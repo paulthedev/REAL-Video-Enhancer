@@ -353,7 +353,7 @@ class DownloadDependencies:
         ]
         return platformIndependentdeps
     
-    def downloadPythonDeps(self, backend, torch_version: Optional[str] = "2.7.0", torchvision_version: Optional[str] = "0.22.0", torch_backend: Optional[str] = "cu126", install: bool = True):
+    def downloadPythonDeps(self, backend, torch_version: Optional[str] = "2.11.0", torchvision_version: Optional[str] = "0.26.0", torch_backend: Optional[str] = "cu130", install: bool = True):
         deps = []
         log("Downloading Python Deps for " + backend)
         log("Torch Version: " + torch_version)
