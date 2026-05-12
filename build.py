@@ -67,62 +67,37 @@ def get_libxcb_cursor_binary():
     
 class PythonManager:
 
-    PYTHON_VENV_PATH = "venv\\Scripts\\python.exe" if PLATFORM == "win32" else "venv/bin/python3"
-    PYTHON_SYSTEM_EXECUTABLE = sys.executable
+    VENV_PATH = ".venv"
+    PYTHON_VENV_PATH = ".venv\\Scripts\\python.exe" if PLATFORM == "win32" else ".venv/bin/python"
+    UV_PATH = "uv"
 
     def __init__(self):
-        if not os.path.exists("venv"):
+        if not os.path.exists(self.VENV_PATH):
             self.setup_python()
-    
+
     @classmethod
     def run_venv_python(cls, command: str):
         command = [cls.PYTHON_VENV_PATH,] + command.split()
         subprocess.run(command)
-    
+
     @classmethod
     def pip_install_package_in_venv(cls, package: str):
-        command = [
-            cls.PYTHON_VENV_PATH,
-            "-m",
-            "pip",
-            "install",
-            package,
-        ]
+        command = [cls.UV_PATH, "pip", "install", package]
         subprocess.run(command)
 
     def setup_python(self):
         self.__create_venv()
-        self.__install_pip_in_venv()
         self.__install_requirements_in_venv()
 
     def __create_venv(self):
-        print("Creating virtual environment")
-        command = [self.PYTHON_SYSTEM_EXECUTABLE, "-m", "venv", "venv"]
-        subprocess.run(command)
-
-
-    def __install_pip_in_venv(self):
-        command = [
-            self.PYTHON_VENV_PATH,
-            "-m",
-            "ensurepip",
-        ]
-        subprocess.run(command)
+        print("Creating virtual environment with uv")
+        subprocess.run([self.UV_PATH, "venv", self.VENV_PATH])
 
     def __install_requirements_in_venv(self):
         print("Installing requirements in virtual environment")
         if not os.path.isfile("requirements.txt"):
             raise FileNotFoundError("No requirements.txt in current directory!")
-        command = [
-            self.PYTHON_VENV_PATH,
-            "-m",
-            "pip",
-            "install",
-            "-r",
-            "requirements.txt",
-        ]
-
-        subprocess.run(command)
+        subprocess.run([self.UV_PATH, "pip", "install", "-r", "requirements.txt"])
         
 
     def get_venv_site_packages(self):
@@ -135,10 +110,6 @@ class PythonManager:
         site_packages = result.stdout.strip().split('\n')[0]
         if os.path.exists(site_packages):
             return site_packages
-        site_packages = site_packages.replace('dist','site')
-        if os.path.exists(site_packages):
-            return site_packages
-        print(site_packages)
         raise FileNotFoundError("Unable to locate site packages for python venv!")
     
 
@@ -285,7 +256,7 @@ if __name__ == "__main__":
     args.add_argument("--build", help="Build the application with a specific builder.", default="gui", choices=["pyinstaller", "cx_freeze", "nuitka", "gui"])
     args.add_argument("--copy_backend", help="Copy the backend to the build directory", action="store_true")    
     args = args.parse_args()
-    if not os.path.exists("venv") or not args.build == "gui":
+    if not os.path.exists(".venv") or not args.build == "gui":
         BuildManager().python_manager.setup_python()
     BuildManager().build_gui()
     if args.run:
