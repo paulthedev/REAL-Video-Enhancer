@@ -9,3 +9,10 @@ __pycache__/
 build
 dist
 venv
+.venv
+
+# Generated
+mainwindow.py
+resources_rc.py
+*.spec
+libxcb-cursor.so.0
