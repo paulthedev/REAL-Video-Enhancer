@@ -268,6 +268,7 @@ class DownloadDependencies:
         deps: list,
         install: bool = True,
         is_nightly: bool = False,
+        torch_backend: Optional[str] = None,
     ):  # going to have to make this into a qt module pop up
         command = []
         if PLATFORM == "linux" and IS_STEAM:
@@ -313,6 +314,18 @@ class DownloadDependencies:
                     "https://download.pytorch.org/whl/test/", 
                     "--extra-index-url",
                     "https://download.pytorch.org/whl/", # search this first, needs to be last in the list 
+                ]
+                # ROCm wheels depend on a version-specific `rocm` meta package
+                # (e.g. rocm==7.14.*) that only exists under the version-specific
+                # index (https://download.pytorch.org/whl/rocm7.14/), not the flat
+                # /whl/ index. Add it so pip can resolve those dependencies.
+                if torch_backend and torch_backend.lstrip("+").startswith("rocm"):
+                    rocm_version = torch_backend.lstrip("+")[4:]
+                    command += [
+                        "--extra-index-url",
+                        f"https://download.pytorch.org/whl/rocm{rocm_version}/",
+                    ]
+                command += [
                     "--trusted-host",
                     "download.pytorch.org",
                 ]
@@ -440,7 +453,7 @@ class DownloadDependencies:
                     
                 ]
                 deps += ["cupy-cuda12x==13.3.0"] if "cu" in backend else []
-                return_code = self.pip(deps, install, is_nightly=is_nightly)
+                return_code = self.pip(deps, install, is_nightly=is_nightly, torch_backend=torch_backend)
                 return_codes.append(return_code)
                 
                 if install:
@@ -448,7 +461,7 @@ class DownloadDependencies:
                         "--no-deps",
                         f"torchvision=={torchvision_version}{torch_backend}",
                     ]
-                    return_code = self.pip(deps, install, is_nightly=is_nightly)
+                    return_code = self.pip(deps, install, is_nightly=is_nightly, torch_backend=torch_backend)
 
                 return_codes.append(return_code)
 

@@ -59,7 +59,7 @@ class DownloadTab:
                 self.parent.pytorch_backend.addItems(
                     ["MPS (Apple Silicon)"]
                 )
-                # force 2.9.0 as it should include support for uint16
+                # lock the version dropdown; all supported versions include uint16 support
                 self.parent.pytorch_version.setEnabled(False)
 
                 self.parent.pytorch_backend.setCurrentText("MPS (Apple Silicon)")
