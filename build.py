@@ -8,7 +8,6 @@ import sys
 import shutil
 import argparse
 import platform
-import urllib.request
 
 PLATFORM = sys.platform
 CPU_ARCH = "x86_64" if platform.machine() == "AMD64" else platform.machine()
@@ -18,31 +17,16 @@ print(f"CPU Arch: {CPU_ARCH}")
 print(f"OUTPUT_FOLDER: {OUTPUT_FOLDER}")
 
 
-def download_file(url, destination):
-        print(f"Downloading file from {url}")
-        urllib.request.urlretrieve(url, destination)
-        print("File downloaded successfully")
-
 def get_libxcb_cursor_binary():
-    try:
-        if CPU_ARCH == "x86_64":
-            input_file = '/usr/lib/x86_64-linux-gnu/libxcb-cursor.so.0'
-        else:
-            input_file = '/usr/lib/aarch64-linux-gnu/libxcb-cursor.so.0'
-        if not os.path.isfile(input_file):
-            raise FileNotFoundError("Unable to build as libxcbcursor is not installed!")
-        
-    except FileNotFoundError:
-        try:
-            print("libxcbcursor not found, downloading...")
-            if CPU_ARCH == "x86_64":
-                download_file("https://github.com/TNTwise/real-video-enhancer-models/releases/download/models/libxcb-cursor.so.0","libxcb-cursor.so.0")
-            else:
-                download_file("https://github.com/TNTwise/real-video-enhancer-models/releases/download/models/libxcb-cursor.so.0_arm64","libxcb-cursor.so.0")
-            input_file = "libxcb-cursor.so.0"
-        except Exception as e:
-            print(e)
-            raise FileNotFoundError("libxcbcursor not installed, and no network available to download it!")
+    # The PySide6 wheel does not bundle libxcb-cursor, but Qt's xcb
+    # platform plugin needs it at runtime, so we vendor a copy per arch
+    # and copy it into the Qt lib directory at build time.
+    if CPU_ARCH == "x86_64":
+        input_file = os.path.join("resources", "libxcb-cursor-x86_64.so.0")
+    else:
+        input_file = os.path.join("resources", "libxcb-cursor-arm64.so.0")
+    if not os.path.isfile(input_file):
+        raise FileNotFoundError(f"libxcb-cursor binary not found at {input_file}!")
     return input_file
     
 class PythonManager:

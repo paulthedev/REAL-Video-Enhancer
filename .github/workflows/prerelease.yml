@@ -288,10 +288,6 @@ jobs:
       #      done
       #    done
 
-      - name: Download flatpakref
-        run: |
-          wget https://dl.flathub.org/repo/appstream/io.github.tntwise.REAL-Video-Enhancer.flatpakref
-          
       - name: Create Release and Upload Release Asset
         uses: softprops/action-gh-release@v1        
         with:
@@ -309,5 +305,4 @@ jobs:
               artifacts/REAL-Video-Enhancer-${{ env.APP_VERSION }}-AppImage_x86_64/REAL-Video-Enhancer-${{ env.APP_VERSION }}-linux-x86_64.AppImage
               artifacts/REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_x86_64.zip/REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_x86_64.zip
               artifacts/REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_arm64.zip/REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_arm64.zip
-              io.github.tntwise.REAL-Video-Enhancer.flatpakref
               artifacts/backend-v${{ env.APP_VERSION }}.tar.gz/backend-v${{ env.APP_VERSION }}.tar.gz
