@@ -574,29 +574,6 @@ QDoubleSpinBox::down-button {
         width: 20px;
         height: 15px;
     }
-QSpinBox{
-	background-color:#2c313c;
-	padding:5px 10px;
-	border-radius: 10px;
-	color:white;
-}
-QSpinBox::up-arrow {
-       
-		image: url(:/icons/icons/arrow-up.svg); 
-    }
-QSpinBox::down-arrow {
-
-        image: url(:/icons/icons/arrow-down.svg); 
-		
-    }
-QSpinBox::up-button {
-        width: 20px;
-        height: 15px;
-    }
-QSpinBox::down-button {
-        width: 20px;
-        height: 15px;
-    }
 
 
 
@@ -4230,29 +4207,6 @@ QLineEdit{
 background-color:#2c313c;
 border-radius: 10px;
 }
-QSpinBox{
-	background-color:#2c313c;
-	padding:5px 10px;
-	border-radius: 10px;
-	color:white;
-}
-QSpinBox::up-arrow {
-       
-		image: url(:/icons/icons/arrow-up.svg); 
-    }
-QSpinBox::down-arrow {
-
-        image: url(:/icons/icons/arrow-down.svg); 
-		
-    }
-QSpinBox::up-button {
-        width: 20px;
-        height: 15px;
-    }
-QSpinBox::down-button {
-        width: 20px;
-        height: 15px;
-    }
 QTextEdit{
 background-color:#2c313c;
 border-radius: 10px;
