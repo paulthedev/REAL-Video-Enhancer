@@ -5258,57 +5258,6 @@ QTabWidget::pane { /* The tab widget frame */
                           </layout>
                          </item>
                          <item>
-                          <layout class="QHBoxLayout" name="precisionSettingsContainer_4">
-                           <property name="spacing">
-                            <number>10</number>
-                           </property>
-                           <item>
-                            <widget class="QLabel" name="label_45">
-                             <property name="font">
-                              <font>
-                               <pointsize>12</pointsize>
-                              </font>
-                             </property>
-                             <property name="text">
-                              <string>NCNN GPU ID</string>
-                             </property>
-                            </widget>
-                           </item>
-                           <item>
-                            <widget class="QLabel" name="label_46">
-                             <property name="maximumSize">
-                              <size>
-                               <width>25</width>
-                               <height>25</height>
-                              </size>
-                             </property>
-                             <property name="toolTip">
-                              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;NCNN GPU ID -&lt;/p&gt;&lt;p&gt;Sets what GPU is used for NCNN&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                             </property>
-                             <property name="text">
-                              <string/>
-                             </property>
-                             <property name="pixmap">
-                              <pixmap resource="resources.qrc">:/icons/icons/info.svg</pixmap>
-                             </property>
-                             <property name="scaledContents">
-                              <bool>true</bool>
-                             </property>
-                            </widget>
-                           </item>
-                           <item>
-                            <widget class="QSpinBox" name="ncnn_gpu_id">
-                             <property name="minimumSize">
-                              <size>
-                               <width>0</width>
-                               <height>0</height>
-                              </size>
-                             </property>
-                            </widget>
-                           </item>
-                          </layout>
-                         </item>
-                         <item>
                           <layout class="QHBoxLayout" name="precisionSettingsContainer_3">
                            <property name="spacing">
                             <number>10</number>
@@ -5321,7 +5270,7 @@ QTabWidget::pane { /* The tab widget frame */
                               </font>
                              </property>
                              <property name="text">
-                              <string>PyTorch GPU ID</string>
+                              <string>GPU</string>
                              </property>
                             </widget>
                            </item>
@@ -5334,7 +5283,7 @@ QTabWidget::pane { /* The tab widget frame */
                               </size>
                              </property>
                              <property name="toolTip">
-                              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;PyTorch GPU ID -&lt;/p&gt;&lt;p&gt;Sets what GPU is used for PyTorch&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPU -&lt;/p&gt;&lt;p&gt;Sets which GPU is used for processing&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                              </property>
                              <property name="text">
                               <string/>
@@ -5348,7 +5297,7 @@ QTabWidget::pane { /* The tab widget frame */
                             </widget>
                            </item>
                            <item>
-                            <widget class="QSpinBox" name="pytorch_gpu_id">
+                            <widget class="QComboBox" name="gpu_id">
                              <property name="minimumSize">
                               <size>
                                <width>0</width>

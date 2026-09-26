@@ -252,19 +252,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         log(printOut)
 
         # process the output
-        total_ncnn_gpus = -1
-        total_pytorch_gpus = -1
         halfPrecisionSupport = False
         for line in self.fullOutput.lower().split("\n"):
             if "half precision support:" in line:
                 halfPrecisionSupport = "true" in line
-            if "ncnn gpu " in line:  # this is to grab every line with "GPU "
-                total_ncnn_gpus += 1
-            if "pytorch gpu " in line:
-                total_pytorch_gpus += 1
-
-        total_pytorch_gpus = max(0, total_pytorch_gpus)  # minimum gpu id is 0
-        total_ncnn_gpus = max(0, total_ncnn_gpus)
 
         if self.anyBackendsInstalled:
             self.processTab = ProcessTab(
@@ -276,8 +267,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.settingsTab = SettingsTab(
             parent=self,
             halfPrecisionSupport=halfPrecisionSupport,
-            total_ncnn_gpus=total_ncnn_gpus,
-            total_pytorch_gpus=total_pytorch_gpus,
+            backend_output=self.fullOutput,
         )
         downloadDeps = DownloadDependencies(False)
         self.downloadTab.hideUninstallButtons()

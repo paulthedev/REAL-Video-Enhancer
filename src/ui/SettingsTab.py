@@ -1,4 +1,5 @@
 import os
+import re
 
 from PySide6.QtWidgets import QMainWindow, QFileDialog
 from ..constants import PLATFORM, HOME_PATH
@@ -12,8 +13,7 @@ class SettingsTab:
         self,
         parent: QMainWindow,
         halfPrecisionSupport,
-        total_pytorch_gpus,
-        total_ncnn_gpus,
+        backend_output,
     ):
         self.parent = parent
         self.input_file = None
@@ -41,10 +41,41 @@ class SettingsTab:
         if not halfPrecisionSupport:
             self.parent.precision.removeItem(1)
 
-        # set max gpu id for combo boxs
-        self.parent.pytorch_gpu_id.setMaximum(total_pytorch_gpus)
-        self.parent.ncnn_gpu_id.setMaximum(total_ncnn_gpus)
+        # populate the GPU dropdown with the friendly names of the GPUs
+        # reported by the backend info output
+        self._populate_gpu_combo(
+            self.parent.gpu_id,
+            self._gpu_names(backend_output, "pytorch")
+            or self._gpu_names(backend_output, "ncnn"),
+        )
         self.parent.openRVEFolderBtn.clicked.connect(lambda:open_folder(currentDirectory()))
+
+    @staticmethod
+    def _gpu_names(backend_output: str, gpu_type: str) -> list:
+        """The names of the GPUs reported in the backend info output
+        (lines like 'PyTorch GPU 1: NVIDIA GeForce ...')."""
+        names = []
+        for line in backend_output.split("\n"):
+            match = re.match(rf"^{gpu_type} gpu \d+: (.+)$", line.strip(), re.IGNORECASE)
+            if match:
+                names.append(match.group(1).strip())
+        return names
+
+    @staticmethod
+    def gpu_index(backend_output: str, gpu_type: str, name: str) -> int:
+        """The index of a GPU name in the backend info output, 0 when it
+        is not found (e.g. 'Auto' or a GPU that is no longer present)."""
+        names = SettingsTab._gpu_names(backend_output, gpu_type)
+        for i, n in enumerate(names):
+            if n == name:
+                return i
+        return 0
+
+    def _populate_gpu_combo(self, combo, gpu_names: list):
+        combo.clear()
+        combo.addItem("Auto")
+        for name in gpu_names:
+            combo.addItem(name)
         
 
         self.updateFFMpegCommand()
@@ -184,14 +215,9 @@ class SettingsTab:
                 "True" if self.parent.uhd_mode.isChecked() else "False",
             )
         )
-        self.parent.ncnn_gpu_id.textChanged.connect(
+        self.parent.gpu_id.currentIndexChanged.connect(
             lambda: self.settings.writeSetting(
-                "ncnn_gpu_id", self.parent.ncnn_gpu_id.text()
-            )
-        )
-        self.parent.pytorch_gpu_id.textChanged.connect(
-            lambda: self.settings.writeSetting(
-                "pytorch_gpu_id", self.parent.pytorch_gpu_id.text()
+                "gpu_id", self.parent.gpu_id.currentText()
             )
         )
         self.parent.auto_border_cropping.stateChanged.connect(
@@ -335,9 +361,8 @@ class SettingsTab:
             self.settings.settings["use_same_output_folder_as_input_file_enabled"] == "True"
         )
         self.parent.uhd_mode.setChecked(self.settings.settings["uhd_mode"] == "True")
-        self.parent.ncnn_gpu_id.setValue(int(self.settings.settings["ncnn_gpu_id"]))
-        self.parent.pytorch_gpu_id.setValue(
-            int(self.settings.settings["pytorch_gpu_id"])
+        self.parent.gpu_id.setCurrentText(
+            self.settings.settings["gpu_id"]
         )
         self.parent.auto_border_cropping.setChecked(
             self.settings.settings["auto_border_cropping"] == "True"
@@ -413,8 +438,7 @@ class Settings:
             "use_same_output_folder_as_input_file_enabled": "False",
             "last_input_folder_location": output_folder_default,
             "uhd_mode": "True",
-            "ncnn_gpu_id": "0",
-            "pytorch_gpu_id": "0",
+            "gpu_id": "Auto",
             "auto_border_cropping": "False",
             "video_container": "mkv",
             "video_pixel_format": "yuv420p",
@@ -459,8 +483,7 @@ class Settings:
             "use_same_output_folder_as_input_file_enabled": ("True", "False"),
             "last_input_folder_location": "ANY",
             "uhd_mode": ("True", "False"),
-            "ncnn_gpu_id": "ANY",
-            "pytorch_gpu_id": "ANY",
+            "gpu_id": "ANY",
             "auto_border_cropping": ("True", "False"),
             "video_container": ("mkv", "mp4", "mov", "webm", "avi"),
             "video_pixel_format": "ANY",
