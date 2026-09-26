@@ -196,9 +196,10 @@ class CxFreeze(BuildManager):
             (
               " -m"
             + " cx_Freeze"
-            + " REAL-Video-Enhancer.py"
+            + " --script REAL-Video-Enhancer.py"
             + " --target-dir"
             + f" {OUTPUT_FOLDER}"
+            + " build_exe"
             )
         )
 
@@ -208,7 +209,8 @@ class CxFreeze(BuildManager):
             qt_lib_dir = f"{OUTPUT_FOLDER}/lib/PySide6/Qt/lib"
             os.makedirs(qt_lib_dir, exist_ok=True)
             print("Copying libcursor to qt lib directory")
-            shutil.copy(input_file, qt_lib_dir)
+            # The loader expects the plain name, not the vendored per-arch name.
+            shutil.copy(input_file, os.path.join(qt_lib_dir, "libxcb-cursor.so.0"))
 
 
 def build_appimage(args):
