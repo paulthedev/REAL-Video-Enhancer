@@ -20,3 +20,5 @@ appimage/*.AppImage
 
 # Logs
 log.txt
+
+.zvec-grep/
