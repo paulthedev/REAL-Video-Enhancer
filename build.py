@@ -225,6 +225,27 @@ def build_appimage(args):
     subprocess.run(command, check=True)
 
 
+def cleanup():
+    """Remove build byproducts that are not part of the final output."""
+    print("Cleaning up build artifacts")
+    # cx_Freeze 8.x (freeze-core) drops an UNKNOWN.egg-info dir somewhere in
+    # the tree when freezing a standalone script.
+    for root, dirs, _files in os.walk("."):
+        rel = root.split(os.sep)
+        if OUTPUT_FOLDER in rel or "venv" in rel:
+            continue
+        for d in [d for d in dirs if d.endswith(".egg-info")]:
+            shutil.rmtree(os.path.join(root, d), ignore_errors=True)
+        dirs[:] = [d for d in dirs if not d.endswith(".egg-info")]
+        # Left over from AppImage extraction (e.g. --appimage-extract).
+        if root == "." and "squashfs-root" in dirs:
+            shutil.rmtree("squashfs-root", ignore_errors=True)
+        # Python bytecode caches.
+        for d in dirs:
+            if d == "__pycache__":
+                shutil.rmtree(os.path.join(root, d), ignore_errors=True)
+
+
 if __name__ == "__main__":
     
     args = argparse.ArgumentParser()
@@ -265,5 +286,6 @@ if __name__ == "__main__":
         if args.build == "appimage":
             build_appimage(args)
         print("Build complete")
+        cleanup()
     
     
