@@ -358,7 +358,82 @@ class DownloadDependencies:
             True,
             version_class.is_nightly,
         )
+        if backend_suffix.lower().lstrip("+").startswith("rocm"):
+            self.ensure_rocm_targets(backend_suffix.lower(), is_nightly=version_class.is_nightly)
         return True
+
+    def detect_rocm_targets(self) -> list:
+        """Detect the gfx targets of the AMD GPUs in this system.
+
+        Sources, in order:
+          1. The AMDGPU_TARGETS environment variable, which distro ROCm
+             packages set to the targets of the installed GPUs.
+          2. rocm-smi / rocminfo output, when a ROCm userspace is present.
+        Returns [] when no target could be determined, in which case the
+        caller falls back to the full device set."""
+        targets = []
+        env_targets = os.environ.get("AMDGPU_TARGETS", "")
+        for target in re.findall(r"gfx\d+", env_targets):
+            if target not in targets:
+                targets.append(target)
+        if targets:
+            log(f"Detected ROCm targets from AMDGPU_TARGETS: {targets}")
+            return targets
+        if PLATFORM == "linux":
+            for tool in (["rocm-smi", "--showproductname"], ["rocminfo"]):
+                try:
+                    output = subprocess.run(
+                        tool, capture_output=True, text=True, timeout=30
+                    ).stdout
+                    for target in re.findall(r"gfx\d+", output):
+                        if target not in targets:
+                            targets.append(target)
+                    if targets:
+                        log(f"Detected ROCm targets from {tool[0]}: {targets}")
+                        return targets
+                except Exception:
+                    continue
+        return targets
+
+    def install_rocm_meta(self, rocm_version: str, targets: list, is_nightly: bool = False) -> int:
+        """Install the `rocm` meta package with only the device extras needed
+        for the detected GPUs (instead of the device-all set, which ships
+        SDKs for every architecture)."""
+        extras = ["libraries"]
+        for target in targets:
+            extras.append(target if target.startswith("device-") else f"device-{target}")
+        dep = f"rocm[{','.join(extras)}]"
+        if rocm_version:
+            dep += f"=={rocm_version}.*"
+        return self.pip([dep], True, is_nightly=is_nightly)
+
+    def ensure_rocm_targets(self, torch_backend: str, is_nightly: bool = False) -> None:
+        """Make sure device packages are installed for every AMD GPU present.
+        This also self-heals machines that got a new/second GPU after the
+        initial install."""
+        rocm_version = torch_backend.lstrip("+")[4:]
+        targets = self.detect_rocm_targets()
+        if not targets:
+            log("Could not detect ROCm targets, falling back to the full device set")
+            return self.install_rocm_meta(rocm_version, ["device-all"], is_nightly=is_nightly)
+        installed = set()
+        try:
+            result = subprocess.run(
+                [PYTHON_EXECUTABLE_PATH, "-m", "pip", "list", "--format=freeze"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            installed = set(re.findall(r"^(rocm-sdk-device-\w+)==", result.stdout, re.MULTILINE))
+        except Exception as e:
+            log(f"Could not query installed ROCm device packages: {e}")
+        missing = [target for target in targets if f"rocm-sdk-device-{target}" not in installed]
+        if not missing:
+            log(f"ROCm device packages for {targets} already installed")
+            return
+        log(f"Installing ROCm device packages for: {missing}")
+        extras = ",".join(f"device-{target}" for target in missing)
+        return self.pip([f"rocm[{extras}]=={rocm_version}.*"], True, is_nightly=is_nightly)
 
     def pip(
         self,
@@ -393,41 +468,41 @@ class DownloadDependencies:
         origTemp = os.environ.get("TMPDIR")
         os.environ["TMPDIR"] = TEMP_DOWNLOAD_PATH
         if install:
+            command += [
+                "--no-warn-script-location",
+                "--isolated",
+            ]
             if is_nightly:
                 command += [
-                    "--no-warn-script-location",
-                    "--isolated",
                     "--extra-index-url",
                     "https://download.pytorch.org/whl/nightly/",
-                    "--trusted-host",
-                    "download.pytorch.org",
                 ]
             else:
                 command += [
-                    "--no-warn-script-location",
-                    "--isolated",
                     "--extra-index-url",
                     "https://download.pytorch.org/whl/test/", 
                     "--extra-index-url",
                     "https://download.pytorch.org/whl/", # search this first, needs to be last in the list 
                 ]
-                # ROCm wheels depend on a version-specific `rocm` meta package
-                # (e.g. rocm==7.14.*) that only exists under the version-specific
-                # index (https://download.pytorch.org/whl/rocm7.14/), not the flat
-                # /whl/ index. Derive the version from the torch dep string and
-                # add that index so pip can resolve the meta package.
-                rocm_match = re.search(
-                    r"torch==\S*\+rocm(\d[\d.]*)([+\s=]|$)", " ".join(deps)
-                )
-                if rocm_match:
-                    command += [
-                        "--extra-index-url",
-                        f"https://download.pytorch.org/whl/rocm{rocm_match.group(1)}/",
-                    ]
+            # ROCm wheels depend on a version-specific `rocm` meta package
+            # (e.g. rocm==7.14.*) that only exists under the version-specific
+            # index (https://download.pytorch.org/whl/rocm7.14/), not the flat
+            # /whl/ index. Derive the version from the dep strings (either a
+            # torch==...+rocm<ver> wheel or a rocm[...]==<ver> pin) and add
+            # that index so pip can resolve the meta package.
+            rocm_match = re.search(
+                r"(?:torch==\S*\+rocm|rocm(?:\[[^\]]*\])?==)(\d[\d.]*)([+\s=.]|\$)",
+                " ".join(deps),
+            )
+            if rocm_match:
                 command += [
-                    "--trusted-host",
-                    "download.pytorch.org",
+                    "--extra-index-url",
+                    f"https://download.pytorch.org/whl/rocm{rocm_match.group(1)}/",
                 ]
+            command += [
+                "--trusted-host",
+                "download.pytorch.org",
+            ]
         else:
             command += ["-y"]
         command += deps
@@ -545,11 +620,25 @@ class DownloadDependencies:
                     torch_version = self._resolve_nightly_version("torch", torch_version, torch_backend)
                     torchvision_version = self._resolve_nightly_version("torchvision", torchvision_version, torch_backend)
 
+                # The ROCm torch wheels depend on the `rocm` meta package,
+                # which by default pulls SDKs for every GPU architecture
+                # (device-all). Install it first, restricted to the targets
+                # of the GPUs actually present, so pip considers its
+                # requirement satisfied when installing torch.
+                if install and torch_backend.lstrip("+").startswith("rocm"):
+                    rocm_version = torch_backend.lstrip("+")[4:]
+                    targets = self.detect_rocm_targets()
+                    if not targets:
+                        log("Could not detect ROCm targets, falling back to the full device set")
+                        targets = ["device-all"]
+                    log(f"Installing ROCm meta package with targets: {targets}")
+                    return_code = self.install_rocm_meta(rocm_version, targets, is_nightly=is_nightly)
+                    return_codes.append(return_code)
+
                 deps += [
                     f"torch=={torch_version}{torch_backend}",  #
                     "safetensors==0.5.3",
                     "einops==0.8.1",
-                    
                 ]
                 deps += ["cupy-cuda12x==13.3.0"] if "cu" in backend else []
                 return_code = self.pip(deps, install, is_nightly=is_nightly)
