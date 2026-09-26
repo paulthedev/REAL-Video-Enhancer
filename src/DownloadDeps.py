@@ -395,6 +395,28 @@ class DownloadDependencies:
                     continue
         return targets
 
+    def get_torch_runtime_deps(self) -> list:
+        """Read torch's runtime requirements from its installed metadata,
+        skipping the `rocm` meta package (which is installed separately,
+        restricted to the targets of the GPUs actually present) and any
+        optional extras."""
+        from importlib.metadata import PackageNotFoundError, requires
+        try:
+            pkg_requires = requires("torch") or []
+        except PackageNotFoundError:
+            return []
+        deps = []
+        for req in pkg_requires:
+            base = req.split(";", 1)[0].strip()
+            marker = req[len(base):]
+            if "extra" in marker:
+                continue
+            if re.match(r"rocm(\[.*\])?", base, re.IGNORECASE):
+                continue
+            if base and base not in deps:
+                deps.append(base)
+        return deps
+
     def install_rocm_meta(self, rocm_version: str, targets: list, is_nightly: bool = False) -> int:
         """Install the `rocm` meta package with only the device extras needed
         for the detected GPUs (instead of the device-all set, which ships
@@ -620,12 +642,12 @@ class DownloadDependencies:
                     torch_version = self._resolve_nightly_version("torch", torch_version, torch_backend)
                     torchvision_version = self._resolve_nightly_version("torchvision", torchvision_version, torch_backend)
 
-                # The ROCm torch wheels depend on the `rocm` meta package,
-                # which by default pulls SDKs for every GPU architecture
-                # (device-all). Install it first, restricted to the targets
-                # of the GPUs actually present, so pip considers its
-                # requirement satisfied when installing torch.
-                if install and torch_backend.lstrip("+").startswith("rocm"):
+                # The ROCm torch wheels depend on the `rocm` meta package with
+                # the device-all extra, which ships SDKs for every GPU
+                # architecture. Install the meta package first, restricted to
+                # the targets of the GPUs actually present.
+                is_rocm = torch_backend.lstrip("+").startswith("rocm")
+                if install and is_rocm:
                     rocm_version = torch_backend.lstrip("+")[4:]
                     targets = self.detect_rocm_targets()
                     if not targets:
@@ -641,8 +663,22 @@ class DownloadDependencies:
                     "einops==0.8.1",
                 ]
                 deps += ["cupy-cuda12x==13.3.0"] if "cu" in backend else []
+                # For ROCm, install torch with --no-deps: its declared
+                # `rocm[device-all,libraries]` requirement would make pip
+                # pull SDKs for every architecture despite the restricted
+                # meta package being installed. Its other runtime deps are
+                # installed separately from the wheel's own metadata.
+                if install and is_rocm:
+                    deps = ["--no-deps"] + deps
                 return_code = self.pip(deps, install, is_nightly=is_nightly)
                 return_codes.append(return_code)
+
+                if install and is_rocm:
+                    torch_deps = self.get_torch_runtime_deps()
+                    log(f"Installing torch runtime dependencies: {torch_deps}")
+                    if torch_deps:
+                        return_code = self.pip(torch_deps, install)
+                        return_codes.append(return_code)
                 
                 if install:
                     deps = [
