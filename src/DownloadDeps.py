@@ -31,6 +31,7 @@ from .ui.QTcustom import (
     needs_network_else_exit,
 )
 import os
+import re
 import subprocess
 
 
@@ -266,6 +267,7 @@ class DownloadDependencies:
         self,
         deps: list,
         install: bool = True,
+        is_nightly: bool = False,
     ):  # going to have to make this into a qt module pop up
         command = []
         if PLATFORM == "linux" and IS_STEAM:
@@ -294,16 +296,26 @@ class DownloadDependencies:
         origTemp = os.environ.get("TMPDIR")
         os.environ["TMPDIR"] = TEMP_DOWNLOAD_PATH
         if install:
-            command += [
-                "--no-warn-script-location",
-                "--isolated",
-                "--extra-index-url",
-                "https://download.pytorch.org/whl/test/", 
-                "--extra-index-url",
-                "https://download.pytorch.org/whl/", # search this first, needs to be last in the list 
-                "--trusted-host",
-                "download.pytorch.org",
-            ]
+            if is_nightly:
+                command += [
+                    "--no-warn-script-location",
+                    "--isolated",
+                    "--extra-index-url",
+                    "https://download.pytorch.org/whl/nightly/",
+                    "--trusted-host",
+                    "download.pytorch.org",
+                ]
+            else:
+                command += [
+                    "--no-warn-script-location",
+                    "--isolated",
+                    "--extra-index-url",
+                    "https://download.pytorch.org/whl/test/", 
+                    "--extra-index-url",
+                    "https://download.pytorch.org/whl/", # search this first, needs to be last in the list 
+                    "--trusted-host",
+                    "download.pytorch.org",
+                ]
         else:
             command += ["-y"]
         command += deps
@@ -336,6 +348,44 @@ class DownloadDependencies:
             os.environ["TMPDIR"] = str(origTemp)
         return return_code
 
+    def _resolve_nightly_version(self, package: str, base_version: str, local_suffix: str) -> str:
+        """
+        Query the nightly index and return the latest dev base version of
+        `package` that matches `base_version` and ships with `local_suffix`
+        (e.g. "+cu134"). Returns the version WITHOUT the local suffix, e.g.
+        "2.15.0.dev20260925" — the caller appends the suffix itself.
+        Falls back to `base_version` if the index can't be reached.
+        """
+        import requests
+        url = f"https://download.pytorch.org/whl/nightly/{package}/"
+        try:
+            resp = requests.get(url, timeout=15)
+            resp.raise_for_status()
+            # Wheel filenames look like: torch-2.15.0.dev20260925%2Bcu134-cp312-...whl
+            # The '+' is URL-encoded as '%2B'. Match the base version, capture the
+            # date, and require our local suffix.
+            suffix = local_suffix.lstrip("+")
+            # base_version already includes the ".dev" prefix (e.g. "2.15.0.dev"),
+            # so we only need to capture the date that follows it.
+            pattern = re.compile(
+                rf"{re.escape(package)}-{re.escape(base_version)}(\d+)%2B{re.escape(suffix)}-cp"
+            )
+            best_date = None
+            for m in pattern.finditer(resp.text):
+                date = m.group(1)
+                if best_date is None or date > best_date:
+                    best_date = date
+            if best_date:
+                # base_version already ends in ".dev" (e.g. "2.15.0.dev"), so the
+                # resolved form is just base + date: "2.15.0.dev20260925".
+                resolved = f"{base_version}{best_date}"
+                log(f"Resolved nightly {package} {base_version} -> {resolved}{local_suffix}")
+                return resolved
+        except Exception as e:
+            log(f"Could not resolve nightly version for {package}: {e}")
+        # Fallback: use the base version (pip will error if no exact match)
+        return base_version
+
     def getPlatformIndependentDeps(self):
         platformIndependentdeps = [
             "testresources==2.0.1",
@@ -353,7 +403,7 @@ class DownloadDependencies:
         ]
         return platformIndependentdeps
     
-    def downloadPythonDeps(self, backend, torch_version: Optional[str] = "2.7.0", torchvision_version: Optional[str] = "0.22.0", torch_backend: Optional[str] = "cu126", install: bool = True):
+    def downloadPythonDeps(self, backend, torch_version: Optional[str] = "2.7.0", torchvision_version: Optional[str] = "0.22.0", torch_backend: Optional[str] = "cu126", install: bool = True, is_nightly: bool = False):
         deps = []
         log("Downloading Python Deps for " + backend)
         log("Torch Version: " + torch_version)
@@ -369,13 +419,20 @@ class DownloadDependencies:
             case "ncnn":
                 deps += [
                     "rife-ncnn-vulkan-python-tntwise==1.4.5",
-                    "upscale_ncnn_py==1.2.0",
-                    "ncnn==1.0.20250916",
+                    "upscale_ncnn_py==1.3.0",
+                    "ncnn==1.0.20260526",
                     "numpy==2.2.2",
                 ]
                 return_code = self.pip(deps, install)
                 return_codes.append(return_code)
             case "torch" | "tensorrt":
+                # Nightly wheels carry a date stamp (e.g. 2.15.0.dev20260925) that
+                # can't be expressed with a plain == pin, so resolve the latest
+                # dev build from the nightly index at install time.
+                if is_nightly:
+                    torch_version = self._resolve_nightly_version("torch", torch_version, torch_backend)
+                    torchvision_version = self._resolve_nightly_version("torchvision", torchvision_version, torch_backend)
+
                 deps += [
                     f"torch=={torch_version}{torch_backend}",  #
                     "safetensors==0.5.3",
@@ -383,7 +440,7 @@ class DownloadDependencies:
                     
                 ]
                 deps += ["cupy-cuda12x==13.3.0"] if "cu" in backend else []
-                return_code = self.pip(deps, install)
+                return_code = self.pip(deps, install, is_nightly=is_nightly)
                 return_codes.append(return_code)
                 
                 if install:
@@ -391,7 +448,7 @@ class DownloadDependencies:
                         "--no-deps",
                         f"torchvision=={torchvision_version}{torch_backend}",
                     ]
-                    return_code = self.pip(deps, install)
+                    return_code = self.pip(deps, install, is_nightly=is_nightly)
 
                 return_codes.append(return_code)
 

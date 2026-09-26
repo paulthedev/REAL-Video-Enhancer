@@ -8,7 +8,6 @@ on:
 
 env:
   APP_VERSION: 2.4.2
-  LINUX_CLIENT_PYTHON_VER: 3.12.9
 
 jobs:
   validate:
@@ -40,31 +39,28 @@ jobs:
 
   build-Linux:
     needs: [validate]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions: write-all  
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Setup Distrobox
-        run : |
-          sudo apt install distrobox
-          distrobox create -i ubuntu:20.04 --yes
 
-      - name: Install Python in distrobox
+      - name: Install system dependencies
         run : |
-          
-          distrobox enter ubuntu-20-04 -- sudo apt-get install python3 python3-pip wget -y && pip install patchelf && wget https://github.com/astral-sh/python-build-standalone/releases/download/20250317/cpython-${{ env.LINUX_CLIENT_PYTHON_VER }}+20250317-x86_64-unknown-linux-gnu-install_only.tar.gz && tar xf cpython-${{ env.LINUX_CLIENT_PYTHON_VER }}+20250317-x86_64-unknown-linux-gnu-install_only.tar.gz
+          sudo apt update
+          sudo apt-get install -y patchelf libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libgtk-3-0 libpulse0 libwayland-cursor0 libwayland-egl1  libxcb-cursor0 libxcb-icccm4 libxcb-image0  libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 -y
 
-      - name: Install Python Dependencies
-        run: |
-          distrobox enter ubuntu-20-04 -- ./python/bin/python3 -m pip install -r requirements.txt
-      - name: install other requirements
-        run : |
-          distrobox enter ubuntu-20-04 -- sudo apt update &&  sudo apt-get install libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libgtk-3-0 libpulse0 libwayland-cursor0 libwayland-egl1  libxcb-cursor0 libxcb-icccm4 libxcb-image0  libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 -y
-          distrobox enter ubuntu-20-04 -- ./python/bin/python3 -m pip install patchelf
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Build
-        run: distrobox enter ubuntu-20-04 -- ./python/bin/python3 build.py --build cx_freeze --copy_backend
-      
+        run: python3 build.py --build cx_freeze --copy_backend
+
+      - name: Save build output as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: REAL-Video-Enhancer-${{ env.APP_VERSION }}-Linux-dist_x86_64
+          path: dist/
+
       - name: compress archive
         run: |
           mv dist/ bin/
@@ -88,28 +84,45 @@ jobs:
           name: backend-v${{ env.APP_VERSION }}.tar.gz 
           path: backend-v${{ env.APP_VERSION }}.tar.gz 
 
-  build-Linux_arm64:
-    needs: [validate]
-    runs-on: ubuntu-24.04-arm
+  build-Linux_AppImage:
+    needs: [build-Linux]
+    runs-on: ubuntu-latest
     permissions: write-all  
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install Python in distrobox
-        run : |
-          
-          sudo apt-get install python3 python3-pip wget -y && pip install patchelf && wget https://github.com/astral-sh/python-build-standalone/releases/download/20250317/cpython-${{ env.LINUX_CLIENT_PYTHON_VER }}+20250317-aarch64-unknown-linux-gnu-install_only.tar.gz && tar xf cpython-${{ env.LINUX_CLIENT_PYTHON_VER }}+20250317-aarch64-unknown-linux-gnu-install_only.tar.gz
+      - name: Download build output
+        uses: actions/download-artifact@v4
+        with:
+          name: REAL-Video-Enhancer-${{ env.APP_VERSION }}-Linux-dist_x86_64
+          path: dist/
 
-      - name: Install Python Dependencies
-        run: |
-          ./python/bin/python3 --version
-          ./python/bin/python3 -m pip install -r requirements.txt
-      - name: install other requirements
+      - name: Build AppImage
+        run: ./appimage/build-appimage.sh dist ${{ env.APP_VERSION }} x86_64
+
+      - name: Save AppImage as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: REAL-Video-Enhancer-${{ env.APP_VERSION }}-AppImage_x86_64
+          path: appimage/REAL-Video-Enhancer-${{ env.APP_VERSION }}-linux-x86_64.AppImage
+
+  build-Linux_arm64:
+    needs: [validate]
+    runs-on: ubuntu-26.04-arm
+    permissions: write-all  
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install system dependencies
         run : |
-          sudo apt update &&  sudo apt-get install libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libgtk-3-0 libpulse0 libwayland-cursor0 libwayland-egl1  libxcb-cursor0 libxcb-icccm4 libxcb-image0  libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 -y
-          ./python/bin/python3 -m pip install patchelf
+          sudo apt update
+          sudo apt-get install -y patchelf libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libgtk-3-0 libpulse0 libwayland-cursor0 libwayland-egl1  libxcb-cursor0 libxcb-icccm4 libxcb-image0  libxcb-keysyms1 libxcb-render-util0 libxcb-shape0 -y
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
       - name: Build
-        run: ./python/bin/python3 build.py --build cx_freeze --copy_backend
+        run: python3 build.py --build cx_freeze --copy_backend
       
       - name: compress archive
         run: |
@@ -244,7 +257,7 @@ jobs:
           path: REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_arm64.zip
           
   Release:
-    needs: [build-Windows, build-Linux, build-MacOS_arm64, build-Linux_arm64, build-MacOS_x86_64]
+    needs: [build-Windows, build-Linux, build-Linux_AppImage, build-MacOS_arm64, build-Linux_arm64, build-MacOS_x86_64]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -293,6 +306,7 @@ jobs:
               artifacts/REAL-Video-Enhancer-${{ env.APP_VERSION }}-Windows-Setup_x86_64.exe/REAL-Video-Enhancer-${{ env.APP_VERSION }}-Windows-Setup_x86_64.exe
               artifacts/REAL-Video-Enhancer-${{ env.APP_VERSION }}-Linux-portable_x86_64.zip/REAL-Video-Enhancer-${{ env.APP_VERSION }}-Linux-portable_x86_64.zip
               artifacts/REAL-Video-Enhancer-${{ env.APP_VERSION }}-Linux-portable_arm64.zip/REAL-Video-Enhancer-${{ env.APP_VERSION }}-Linux-portable_arm64.zip
+              artifacts/REAL-Video-Enhancer-${{ env.APP_VERSION }}-AppImage_x86_64/REAL-Video-Enhancer-${{ env.APP_VERSION }}-linux-x86_64.AppImage
               artifacts/REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_x86_64.zip/REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_x86_64.zip
               artifacts/REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_arm64.zip/REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_arm64.zip
               io.github.tntwise.REAL-Video-Enhancer.flatpakref

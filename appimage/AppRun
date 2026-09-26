@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# AppImage entry point for REAL-Video-Enhancer.
+#
+# The AppImage squashfs is mounted read-only at $APPDIR. The application
+# needs a writable working directory (CWD) for models, temp files, the
+# downloaded Python environment, and logs, and it detects a local backend
+# by checking for ./backend inside os.getcwd().
+#
+# Strategy:
+#   * Keep the frozen executable in $APPDIR so its cx_Freeze `lib/`
+#     directory (located relative to the exe) resolves correctly.
+#   * cd into a writable per-user directory that contains a symlink to the
+#     bundled read-only backend. This makes USE_LOCAL_BACKEND resolve True
+#     and CWD point at a writable location.
+
+set -e
+
+# Writable area (matches the CWD the app uses for AppImages).
+CWD="${HOME}/.local/share/REAL-Video-Enhancer"
+mkdir -p "$CWD"
+
+# Expose the bundled (read-only) backend inside the writable CWD.
+if [ ! -e "$CWD/backend" ]; then
+    ln -s "$APPDIR/backend" "$CWD/backend"
+fi
+
+# Run from the writable CWD so os.getcwd() sees ./backend.
+cd "$CWD"
+
+exec "$APPDIR/REAL-Video-Enhancer" "$@"

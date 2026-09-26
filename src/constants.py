@@ -22,6 +22,7 @@ LOCKFILE = QDir.tempPath() + "/REAL-Video-Enhancer.lock"
 PLATFORM = sys.platform  # win32, darwin, linux
 IS_STEAM = "SteamAppId" in os.environ
 IS_FLATPAK = "FLATPAK_ID" in os.environ and not IS_STEAM
+IS_APPIMAGE = "APPIMAGE" in os.environ
 
 HOME_PATH = os.path.expanduser("~")
 
@@ -49,6 +50,9 @@ if IS_FLATPAK:
             HOME_PATH, ".var", "app", "io.github.tntwise.REAL-Video-Enhancer"
         )
     )
+elif IS_APPIMAGE:
+    # The AppImage squashfs is read-only, so point CWD at a writable area.
+    CWD = os.path.join(HOME_PATH, ".local", "share", "REAL-Video-Enhancer")
 
 CPU_ARCH = "x86_64" if platform.machine() == "AMD64" else platform.machine()
 

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=REAL Video Enhancer
+Comment=REAL Video Enhancer is a simple way to enhance videos on Linux.
+Exec=REAL-Video-Enhancer
+Type=Application
+MimeType=video/mp4;video/avi;video/x-matroska;
+Categories=AudioVideo
+Keywords=Video;Enhancer;
+Icon=REAL-Video-Enhancer
+Terminal=false

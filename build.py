@@ -18,26 +18,6 @@ print(f"CPU Arch: {CPU_ARCH}")
 print(f"OUTPUT_FOLDER: {OUTPUT_FOLDER}")
 
 
-def set_mainwindow_size():
-    import xml.etree.ElementTree as ET
-
-    def set_mainwindow_size_zero(path="testRVEInterface.ui"):
-        tree = ET.parse(path)
-        root = tree.getroot()
-
-        geometry = root.find('.//property[@name="geometry"]/rect')
-        if geometry is not None:
-            width = geometry.find("width")
-            height = geometry.find("height")
-            if width is not None:
-                width.text = "1000"
-            if height is not None:
-                height.text = "700"
-            tree.write(path)
-
-    set_mainwindow_size_zero()
-
-
 def download_file(url, destination):
         print(f"Downloading file from {url}")
         urllib.request.urlretrieve(url, destination)
@@ -68,10 +48,13 @@ def get_libxcb_cursor_binary():
 class PythonManager:
 
     PYTHON_VENV_PATH = "venv\\Scripts\\python.exe" if PLATFORM == "win32" else "venv/bin/python3"
-    PYTHON_SYSTEM_EXECUTABLE = sys.executable
+    VENV_DIR = "venv"
+    # The venv is built with uv, which can fetch a standalone CPython
+    # automatically. Pin the version so local and CI builds match.
+    PYTHON_VERSION = "3.14"
 
     def __init__(self):
-        if not os.path.exists("venv"):
+        if not os.path.exists(self.VENV_DIR):
             self.setup_python()
     
     @classmethod
@@ -82,30 +65,27 @@ class PythonManager:
     @classmethod
     def pip_install_package_in_venv(cls, package: str):
         command = [
-            cls.PYTHON_VENV_PATH,
-            "-m",
+            "uv",
             "pip",
             "install",
+            "--python",
+            cls.PYTHON_VENV_PATH,
             package,
         ]
         subprocess.run(command)
 
     def setup_python(self):
         self.__create_venv()
-        self.__install_pip_in_venv()
         self.__install_requirements_in_venv()
 
     def __create_venv(self):
-        print("Creating virtual environment")
-        command = [self.PYTHON_SYSTEM_EXECUTABLE, "-m", "venv", "venv"]
-        subprocess.run(command)
-
-
-    def __install_pip_in_venv(self):
+        print("Creating virtual environment with uv")
         command = [
-            self.PYTHON_VENV_PATH,
-            "-m",
-            "ensurepip",
+            "uv",
+            "venv",
+            self.VENV_DIR,
+            "--python",
+            self.PYTHON_VERSION,
         ]
         subprocess.run(command)
 
@@ -114,14 +94,14 @@ class PythonManager:
         if not os.path.isfile("requirements.txt"):
             raise FileNotFoundError("No requirements.txt in current directory!")
         command = [
-            self.PYTHON_VENV_PATH,
-            "-m",
+            "uv",
             "pip",
             "install",
+            "--python",
+            self.PYTHON_VENV_PATH,
             "-r",
             "requirements.txt",
         ]
-
         subprocess.run(command)
         
 
@@ -154,7 +134,6 @@ class BuildManager:
     
     def build_gui(self):
         print("Building GUI")
-        #set_mainwindow_size()
         if PLATFORM == "darwin" or PLATFORM == "linux":
             os.system(
                 f"{self.python_manager.get_venv_site_packages()}/PySide6/Qt/libexec/uic -g python testRVEInterface.ui > mainwindow.py"
@@ -222,7 +201,8 @@ class PyInstaller(BuildManager):
             
 class CxFreeze(BuildManager):
 
-    cx_freeze_version = "cx_freeze==7.2.10"
+    # 8.x is pure Python, so it works on Python 3.14 without building from source.
+    cx_freeze_version = "cx_freeze==8.7.1"
 
     def build(self):
         print("Building executable")
@@ -241,40 +221,22 @@ class CxFreeze(BuildManager):
     def patch_for_xcbcursor(self):
         if PLATFORM == "linux":
             input_file = get_libxcb_cursor_binary()
+            qt_lib_dir = f"{OUTPUT_FOLDER}/lib/PySide6/Qt/lib"
+            os.makedirs(qt_lib_dir, exist_ok=True)
             print("Copying libcursor to qt lib directory")
-            shutil.copy(input_file, f"{OUTPUT_FOLDER}/lib/PySide6/Qt/lib")
-            
+            shutil.copy(input_file, qt_lib_dir)
 
-class Nuitka(BuildManager):
 
-    nuitka_version = "nuitka==2.6.7"
-
-    def build(self):
-        print("Building executable")
-
-        PythonManager.pip_install_package_in_venv(self.nuitka_version)
-        PythonManager.run_venv_python(
-            (
-              " -m nuitka" 
-            + " --standalone" 
-            + " --low-memory"
-            + " --include-package-data=PySide6"
-            + " --include-package-data=cpuinfo"
-            + " --enable-plugin=pyside6"
-            + " --include-qt-plugins=qml"
-            + " --show-progress" 
-            + " --show-scons" 
-            + f" --output-dir={OUTPUT_FOLDER}"
-            + " REAL-Video-Enhancer.py"
-            )
-        )
-
-    def patch_for_xcbcursor(self):
-        if PLATFORM == "linux":
-            raise NotImplementedError("Nuitka is not working on linux.")
-            input_file = get_libxcb_cursor_binary()
-            print("Copying libcursor to qt lib directory")
-            shutil.copy(input_file, f"{OUTPUT_FOLDER}/lib/PySide6/Qt/lib")
+def build_appimage(args):
+    print("Packaging AppImage")
+    appimage_script = os.path.join("appimage", "build-appimage.sh")
+    command = [
+        appimage_script,
+        f"{OUTPUT_FOLDER}",
+        args.appimage_version,
+        args.appimage_arch,
+    ]
+    subprocess.run(command, check=True)
 
 
 if __name__ == "__main__":
@@ -282,7 +244,9 @@ if __name__ == "__main__":
     args = argparse.ArgumentParser()
     args.add_argument("--run", help="Run the application", action="store_true")
     args.add_argument("--run_backend", help="Run the backend", action="store_true")
-    args.add_argument("--build", help="Build the application with a specific builder.", default="gui", choices=["pyinstaller", "cx_freeze", "nuitka", "gui"])
+    args.add_argument("--build", help="Build the application with a specific builder.", default="gui", choices=["pyinstaller", "cx_freeze", "appimage", "gui"])
+    args.add_argument("--appimage_version", help="Version for the AppImage build.", default="2.4.2")
+    args.add_argument("--appimage_arch", help="Architecture for the AppImage build.", default="x86_64")
     args.add_argument("--copy_backend", help="Copy the backend to the build directory", action="store_true")    
     args = args.parse_args()
     if not os.path.exists("venv") or not args.build == "gui":
@@ -301,16 +265,19 @@ if __name__ == "__main__":
                 builder = PyInstaller()
             case "cx_freeze":
                 builder = CxFreeze()
-            case "nuitka":
-                builder = Nuitka()
+            case "appimage":
+                # AppImages are built on top of the cx_Freeze output.
+                builder = CxFreeze()
             case "gui":
                 exit()
             case _:
                 raise ValueError("Invalid build option")
         builder.build()
         builder.patch_for_xcbcursor()
-        if args.copy_backend:
+        if args.copy_backend or args.build == "appimage":
             builder.copy_backend()
+        if args.build == "appimage":
+            build_appimage(args)
         print("Build complete")
     
     
