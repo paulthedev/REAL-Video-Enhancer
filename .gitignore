@@ -17,3 +17,6 @@ resources_rc.py
 
 # AppImage output
 appimage/*.AppImage
+
+# Logs
+log.txt
