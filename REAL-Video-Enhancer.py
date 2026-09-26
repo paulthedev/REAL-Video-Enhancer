@@ -164,8 +164,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # match the torchvision that will be (re)installed now, which breaks
         # the backend with "operator torchvision::nms does not exist".
         start_time = time.time()
-        if DownloadDependencies().check_torch_consistency(self.settings):
+        downloadDeps = DownloadDependencies()
+        if downloadDeps.check_torch_consistency(self.settings):
             log("Reinstalled a matching torch/torchvision pair")
+        # The GPU hardware may have changed since the installed torch build
+        # was made (e.g. a ROCm install on a machine that now has an
+        # Nvidia GPU), in which case the build no longer matches the
+        # hardware and needs to be reinstalled for it.
+        if downloadDeps.check_torch_hardware(self.settings):
+            log("Reinstalled torch for the current GPU hardware")
         end_time = time.time()
         log("Torch consistency check time: " + str(end_time - start_time))
 

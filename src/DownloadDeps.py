@@ -17,6 +17,11 @@ from .constants import (
     IS_STEAM
 )
 from .version import version, backend_dev_version
+from .GpuHardware import (
+    detect_gpu_hardware,
+    FAMILY_HARDWARE,
+    HARDWARE_FAMILIES,
+)
 from .Util import (
     FileHandler,
     log,
@@ -327,26 +332,37 @@ class DownloadDependencies:
         if reply != QMessageBox.StandardButton.Yes:
             return False
 
-        # Reinstall the version pair selected in the settings, falling back
-        # to the latest stable built-in version.
+        self._reinstall_torch(settings)
+        return True
+
+    def _resolve_torch_version(self, settings):
+        """The version class selected in the settings, falling back to the
+        latest stable built-in version."""
+        from .BuiltInTorchVersions import TorchVersion
+
         requested_version = settings.settings.get("pytorch_version", "")
-        requested_backend = settings.settings.get("pytorch_backend", "CUDA").lower()
-        version_class = None
         for v in TorchVersion.__subclasses__():
             if v.torch_version == requested_version:
-                version_class = v
-                break
-        if not version_class:
-            stable = [v for v in TorchVersion.__subclasses__() if not v.is_nightly]
-            version_class = max(
-                stable or TorchVersion.__subclasses__(),
-                key=lambda v: v.torch_version,
+                return v
+        stable = [v for v in TorchVersion.__subclasses__() if not v.is_nightly]
+        return max(stable or TorchVersion.__subclasses__(), key=lambda v: v.torch_version)
+
+    def _reinstall_torch(self, settings, backend_family: str = None) -> None:
+        """Reinstall the selected torch/torchvision pair for the given
+        backend family (cuda/rocm/xpu/mps), defaulting to the one selected
+        in the settings."""
+        backend_family = (
+            backend_family
+            or self.backend_family_from_setting(
+                settings.settings.get("pytorch_backend", "CUDA")
             )
-        if requested_backend == "rocm":
+        )
+        version_class = self._resolve_torch_version(settings)
+        if backend_family == "rocm":
             backend_suffix = version_class.rocm_version
-        elif requested_backend == "xpu":
+        elif backend_family == "xpu":
             backend_suffix = version_class.xpu_version
-        elif requested_backend == "mps":
+        elif backend_family == "mps":
             backend_suffix = version_class.mps_version
         else:
             backend_suffix = version_class.cuda_version
@@ -360,7 +376,94 @@ class DownloadDependencies:
         )
         if backend_suffix.lower().lstrip("+").startswith("rocm"):
             self.ensure_rocm_targets(backend_suffix.lower(), is_nightly=version_class.is_nightly)
+
+    def check_torch_hardware(self, settings) -> bool:
+        """Detect a change of GPU hardware since the installed torch build
+        was made (e.g. a ROCm install on a machine that now has an Nvidia
+        GPU) and offer to reinstall torch for the new hardware. Returns
+        True if a reinstall was performed."""
+        installed = self.get_torch_versions()
+        torch_ver = installed["torch"]
+        if torch_ver is None:
+            return False  # nothing installed, the backend setup flow handles it
+
+        # The local version tag (everything after "+") identifies the
+        # backend family of the installed build (e.g. 2.14.0+rocm7.14 ->
+        # rocm, 2.14.0+cu132 -> cuda).
+        local_tag = ""
+        if "+" in torch_ver:
+            local_tag = torch_ver.split("+", 1)[1].lower()
+        installed_family = None
+        if local_tag.startswith("rocm"):
+            installed_family = "rocm"
+        elif local_tag.startswith("cu") and not local_tag.startswith("cpu"):
+            installed_family = "cuda"
+        elif local_tag.startswith("xpu"):
+            installed_family = "xpu"
+        elif local_tag.startswith("mps"):
+            installed_family = "mps"
+        if installed_family is None:
+            return False  # generic/CPU build, nothing hardware-specific to check
+
+        hardware = detect_gpu_hardware()
+        current_family = self.backend_family_from_setting(
+            settings.settings.get("pytorch_backend", "")
+        )
+        # Only offer a switch when the installed build's hardware is not
+        # present anymore (a machine with several vendors can
+        # legitimately use any of them). When nothing could be detected
+        # there is nothing to compare against, so stay silent.
+        installed_hardware = FAMILY_HARDWARE.get(installed_family)
+        if not hardware or installed_hardware in hardware:
+            return False
+        log(
+            f"GPU hardware changed: torch={torch_ver} installed for "
+            f"'{installed_family}', hardware present: {hardware}"
+        )
+        reply = QMessageBox.question(
+            None,
+            "GPU change detected",
+            "The installed PyTorch build does not match the hardware "
+            f"currently present in this system.\n"
+            f"Installed torch: {torch_ver}\n"
+            f"Detected hardware: {', '.join(hardware) if hardware else 'unknown'}\n"
+            "\nReinstall PyTorch for the current hardware?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,  # type: ignore
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return False
+        # Switch to the backend matching the hardware; when several
+        # vendors are present, keep the one selected in the settings.
+        target = current_family
+        if len(hardware) == 1:
+            target = HARDWARE_FAMILIES.get(hardware[0], target)
+        settings.writeSetting("pytorch_backend", self.backend_setting_from_family(target))
+        self._reinstall_torch(settings, backend_family=target)
         return True
+
+    @staticmethod
+    def backend_setting_from_family(family: str) -> str:
+        """The combo box text used in the settings for a torch backend
+        family (cuda/rocm/xpu/mps)."""
+        return {
+            "cuda": "CUDA",
+            "rocm": "ROCm",
+            "xpu": "xpu",
+            "mps": "MPS (Apple Silicon)",
+        }.get(family, "CUDA")
+
+    def backend_family_from_setting(self, backend_text: str) -> str:
+        """Map the backend selected in the settings (combo box text) to a
+        torch backend family (cuda/rocm/xpu/mps)."""
+        text = backend_text.lower()
+        if "mps" in text or "apple" in text:
+            return "mps"
+        if "rocm" in text or "amd" in text:
+            return "rocm"
+        if "xpu" in text or "intel" in text:
+            return "xpu"
+        return "cuda"
 
     def detect_rocm_targets(self) -> list:
         """Detect the gfx targets of the AMD GPUs in this system.
