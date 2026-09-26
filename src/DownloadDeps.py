@@ -263,6 +263,103 @@ class DownloadDependencies:
             d = dep()
             d.download()
 
+    def get_torch_versions(self) -> dict:
+        """Return the installed torch/torchvision versions (local suffix
+        included), or None for packages that are not installed."""
+        versions = {"torch": None, "torchvision": None}
+        try:
+            result = subprocess.run(
+                [PYTHON_EXECUTABLE_PATH, "-m", "pip", "list", "--format=freeze"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            for line in result.stdout.splitlines():
+                match = re.match(r"^(torchvision|torch)==(.+)$", line.strip())
+                if match:
+                    versions[match.group(1)] = match.group(2)
+        except Exception as e:
+            log(f"Could not query installed torch versions: {e}")
+        return versions
+
+    def check_torch_consistency(self, settings) -> bool:
+        """Detect a torch/torchvision mismatch left behind by an older RVE
+        release (e.g. an old torch with a newly installed torchvision) and
+        offer to reinstall a matching pair. Returns True if a reinstall was
+        performed."""
+        from .BuiltInTorchVersions import TorchVersion
+
+        installed = self.get_torch_versions()
+        torch_ver = installed["torch"]
+        torchvision_ver = installed["torchvision"]
+        if torch_ver is None and torchvision_ver is None:
+            return False  # nothing installed yet, nothing to check
+
+        def base(v: Optional[str]) -> str:
+            return v.split("+")[0] if v else ""
+
+        # Valid (torch, torchvision) pairs as defined by the built-in matrix.
+        # Nightly versions carry a date stamp (e.g. 2.15.0.dev20260925), so
+        # compare only the version prefix.
+        valid_pairs = [
+            (v.torch_version, v.torchvision_version)
+            for v in TorchVersion.__subclasses__()
+        ]
+        mismatch = not any(
+            base(torch_ver).startswith(base(t))
+            and base(torchvision_ver).startswith(base(tv))
+            for t, tv in valid_pairs
+        )
+        if not mismatch:
+            return False
+
+        log(f"torch/torchvision mismatch detected: torch={torch_ver}, torchvision={torchvision_ver}")
+        reply = QMessageBox.question(
+            None,
+            "Outdated PyTorch detected",
+            "The installed torch and torchvision versions do not match:\n"
+            f"torch: {torch_ver}\n"
+            f"torchvision: {torchvision_ver}\n"
+            "\nReinstall a matching version pair?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,  # type: ignore
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return False
+
+        # Reinstall the version pair selected in the settings, falling back
+        # to the latest stable built-in version.
+        requested_version = settings.settings.get("pytorch_version", "")
+        requested_backend = settings.settings.get("pytorch_backend", "CUDA").lower()
+        version_class = None
+        for v in TorchVersion.__subclasses__():
+            if v.torch_version == requested_version:
+                version_class = v
+                break
+        if not version_class:
+            stable = [v for v in TorchVersion.__subclasses__() if not v.is_nightly]
+            version_class = max(
+                stable or TorchVersion.__subclasses__(),
+                key=lambda v: v.torch_version,
+            )
+        if requested_backend == "rocm":
+            backend_suffix = version_class.rocm_version
+        elif requested_backend == "xpu":
+            backend_suffix = version_class.xpu_version
+        elif requested_backend == "mps":
+            backend_suffix = version_class.mps_version
+        else:
+            backend_suffix = version_class.cuda_version
+        self.downloadPythonDeps(
+            "torch",
+            version_class.torch_version,
+            version_class.torchvision_version,
+            backend_suffix.lower(),
+            True,
+            version_class.is_nightly,
+        )
+        return True
+
     def pip(
         self,
         deps: list,

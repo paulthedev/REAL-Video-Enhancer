@@ -160,6 +160,15 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #except Exception:
         #    pass
 
+        # An older RVE release may have left behind a torch build that doesn't
+        # match the torchvision that will be (re)installed now, which breaks
+        # the backend with "operator torchvision::nms does not exist".
+        start_time = time.time()
+        if DownloadDependencies().check_torch_consistency(self.settings):
+            log("Reinstalled a matching torch/torchvision pair")
+        end_time = time.time()
+        log("Torch consistency check time: " + str(end_time - start_time))
+
         start_time = time.time()
         self.backends, self.fullOutput = (
             backendHandler.getAvailableBackends()
