@@ -21,8 +21,10 @@ CWD="${HOME}/.local/share/REAL-Video-Enhancer"
 mkdir -p "$CWD"
 
 # Expose the bundled (read-only) backend inside the writable CWD.
-if [ ! -e "$CWD/backend" ]; then
-    ln -s "$APPDIR/backend" "$CWD/backend"
+# Each AppImage run mounts at a fresh /tmp/.mount_* path, so the symlink
+# from a previous run is stale and must be replaced.
+if [ "$(readlink "$CWD/backend" 2>/dev/null)" != "$APPDIR/backend" ]; then
+    ln -sfn "$APPDIR/backend" "$CWD/backend"
 fi
 
 # Run from the writable CWD so os.getcwd() sees ./backend.
