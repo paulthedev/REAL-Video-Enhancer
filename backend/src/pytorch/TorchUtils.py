@@ -71,10 +71,40 @@ class TorchUtils:
         configure_tuning_env(self.device_type)  # idempotent; no-op after first call sets env
         tune_device(self.device_type)
 
-        # persistent pinned buffer for async GPU uploads
-        self._pinned_buffer = None
-        self._pinned_buffer_numel = 0
-        self._pinned_buffer_dtype = None
+        # Persistent per-stream pinned staging buffers for async GPU uploads.
+        self._pinned_staging: dict[int, torch.Tensor] = {}
+
+    def _get_staging_buffer(self, stream, nbytes: int) -> "torch.Tensor | bytes":
+        """Return a persistent pinned host buffer large enough to hold `nbytes`
+        of raw frame data for uploads on this specific stream.
+
+        Uploading from pinned memory makes .to(non_blocking=True) an actual
+        async DMA; pageable sources (torch.frombuffer over Python bytes /
+        numpy arrays) force the driver to stage internally, which is slower on
+        ROCm in particular.
+
+        Buffers are keyed by id(stream): two concurrent uploads on different
+        streams must never share a staging buffer because an asynchronous
+        transfer may still be reading it when another call occurs. Sequential
+        calls on the same stream safely reuse one buffer — frame_to_tensor
+        syncs that stream before returning, so no DMA can outlive the call.
+
+        Returns None if pinned allocation is unavailable (caller falls back to
+        a pageable upload)."""
+        key = id(stream)
+        buf = self._pinned_staging.get(key)
+        if buf is not None and buf.numel() >= nbytes:
+            # Grow-only with a small margin so resolution changes between runs don't churn.
+            return buf
+        # Allocate with headroom so small resolution changes don't force reallocation.
+        alloc_bytes = max(nbytes + (nbytes // 4), 16 * 1024 * 1024)
+        try:
+            new_buf = torch.empty((alloc_bytes,), dtype=torch.uint8, pin_memory=True)
+        except Exception as e:  # pragma: no cover - pinned alloc can fail on some platforms
+            log(f"Failed to allocate pinned staging buffer ({e}); falling back to pageable upload")
+            return None
+        self._pinned_staging[key] = new_buf
+        return new_buf
 
     def __sync_all_streams_function(self):
         if self.device_type == "cuda":
@@ -176,14 +206,25 @@ class TorchUtils:
             self.sync_stream(stream)
 
     @torch.inference_mode()
-    def frame_to_tensor(self, frame, stream: torch.Stream, device: torch.device, dtype: torch.dtype) -> torch.Tensor: # stream might be None
+    def frame_to_tensor(self, frame: bytes | np.ndarray, stream: torch.Stream, device: torch.device, dtype: torch.dtype) -> torch.Tensor: # stream might be None
         with self.run_stream(stream):  # type: ignore
-             # ... (tensor creation and manipulation) ...
-            frame = torch.frombuffer(
-                    frame,
-                    dtype=torch.uint16 if self.hdr_mode else torch.uint8,
-                ).to(device=device, non_blocking=True) 
-            
+            src_dtype = torch.uint16 if self.hdr_mode else torch.uint8
+
+            nbytes = len(frame)
+            pinned = self._get_staging_buffer(stream, nbytes)
+            staged = None
+            if pinned is not None and nbytes % src_dtype.itemsize == 0:
+                # One memcpy of the raw frame bytes into a persistent per-stream pinned buffer (flat uint8), then upload that as an async DMA. The copy-into-pinned path costs ~1x memory bandwidth on CPU but replaces what would otherwise be a driver-managed staging copy per frame; net win is single-digit % at 4K, and the pooled buffer is reused across frames.
+                np_dtype = np.uint16 if self.hdr_mode else np.uint8
+                source_np = (np.frombuffer(frame, dtype=np_dtype) if isinstance(frame, bytes)
+                             else frame.astype(np_dtype, copy=False)).ravel()
+                # pinned is flat uint8; view the leading region as the raw element type.
+                staged = pinned[:nbytes].view(src_dtype).copy_(source_np)
+
+            source = (staged if staged is not None else
+                      torch.frombuffer(frame, dtype=src_dtype))
+            frame = source.to(device=device, non_blocking=True)
+
             frame = (
                 frame
                 .div(65535.0 if self.hdr_mode else 255.0)

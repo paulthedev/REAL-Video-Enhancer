@@ -110,6 +110,31 @@ class UpscaleModelWrapper:
                 self.inference_helper = AnimeSRInferenceHelper(model=model, scale=self.__scale)
             elif self.__inference_mode == 'tspan':
                 self.inference_helper = TemporalSPANInferenceHelper(model=model, scale=self.__scale)
+    def enable_compile(self) -> torch.nn.Module | object | None:
+        """Wrap the inference helper in torch.compile for faster steady-state
+        inference.
+
+        Only plain spandrel models are eligible: they are stateless nn.Modules
+        whose forward is fully traceable at eval time. The AnimeSR/TSPAN helpers
+        hold temporal buffers and custom Python control flow that don't trace
+        reliably, so they keep running eager.
+
+        Returns the previous helper (call restore_inference_helper with it to
+        fall back), or None if this mode was not eligible for compilation."""
+        if self.__inference_mode != 'spandrel':
+            return None
+        prev = self.inference_helper
+        # Static shapes: the render pipeline feeds fixed tile/full-frame sizes.
+        # Graph breaks are allowed (some archs have data-dependent control
+        # flow); they still get kernel fusion for the traced regions.
+        self.inference_helper = torch.compile(prev, dynamic=False)
+        return prev
+
+    def restore_inference_helper(self, helper):
+        """Put the inference helper back (e.g. after a failed compile warmup)."""
+        if helper is not None:
+            self.inference_helper = helper
+
     def __call__(self, *args, **kwargs):
         assert self.inference_helper is not None, "Inference helper is not initialized."
         return self.inference_helper(*args, **kwargs).clone()

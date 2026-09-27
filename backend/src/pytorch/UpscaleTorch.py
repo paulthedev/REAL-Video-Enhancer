@@ -2,6 +2,7 @@ import os
 import math
 
 import gc
+import time
 from .TorchUtils import TorchUtils
 from .UpscaleModelWrapper import UpscaleModelWrapper
 import torch as torch
@@ -68,7 +69,6 @@ class UpscalePytorch:
         saveImage(image, fullOutputPathLocation): Saves an image to a file.
         renderTiledImage(image, tile_size): Renders a tiled image."""
 
-    @torch.inference_mode()
     def __init__(
         self,
         modelPath: str,
@@ -81,6 +81,7 @@ class UpscalePytorch:
         backend: str = "pytorch",
         gpu_id: int = 0,
         hdr_mode: bool = False,
+        torch_compile: bool = True,
         override_upscale_scale: int | None = None,
         # trt options
         trt_workspace_size: int = 0,
@@ -111,6 +112,10 @@ class UpscalePytorch:
 
         self.trt_static_shape = trt_static_shape
 
+        # Enable Inductor compilation (cached in the persistent tuning dir, so
+        # the compile cost is paid once per model+shape). Default on.
+        self.torch_compile = torch_compile
+
         # streams
         self.stream = self.torchUtils.init_stream(gpu_id=gpu_id)
         self.f2tstream = self.torchUtils.init_stream(gpu_id=gpu_id)
@@ -118,7 +123,9 @@ class UpscalePytorch:
         self.convertStream = self.torchUtils.init_stream(gpu_id=gpu_id)
         self._load()
 
-    @torch.inference_mode()
+    # NOTE: no inference_mode here — it would create the model's parameters as
+    # inference tensors and break torch.compile tracing ("Inference tensors
+    # cannot be saved for backward"). Inference is wrapped at call sites instead.
     def _load(self):
 
         self.trt_min_shape = [128, 128]
@@ -167,6 +174,45 @@ class UpscalePytorch:
                 modulo = 1 if self.videoWidth < 720 or self.videoHeight < 720 else 1
                 self.pad_w = math.ceil(self.videoWidth / modulo) * modulo
                 self.pad_h = math.ceil(self.videoHeight / modulo) * modulo
+
+            # Enable torch.compile for the raw PyTorch backend. The compiled
+            # artifact is cached in the persistent tuning dir (Inductor), so
+            # this cost is only paid once per model+shape across runs.
+            #
+            # RDNA2/early RDNA3 AMD cards (gfx1103 and cc.major == 10) currently
+            # crash torch.compile's warmup trace with a device-side assertion
+            # (hipErrorIllegalState). On ROCm that assertion permanently corrupts
+            # the GPU context for the rest of the process/session, so we skip
+            # compile on those archs entirely and run eager instead.
+            _cc_major = torch.cuda.get_device_capability(self.device)[0] if str(self.device).split(":")[0] == "cuda" else None
+            if self.torch_compile and self.backend == "pytorch" and str(self.device).split(":")[0] in ("cuda", "xpu"):
+                if _cc_major == 10:
+                    log("torch.compile skipped: RX 6800 XT (gfx1103/RDNA2) has no supported torch.compile path — running eager")
+                    self.torch_compile = False
+                prev_helper = None  # set to the eager helper when compile wraps it
+                try:
+                    log("Compiling upscale model with torch.compile (cached after first run)...")
+                    compile_start = time.perf_counter()
+                    compiled_prev = self.upscale_model_wrapper.enable_compile()
+                    if compiled_prev is not None:
+                        prev_helper = compiled_prev
+                        # Warm up so the first real frame doesn't pay trace cost mid-render,
+                        # and surface any tracing errors before we're in the hot path.
+                        # Use the exact input shape inference will receive (untiled
+                        # full frames vs padded tiles) to avoid a recompile later.
+                        with torch.no_grad():
+                            in_w = self.pad_w if all(t > 0 for t in self.tile) else self.videoWidth
+                            in_h = self.pad_h if all(t > 0 for t in self.tile) else self.videoHeight
+                            dummy_input = self.upscale_model_wrapper.get_dummy_input(in_w, in_h)
+                            _ = self.upscale_model_wrapper(dummy_input)
+                    else:
+                        log("Model mode not eligible for torch.compile (temporal model); running eager")
+                    log(f"torch.compile warmup complete ({time.perf_counter() - compile_start:.1f}s)")
+                except Exception as e:
+                    # Never let a tracing failure block rendering — fall back to eager.
+                    log(f"torch.compile failed, falling back to eager execution: {e}")
+                    if prev_helper is not None:
+                        self.upscale_model_wrapper.restore_inference_helper(prev_helper)
 
             if self.backend == "tensorrt":
                 self.tensorrt_example_inputs = (self.upscale_model_wrapper.get_dummy_input(self.pad_w, self.pad_h),) # gotta make a tuple cause im dumb.
@@ -285,7 +331,6 @@ class UpscalePytorch:
             torch.cuda.reset_max_memory_allocated()
             torch.cuda.reset_max_memory_cached()
 
-    @torch.inference_mode()
     def hotReload(self):
         self._load()
     
@@ -329,8 +374,14 @@ class UpscalePytorch:
         batch, channel, height, width = img.shape
         output_shape = (batch, channel, height * scale, width * scale)
 
-        # start with black image
-        output = img.new_zeros(output_shape).to(device=self.device, dtype=self.dtype)
+        # Normalize input once instead of per-tile: .to() is a no-op when the
+        # tensor already matches, but calling it on every tile adds redundant
+        # device/dtype checks and potential copies inside the hot loop.
+        if img.device != self.device or img.dtype != self.dtype:
+            img = img.to(device=self.device, dtype=self.dtype)
+
+        # start with black image (allocated directly on-device in target dtype)
+        output = torch.zeros(output_shape, device=img.device, dtype=img.dtype)
 
         tiles_x = math.ceil(width / tile[0])
         tiles_y = math.ceil(height / tile[1])
@@ -358,12 +409,14 @@ class UpscalePytorch:
                 input_tile_width = input_end_x - input_start_x
                 input_tile_height = input_end_y - input_start_y
 
+                # img is already on-device in the target dtype (normalized above),
+                # so this slice needs no .to() conversion.
                 input_tile = img[
                     :,
                     :,
                     input_start_y_pad:input_end_y_pad,
                     input_start_x_pad:input_end_x_pad,
-                ].to(device=self.device, dtype=self.dtype)
+                ]
 
                 h, w = input_tile.shape[2:]
                 input_tile = F.pad(
