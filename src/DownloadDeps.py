@@ -793,7 +793,10 @@ class DownloadDependencies:
                 return_codes.append(return_code)
 
                 if backend == "tensorrt":
-                    trt_ver = "10.12.0.36"
+                    # torch-tensorrt 2.14.0 (the latest release) pins
+                    # tensorrt>=11.1.0,<11.2.0, so 11.1.0.106 is the newest
+                    # compatible version.
+                    trt_ver = "11.1.0.106"
                     deps = [
                         f"tensorrt=={trt_ver}",
                         f"tensorrt_cu12=={trt_ver}",

@@ -6,6 +6,9 @@ from ..utils.BackendDetect import (
 )
 backendDetect = BackendDetect()
 
+# Persistent tuning cache + startup autotune for CUDA/ROCm/XPU devices.
+from .tuning import configure_tuning_env, tune_device
+
 from ..utils.Util import (
     log,
     CudaChecker
@@ -63,6 +66,10 @@ class TorchUtils:
             self.use_numpy = False
         self.__run_stream_func = self.__run_stream_function()
         self.__sync_all_streams_func = self.__sync_all_streams_function()
+        # Point tuning caches (Inductor/Triton, MIOpen) at the persistent app
+        # cache dir and enable startup autotune for GPU device types.
+        configure_tuning_env(self.device_type)  # idempotent; no-op after first call sets env
+        tune_device(self.device_type)
 
         # persistent pinned buffer for async GPU uploads
         self._pinned_buffer = None
@@ -103,7 +110,6 @@ class TorchUtils:
             return torch.xpu.stream
         else:
             return  dummy_context_manager # For CPU and MPS, we can use a dummy context manager
-
 
     def run_stream(self, stream):
         return self.__run_stream_func(stream) 

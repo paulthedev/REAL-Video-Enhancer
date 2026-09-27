@@ -194,8 +194,10 @@ class Attention_regular(nn.Module):
         # use mask for shift window
         if mask is not None:
             nW = mask.shape[0]
-            attn = attn.view(B, nW, self.num_heads, N, N) + mask.unsqueeze(1).unsqueeze(
-                0
+            # calculate_mask builds fp32 masks; cast to the attention dtype,
+            # otherwise the add crashes on GPU with mixed-dtype tensors.
+            attn = attn.view(B, nW, self.num_heads, N, N) + (
+                mask.to(attn.dtype).unsqueeze(1).unsqueeze(0)
             )
             attn = attn.view(-1, self.num_heads, N, N)
         attn = self.softmax(attn)

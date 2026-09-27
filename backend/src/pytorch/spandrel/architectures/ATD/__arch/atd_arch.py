@@ -192,10 +192,12 @@ class WindowAttention(nn.Module):
         attn = attn + relative_position_bias.unsqueeze(0)
 
         if mask is not None:
+            # calculate_mask builds fp32 masks; cast to the attention dtype,
+            # otherwise the add crashes on GPU with mixed-dtype tensors.
             nw = mask.shape[0]
-            attn = attn.view(b_ // nw, nw, self.num_heads, n, n) + mask.unsqueeze(
-                1
-            ).unsqueeze(0)
+            attn = attn.view(b_ // nw, nw, self.num_heads, n, n) + (
+                mask.to(attn.dtype).unsqueeze(1).unsqueeze(0)
+            )
             attn = attn.view(-1, self.num_heads, n, n)
             attn = self.softmax(attn)
         else:

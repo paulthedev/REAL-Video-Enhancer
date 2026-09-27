@@ -46,9 +46,12 @@ class AffineTransform(nn.Module):
         # W-MSA/SW-MSA
         # shift attention mask
         if mask is not None:
+            # calculate_mask builds fp32 masks; cast to the attention dtype,
+            # otherwise the add crashes on GPU with mixed-dtype tensors.
             nW = mask.shape[0]
-            mask = mask.unsqueeze(1).unsqueeze(0)
-            attn = attn.view(B_ // nW, nW, H, N1, N2) + mask
+            attn = attn.view(B_ // nW, nW, H, N1, N2) + (
+                mask.to(attn.dtype).unsqueeze(1).unsqueeze(0)
+            )
             attn = attn.view(-1, H, N1, N2)
 
         return attn

@@ -588,8 +588,12 @@ class WindowAttention(nn.Module):
         attn = attn + relative_position_bias.unsqueeze(0)
 
         if mask is not None:
+            # masks can be fp32 while attention runs in fp16; cast to the
+            # attention dtype or the add crashes on GPU with mixed dtypes.
             nW = mask.shape[0]
-            mask = repeat(mask, "nW m n -> nW m (n d)", d=ratio)
+            mask = repeat(
+                mask.to(attn.dtype), "nW m n -> nW m (n d)", d=ratio
+            )
             attn = attn.view(
                 B_ // nW, nW, self.num_heads, N, N * ratio
             ) + mask.unsqueeze(1).unsqueeze(0)
@@ -671,11 +675,12 @@ class Attention(nn.Module):
         # attn = attn + relative_position_bias.unsqueeze(0)
 
         if mask is not None:
+            # masks can be fp32 while attention runs in fp16; cast to the
+            # attention dtype or the add crashes on GPU with mixed dtypes.
             nW = mask.shape[0]
-            # mask = repeat(mask, 'nW m n -> nW m (n d)',d = ratio)
-            attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + mask.unsqueeze(
-                1
-            ).unsqueeze(0)
+            attn = attn.view(B_ // nW, nW, self.num_heads, N, N) + (
+                mask.to(attn.dtype).unsqueeze(1).unsqueeze(0)
+            )
             attn = attn.view(-1, self.num_heads, N, N)
             attn = self.softmax(attn)
         else:

@@ -49,6 +49,7 @@ class UpscaleModelWrapper:
             except Exception as e:
                 log(f"Model precision {self.__precision} not supported, falling back to float32: {e}")
                 self.set_precision(torch.float32)
+                test_input = test_input.to(dtype=torch.float32)  # must match the model's new dtype
                 self.__test_inference(test_input)
     
     def get_dummy_input(self, width: int, height: int) -> torch.Tensor:
@@ -59,8 +60,12 @@ class UpscaleModelWrapper:
         dummy_input.append(width)
         return torch.zeros(dummy_input, dtype=self.__precision, device=self.__device)
     
-    @torch.inference_mode()
     def load_model(self, model=None) -> torch.nn.Module:
+        # NOTE: This must NOT be run under inference_mode, otherwise the
+        # freshly built model's parameters become inference tensors and the
+        # load_state_dict calls below fail on GPU with
+        # "Inference tensors do not track version counter".
+        # Inference itself is wrapped in inference_mode at call sites.
         if not model:
             from .spandrel import ModelLoader, ImageModelDescriptor, UnsupportedModelError
             try:

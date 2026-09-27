@@ -508,8 +508,11 @@ class SwinTransformerBlock(nn.Module):
                 x_windows, mask=self.attn_mask
             )  # nW*B, window_size*window_size, C
         else:
+            # calculate_mask builds fp32 masks; cast to the feature dtype,
+            # otherwise the add in WindowAttention crashes on GPU with
+            # mixed-dtype tensors.
             attn_windows = self.attn(
-                x_windows, mask=self.calculate_mask(x_size).to(x.device)
+                x_windows, mask=self.calculate_mask(x_size).to(device=x.device, dtype=x.dtype)
             )
 
         # merge windows
