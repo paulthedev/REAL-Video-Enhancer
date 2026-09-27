@@ -102,6 +102,7 @@ class Render:
         dynamic_scaled_optical_flow: bool = False,
         ensemble: bool = False,
         output_to_mpv: bool = False,
+        torch_compile: bool = True,
     ):
         self.inputFile = inputFile
         self.backend = backend
@@ -138,6 +139,7 @@ class Render:
         self.override_upscale_scale = override_upscale_scale
         self.trt_dynamic_shapes = trt_dynamic_shapes
         self.extraRestorationModels = []
+        self.torch_compile = torch_compile
         
         if cwd:
             log("Working Directory: " + cwd)
@@ -413,6 +415,7 @@ class Render:
             trt_optimization_level=self.trt_optimization_level,
             hdr_mode=self.hdr_mode,
             trt_static_shape= not self.trt_dynamic_shapes,
+            torch_compile=self.torch_compile,
         )
     
     def upscaleNCNNObject(self, scale=None, modelPath=None):

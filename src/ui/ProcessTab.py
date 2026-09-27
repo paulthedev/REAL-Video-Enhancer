@@ -655,6 +655,10 @@ class ProcessTab:
                 command += ["--UHD_mode"]
                 log("UHD mode enabled")
 
+        if self.settings.settings["torch_compile_enabled"] == "False":
+            command += ["--no_torch_compile"]
+            log("torch.compile disabled via settings")
+
         if self.isOverwrite:
             command += ["--overwrite"]
 

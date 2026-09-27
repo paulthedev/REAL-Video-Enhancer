@@ -1,6 +1,19 @@
 
 from .Util import log_error, suppress_stdout_stderr
 
+# Compute-capability floors for backend/feature availability, queried strictly
+# through torch.cuda.get_device_capability (works for CUDA and ROCm, since
+# ROCm exposes a CUDA-compatible interface; XPU via torch.xpu). A GPU must meet
+# or exceed (major, minor) to offer the feature.
+#   - PyTorch inference: cc >= 6.0 (Pascal+), ROCm, or XPU.
+#   - torch.compile (Inductor): cc >= 8.0 (Ampere+ on CUDA); ROCm/XPU archs
+#     all qualify. Capability is the sole gate — an arch is never disabled
+#     because a trace happened to crash (that is an OOM/runtime error caught by
+#     the eager fallback in UpscaleTorch._load, not a capability floor).
+MINIMUM_PYTORCH_CAP = (6, 0)
+MINIMUM_COMPILE_CAP = (8, 0)
+
+
 class BackendDetect:
     def __init__(self):
         self.__torch = None
@@ -95,6 +108,44 @@ class BackendDetect:
                 devices.append("CPU")
        
         return devices
+
+    def _torch_api(self):
+        """Return the torch device API bound to this backend (cuda/xpu)."""
+        if not self.__torch:
+            return None
+        if self.pytorch_device == "xpu":
+            return self.__torch.xpu
+        return self.__torch.cuda
+
+    def get_device_capability(self, gpu_id: int = 0):
+        """Return (major, minor) compute capability of the requested GPU via
+        torch.cuda.get_device_capability. Returns (0, 0) when the backend has
+        no CUDA-style device, or when the requested index is out of range."""
+        api = self._torch_api()
+        if api is None or self.pytorch_device == "cpu" or self.pytorch_device == "mps":
+            return (0, 0)
+        try:
+            if not api.is_available() or gpu_id >= api.device_count():
+                return (0, 0)
+            return tuple(api.get_device_capability(gpu_id))
+        except Exception:
+            return (0, 0)
+
+    def meets_capability(self, gpu_id: int = 0, minimum=MINIMUM_PYTORCH_CAP):
+        """True if the GPU's compute capability meets the given (major, minor)
+        floor. (0, 0) from get_device_capability is always treated as below any
+        positive floor."""
+        major, minor = self.get_device_capability(gpu_id)
+        return (major, minor) >= minimum
+
+    def pytorch_available(self, gpu_id: int = 0):
+        """Whether the PyTorch upscale backend is offered on this GPU (cc >=
+        MINIMUM_PYTORCH_CAP)."""
+        return self.meets_capability(gpu_id, MINIMUM_PYTORCH_CAP)
+
+    def compile_available(self, gpu_id: int = 0):
+        """Whether torch.compile is offered on this GPU (cc >= MINIMUM_COMPILE_CAP)."""
+        return self.meets_capability(gpu_id, MINIMUM_COMPILE_CAP)
 
     def get_gpus_ncnn(self):
         if self.__ncnn:

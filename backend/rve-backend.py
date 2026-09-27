@@ -75,7 +75,8 @@ class HandleApplication:
 
     def listBackends(self):
         from src.utils.BackendDetect import (
-            BackendDetect
+            BackendDetect,
+            MINIMUM_PYTORCH_CAP,
         )
         half_prec_supp = False
         availableBackends = []
@@ -101,13 +102,17 @@ class HandleApplication:
                 printMSG += "ERROR: Cannot use tensorrt backend, as it is not supported on your current GPU"
 
         if pytorch_device:
-
-            availableBackends.append(f"pytorch ({pytorch_device})")
-            printMSG += f"PyTorch Version: {pytorch_version}\n"
-            half_prec_supp = backendDetect.get_half_precision()
             pyTorchGpus = backendDetect.get_gpus_torch()
-            for i, gpu in enumerate(pyTorchGpus):
-                printMSG += f"PyTorch GPU {i}: {gpu}\n"
+            if not pyTorchGpus or pyTorchGpus == ["CPU"]:
+                printMSG += "ERROR: Cannot use pytorch backend, as no CUDA/ROCm/XPU device is available\n"
+            elif not all(backendDetect.meets_capability(i, MINIMUM_PYTORCH_CAP) for i in range(len(pyTorchGpus))):
+                printMSG += "ERROR: Cannot use pytorch backend, as the current GPU compute capability is below the required minimum (cc >= 6.0)\n"
+            else:
+                availableBackends.append(f"pytorch ({pytorch_device})")
+                printMSG += f"PyTorch Version: {pytorch_version}\n"
+                half_prec_supp = backendDetect.get_half_precision()
+                for i, gpu in enumerate(pyTorchGpus):
+                    printMSG += f"PyTorch GPU {i}: {gpu}\n"
 
         if ncnn_ver:
             availableBackends.append("ncnn")
@@ -175,6 +180,7 @@ class HandleApplication:
             dynamic_scaled_optical_flow=self.args.dynamic_scaled_optical_flow,
             ensemble=self.args.ensemble,
             output_to_mpv=self.args.output_to_mpv,
+            torch_compile=not self.args.no_torch_compile,
         )
         
 
@@ -418,6 +424,12 @@ class HandleApplication:
         parser.add_argument(
             "--UHD_mode",
             help="Lowers the resoltion flow is calculated at, speeding up model and saving vram. Helpful for higher resultions.",
+            action="store_true",
+            default=False,
+        )
+        parser.add_argument(
+            "--no_torch_compile",
+            help="Disable torch.compile for the PyTorch backend and run the model in eager mode.",
             action="store_true",
             default=False,
         )

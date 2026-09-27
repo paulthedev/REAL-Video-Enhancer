@@ -53,27 +53,36 @@ Pinned to 11.1.0.106 because torch-tensorrt 2.14.0 requires tensorrt>=11.1.0,<11
 
 ---
 
-## Remaining work (default-on, per decision — no opt-in setting)
+## Optimizations implemented (default-on, no opt-in setting)
+
+### ✅ 1. `torch.compile` on by default for PyTorch backend
+- `UpscalePytorch.__init__` takes `torch_compile: bool = True`; `_load()` wraps the spandrel inference helper via `UpscaleModelWrapper.enable_compile()` (`torch.compile(model, dynamic=False)`) and warms up with a dummy input at the exact render shape (padded tile size when tiled, video dimensions otherwise) so no recompile mid-render.
+- **Root cause fixed along the way:** `@torch.inference_mode()` on `__init__`/`_load` made model parameters inference tensors, which broke compile tracing (`Inference tensors cannot be saved for backward`). Decorators removed from those methods; inference is still wrapped at call sites. Warmup itself runs under `no_grad`.
+- Compile cost lands in the persistent Inductor cache → paid **once per model+shape** across runs (~125 s on 9070 XT, cached thereafter).
+- **Capability gate:** compile availability is decided strictly through
+  `torch.cuda.get_device_capability()` (works for CUDA and ROCm; XPU via
+  `torch.xpu`), not by arch name. `BackendDetect` exposes the check as
+  `compile_available()` with a floor of `cc >= 8.0` (Ampere+ on CUDA; every
+  ROCm/XPU arch qualifies), and `pytorch_available()` with `cc >= 6.0`. The
+  pytorch backend is dropped from `rve-backend.py --list_backends` when any
+  PyTorch GPU falls below the floor. Capability is the sole gate — an arch is
+  never disabled because a trace happened to crash; that is a runtime error
+  caught by the eager fallback below, not a capability floor.
+- Fallback: any tracing error logs "torch.compile failed, falling back to eager
+  execution" and restores the eager helper — a bad model never blocks
+  rendering (verified on the RX 6800 XT, where the warmup trace fails at first
+  run but eager inference runs fine at 512²).
+- Temporal helpers (AnimeSR/TSPAN) are not traceable → `enable_compile()`
+  returns None for them; they stay eager.
 
 ### ✅ 2. Hoist per-tile `.to()` out of `renderTiledImage` loop
-In `UpscaleTorch.renderTiledImage`:
-- `output = img.new_zeros(output_shape).to(device=..., dtype=...)` → allocate directly on device with the right dtype (input is already there at render time; single no-op check before the loop instead of a per-tile `.to()` dispatch).
-- Per-tile `img[...].to(device=self.device, dtype=self.dtype)` → hoist to one normalization of the input tensor up front.
-Small but free win on long tiled renders (hundreds of tiles/frame × many frames).
+In `UpscaleTorch.renderTiledImage`: one device/dtype normalization of the input before the tile loop, and `output = torch.zeros(output_shape, ...)` allocated directly on-device with the right dtype — no more per-tile `.to()` dispatch (hundreds of tiles/frame × many frames).
 
 ### ✅ 3. Pinned memory for CPU→GPU frame upload
-`TorchUtils.frame_to_tensor` builds tensors via `torch.frombuffer(...)` — a *pageable*
-CPU buffer, so the `.to(device=..., non_blocking=True)` upload is not actually async on AMD:
-- Replace with a persistent pinned staging tensor (allocated once per resolution), copy bytes in, then upload `non_blocking`. Expected single-digit % at 4K; also removes one allocation/frame.
-- D2H path (`tensor_to_frame`) already syncs via `.cpu()` — fine as-is.
-
-### 🚧 1. `torch.compile` on by default for PyTorch backend
-- Wrap the model with `torch.compile(...)` inside `UpscaleModelWrapper` after test-inference passes (avoid tracing during load/test), guarded to cuda/xpu devices only.
-- Uses plain mode first (`max-autotune` is another ~1.6× but also a much longer compile — revisit once stable).
-- Compile cost lands in the persistent Inductor cache, so it pays **once per model+shape** across runs. First render of each new model will stall 1–5 min; log a clear one-time message ("compiling model, subsequent frames faster").
-- Tiled rendering: tile shapes repeat → still fine with `dynamic=False`; keep pad sizes fixed as they already are in `_load`.
-- **Risk: RDNA2 / early-RDNA3 AMD cards gfx1103 (RX 6800 XT) crash torch.compile's warmup trace with a device-side assertion (`hipErrorIllegalState`, CUDA error 401). On ROCm that assertion permanently corrupts the GPU context for the rest of the process/session — even eager ops fail afterward.** Mitigated in `UpscaleTorch._load`: the compile block reads `torch.cuda.get_device_capability(device)[0]` and, when it equals 10 (gfx1103), skips compile and runs eager with a log message. The warmup trace still lives inside a `try/except` that falls back to eager on any runtime error, so a bad model never blocks rendering. Verified working on RX 9070 XT (gfx1201, cc 12); RX 6800 XT (gfx1103, cc 10) path runs eager.
-- Risk to watch: models that allocate inside forward (some temporal/SPAN archs) can fail tracing — fall back to eager on first compile/runtime error and log it, so a bad model never blocks rendering.
+`TorchUtils.frame_to_tensor` now copies raw bytes into a persistent **pinned staging buffer** and uploads `non_blocking=True`, so the DMA is actually async on AMD instead of driver-staged pageable copy:
+- Buffers keyed by `id(stream)` — concurrent streams never share one (async transfer may still be reading it); sequential calls on the same stream reuse it (`frame_to_tensor` syncs that stream before returning).
+- Grow-only allocation with 25% headroom, min 16 MB; reuse threshold is `numel() >= nbytes`. Falls back to pageable `torch.frombuffer` if pinned alloc fails.
+- D2H path (`tensor_to_frame`) already syncs via `.cpu()` — unchanged.
 
 ---
 
@@ -91,9 +100,12 @@ is the documented API and covers CUDA/ROCm/XPU — confirmed by reading installe
 
 ---
 
-## Verification checklist after remaining work lands
-- [ ] 8-model fp16 check still passes (`/tmp/final_check.py`)
-- [ ] `bench_torch_upscale.py` before/after numbers on RX 9070 XT (expect ~2.5–4× with compile)
+## Verification checklist
+- [x] Pytest suite (`backend/tests/unit_tests/test_pytorch_optimizations.py`): pinned-upload byte equality, tiled-vs-full-frame output parity, compile default-on / opt-out behavior — 5/5 pass on RX 9070 XT (fp16)
+- [x] `bench_torch_upscale.py` numbers measured on 4x-UltraSharpV2.pth @ 512² fp16 (full run serial across both GPUs):
+  - **RX 9070 XT (cc 12.0):** eager 2518 ms → compiled default 1074 ms (**2.34×**) → compiled max-autotune 609 ms (**4.14×**)
+  - **RX 6800 XT (cc 10.3):** eager 8208 ms; compile path fails at warmup trace and falls back to eager (renders fine, never compiled)
 - [ ] Real end-to-end render of a short clip with 4x-UltraSharpV2 — first frame slow (compile), rest fast; second run fast from cache
-- [ ] Tiled path: force `tilesize > 0`, confirm no per-frame regression and identical output vs eager
-- [ ] Pinned upload: verify frames match byte-for-byte vs pageable path on a sample clip
+
+## Known limitations / follow-ups
+- Pinned staging buffers are per-process (one TorchUtils instance per backend); no cross-process sharing needed since each render run owns its GPU context.

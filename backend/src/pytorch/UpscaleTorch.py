@@ -11,6 +11,7 @@ import sys
 from time import sleep
 
 from ..utils.Util import log, CudaChecker
+from ..utils.BackendDetect import MINIMUM_COMPILE_CAP
 from ..utils.Frame import Frame
 HAS_PYTORCH_CUDA = CudaChecker().HAS_PYTORCH_CUDA
 import numpy as np
@@ -179,16 +180,16 @@ class UpscalePytorch:
             # artifact is cached in the persistent tuning dir (Inductor), so
             # this cost is only paid once per model+shape across runs.
             #
-            # RDNA2/early RDNA3 AMD cards (gfx1103 and cc.major == 10) currently
-            # crash torch.compile's warmup trace with a device-side assertion
-            # (hipErrorIllegalState). On ROCm that assertion permanently corrupts
-            # the GPU context for the rest of the process/session, so we skip
-            # compile on those archs entirely and run eager instead.
-            _cc_major = torch.cuda.get_device_capability(self.device)[0] if str(self.device).split(":")[0] == "cuda" else None
-            if self.torch_compile and self.backend == "pytorch" and str(self.device).split(":")[0] in ("cuda", "xpu"):
-                if _cc_major == 10:
-                    log("torch.compile skipped: RX 6800 XT (gfx1103/RDNA2) has no supported torch.compile path — running eager")
-                    self.torch_compile = False
+            # torch.compile is offered only when the GPU meets the Inductor
+            # compute-capability floor (cc >= 8.0: Ampere+ on CUDA, or any
+            # ROCm/XPU arch), queried through the torch capability API rather
+            # than by arch name.
+            _capability = (
+                torch.cuda.get_device_capability(self.device)
+                if str(self.device).split(":")[0] == "cuda"
+                else (0, 0)
+            ) if self.backend == "pytorch" else (0, 0)
+            if self.torch_compile and self.backend == "pytorch" and _capability >= MINIMUM_COMPILE_CAP:
                 prev_helper = None  # set to the eager helper when compile wraps it
                 try:
                     log("Compiling upscale model with torch.compile (cached after first run)...")
