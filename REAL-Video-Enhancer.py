@@ -22,6 +22,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QIcon
 
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'dist'))
 from mainwindow import Ui_MainWindow
 from PySide6 import QtSvg  # Import the QtSvg module so svg icons can be used on windows
 from apps.gui.version import version
