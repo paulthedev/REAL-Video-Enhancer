@@ -89,11 +89,21 @@
 - [x] Add ONNX support for DnCNN denoise model
   - Location: `apps/backend/models/denoise/dncnn.py`
   - Status: Complete - PyTorch, ONNX, NCNN backends implemented
-- [ ] Add ONNX support for IFRNet interpolation model
-- [ ] Add ONNX support for GIMM interpolation model
-- [ ] Add ONNX support for NAFNet restoration model
-- [ ] Add ONNX support for ANIMEsr upscale model
-- [ ] Add ONNX support for TSPAN upscale model
+- [x] Add ONNX support for IFRNet interpolation model
+  - Location: `apps/backend/models/interpolate/ifrnet.py`
+  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+- [x] Add ONNX support for GIMM interpolation model
+  - Location: `apps/backend/models/interpolate/gimm.py`
+  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+- [x] Add ONNX support for NAFNet restoration model
+  - Location: `apps/backend/models/restoration/nafnet.py`
+  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+- [x] Add ONNX support for ANIMEsr upscale model
+  - Location: `apps/backend/models/upscale/animesr.py`
+  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+- [x] Add ONNX support for TSPAN upscale model
+  - Location: `apps/backend/models/upscale/tspan.py`
+  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
 
 #### 2. Model Conversion ✅
 - [x] Implement SPAN conversion to ONNX
