@@ -28,8 +28,9 @@
 ### Backend Strategy (2026-09-29)
 - [x] ONNX Runtime designated as primary backend
 - [x] PyTorch retained as fallback for complex models
-- [x] NCNN deprecated for desktop use
-- [x] Updated provider selection: TensorRT > CUDA > MIGraphX > OpenVINO > QNN > DirectML > CoreML > WebGPU > CPU
+- [x] NCNN retained as tertiary backend (mobile/embedded/Vulkan)
+- [x] Execution providers auto-selected based on hardware (user sees only 3 backends)
+- [x] UI simplified to 3 backend options: ONNX, PyTorch, NCNN
 
 ### Repository Cleanup (100%)
 - [x] Consolidate build artifacts to `dist/`

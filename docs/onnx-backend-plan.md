@@ -23,9 +23,12 @@
 - Scene detection ONNX integration
 - Interpolate ONNX refinement
 
-## 2. Execution Provider Matrix
+## 2. Execution Provider Matrix (Automatic Selection)
 
 **Status**: ✅ Implemented in `OnnxModelLoader.PROVIDER_PRIORITY`
+
+**User-facing**: 3 backend options (ONNX, PyTorch, NCNN)
+**Internal**: Execution providers auto-selected based on hardware
 
 | Priority | Provider | Hardware | pip package | Runtime name |
 |----------|----------|----------|-------------|--------------|
@@ -39,7 +42,7 @@
 | 8 | WebGPU | Browser/native | (built-in) | `WebGPUExecutionProvider` |
 | 9 | CPU | Universal fallback | `onnxruntime` | `CPUExecutionProvider` |
 
-**Selection logic**: Automatic via `OnnxModelLoader._select_provider()` — checks availability and returns best match.
+**Selection logic**: Automatic via `OnnxModelLoader._select_provider()` — checks availability and returns best match. Users never see these options.
 
 ## 3. Install Path
 
@@ -51,56 +54,82 @@
 - [ ] Log which EP was chosen at runtime
 
 **Note**: Variant wheels have different release dates (`onnxruntime-migraphx` is newer than `onnxruntime-openvino`).
+Availability Reporting
 
-## 4. Backend availability reporting (`backend/rve-backend.py`)
+**Status**: ✅ Implemented
 
-Add an ONNX section next to tensorrt/pytorch/ncnn:
-- `import onnxruntime` (guarded), report version + `ort.get_available_providers()`.
-- Only advertise the backend if at least one GPU-capable EP is present when a GPU exists, else still advertise it as CPU fallback.
-- Print each provider so UI/logs show e.g. `ONNX Runtime: 1.x [CUDAExecutionProvider]`.
+- ONNX backend registered in `BackendDetect`
+- Reports version and available providers
+- Logs provider selection at initializations, else still advertise it as CPU fallback.
+- Print each pCode Status
 
-## 5. Backend code fixes (required before wiring up)
+**Status**: ✅ Core implementation complete
 
-### `backend/src/onnx/UpscaleONNX.py`
-- Provider selection is already dynamic (CUDA → DML → CPU fallback); extend it to
-  also try `MIGraphXExecutionProvider` / `OpenVINOExecutionProvider`. Note:
-  MIGraphX EP requires a one-time JIT compile of the model and OpenVINO wants its
-  own options — both should be validated with real models.
-- The constructor takes `gpu_id`, but `RenderVideo.upscaleONNXObject()` passes
-  `deviceID=` → `TypeError`. Fix the kwargs to match (prefer aligning with how
-  pytorch objects receive `device`/`gpu_id`).
-- `precision` is hardcoded `np.float16` in `__init__`; wire through a real
-  precision argument and only convert the model to fp16 when the provider supports it.
+### `apps/backend/backends/onnx/loader.py`
+- ✅ Provider selection with full matrix (TensorRT > CUDA > MIGraphX > OpenVINO > QNN > DirectML > CoreML > WebGPU > CPU)
+- ✅ Dynamic provider detection via `ort.get_available_providers()`
+- ✅ Session options and provider options handling
 
-### `backend/src/onnx/InterpolateONNX.py` — mostly broken, needs work before use
-- Imports `checkForDirectMLHalfPrecisionSupport` from `utils.Util`, which does not exist anymore → import error. Replace with the same precision logic as UpscaleONNX (or a new shared helper).
-- The class is named `UpscaleONNX` but holds interpolate code; rename to match its role, and export it properly in `src/onnx/__init__.py`.
-- `render()` references undefined attributes (`self.ph`, `self.pw`, `self.dtype`,
-  `self.device`) and a torch-style `np.full(...)` — rewrite against the actual RIFE ONNX model's input signature.
-- `bytesToFrame` hardcodes 1080p; make width/height dynamic like UpscaleONNX does with preallocated buffers.
+### `apps/backend/backends/onnx/runner.py`
+- ✅ `ONNXInterpolateRunner` for RIFE interpolation
+- ✅ `ONNXUpscaleRunner` for SPAN upscale
+- ✅ Dynamic input/output handling
 
-### `backend/src/RenderVideo.py`
-- Wire `setupInterpolate()` for the onnx backend (currently only ncnn/pytorch/tensorrt are handled — ONNX RIFE would silently leave `interpolateOption = None`).
+### `apps/backend/utils/OnnxLoader.py`
+- ✅ Reusable `OnnxModelLoader` class
+- ✅ Automatic provider selection
+- ✅ Session management
+
+### `apps/backend/models/`
+- ✅ `interpolate/rife.py` - RIFE with ONNX support
+- ✅ `upscale/span.py` - SPAN with ONNX support
+- ✅ `scene_detect/onnx.py` - ONNX scene detectionsorrt are handled — ONNX RIFE would silently leave `interpolateOption = None`).
 - Scene detection: `SceneDetect` maps unknown backends to the NCNN scene-detect model; decide whether onnx uses pytorch-scenedetect, an ONNX export of sudo scenedetect (there is already a `sudo_efficientnet_scenedetect.onnx` produced in `pytorch/scenechangedetect/sudo_scenechange.py`), or falls back to mean/pyscenedetect.
 - Pass the correct gpu id/device for onnx (`self.device`, `gpu_id`) consistently.
 
-## 6. UI changes
+## 6. UI Integration
 
-- `testRVEInterface.ui`: replace the "DirectML - NOT IMPLEMENTED YET" row with an ONNX installer (download/uninstall buttons + label), or rename in place and keep widget names to minimize churn.
-- `src/REAL-Video-Enhancer.py` line ~127: remove/hide logic for `directMLBackendInstallerContainer`.
-- `src/ui/DownloadTab.py`: currently disables the DirectML button unconditionally; wire it to `self.download("onnx", True)` and add the installed-state handling in `showUninstallButton()`.
-- `getModels()` already returns ONNX model lists (RIFE 4.22 onnx, SPAN 2x) — verify those files are actually downloadable from the models repo before enabling interpolate; otherwise start with upscale-only for v1.
+**Status**: 🔄 In Progress
 
-## 7. Verification plan
+- [ ] Add ONNX installer row to `testRVEInterface.ui`
+- [ ] Wire `DownloadTab.py` to download ONNX packages
+- [ ] Add backend selection in main UI
+- [ ] Verify model & Testing
 
-Per EP: load a small test image through `UpscaleONNX.__main__`-style benchmark
-(mirror of `tests/benchmarks/`) and confirm output matches pytorch SPAN within tolerance, plus an fps number to decide default provider ordering (CUDA vs MIGraphX vs DirectML) on each vendor.
+**Status**: 🔄 In Progress
 
-## Suggested order
+- [ ] End-to-end upscale test (SPAN ONNX)
+- [ ] End-to-end interpolate test (RIFE ONNX)
+- [ ] Performance benchmarking per EP
+- [ ] Cross-platform testing (Windows, Linux, macOS)
+- [ ] GPU vendor testing (NVIDIA, AMD, Intel)
 
-1. Rename backend `"directml"` → `"onnx"` across the codebase (pure refactor).
-2. Fix `UpscaleONNX` kwargs + dynamic providers; get upscale working end-to-end via CLI (`--backend onnx`).
-3. Add install path in `DownloadDeps.py` with per-hardware package selection.
+## 8. Remaining Work
+
+### High Priority
+1. **UI Integration** - Add ONNX to download tab and backend selector
+2. **Install Path** - Add ONNX package selection to `DownloadDeps.py`
+3. **End-to-End Testing** - Verify full pipeline with real models
+
+### Medium Priority
+4. **Scene Detection** - Complete ONNX scene detection integration
+5. **Performance Tuning** - Optimize provider selection and memory usage
+6. **Error Handling** - Improve fallback logic when providers fail
+
+### Low Priority
+7. **Documentation** - User-facing docs for ONNX backend
+8. **Benchmarking** - Compare ONNX vs PyTorch performance
+9. **Mobile Support** - Explore QNN for Android deployment
+
+## Suggested Order
+
+1. ✅ Backend architecture (complete)
+2. ✅ Provider selection (complete)
+3. ✅ Model implementations (complete)
+4. 🔄 UI integration (in progress)
+5. 🔄 Install path (in progress)
+6. ⏳ End-to-end testing (pending)
+7. ⏳ Performance optimization (pending)
 4. Backend availability reporting in `rve-backend.py`.
 5. UI row + DownloadTab wiring.
 6. Interpolate (RIFE ONNX) — rewrite `InterpolateONNX`, scene-detect fallback, then enable interpolate models in the UI.

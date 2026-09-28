@@ -37,9 +37,44 @@ NCNN remains as the **tertiary backend** for:
 
 ### Backend Priority Order
 
-1. **ONNX Runtime** (primary) - Automatic provider selection: TensorRT > CUDA > MIGraphX > OpenVINO > QNN > DirectML > CoreML > WebGPU > CPU
+1. **ONNX Runtime** (primary) - Auto-selects optimal execution provider based on hardware
 2. **PyTorch** (fallback) - For models that can't use ONNX
 3. **NCNN** (tertiary) - Mobile/embedded, Vulkan GPU inference
+
+### Execution Provider Selection (Automatic)
+
+Users select one of 3 backends. The execution provider is **automatically selected** based on detected hardware:
+
+**ONNX Runtime** auto-selects from:
+- TensorRT (NVIDIA GPUs - best performance)
+- CUDA (NVIDIA GPUs - fallback)
+- MIGraphX (AMD GPUs)
+- OpenVINO (Intel CPU/iGPU/NPU)
+- QNN (Qualcomm Snapdragon)
+- DirectML (Windows DX12 GPUs)
+- CoreML (Apple Silicon)
+- WebGPU (browser/native)
+- CPU (universal fallback)
+
+**PyTorch** auto-selects from:
+- CUDA (NVIDIA GPUs)
+- ROCm (AMD GPUs)
+- XPU (Intel GPUs)
+- MPS (Apple Silicon)
+- CPU (fallback)
+
+**NCNN** auto-selects from:
+- Vulkan (GPU inference)
+- CPU (fallback)
+
+### User-Facing Backend Options
+
+The UI should only show 3 backend options:
+1. **ONNX** (recommended, best performance)
+2. **PyTorch** (fallback)
+3. **NCNN** (mobile/embedded)
+
+Execution providers are transparent to users - selected automatically based on hardware detection.
 
 ## Proposed Structure
 
