@@ -67,7 +67,7 @@ VIDEOS_PATH = (
     if PLATFORM == "darwin"
     else os.path.join(HOME_PATH, "Videos")
 )
-BACKEND_PATH = "/app/bin/backend" if IS_FLATPAK else os.path.join(CWD, "backend")
+BACKEND_PATH = "/app/bin/apps/backend" if IS_FLATPAK else os.path.join(CWD, "apps", "backend")
 TEMP_DOWNLOAD_PATH = os.path.join(CWD, "temp")
 # exes
 FFMPEG_PATH = (

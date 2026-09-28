@@ -6,7 +6,7 @@
 #   ./appimage/build-appimage.sh <build-dir> [version] [arch]
 #
 #   build-dir : directory containing the cx_Freeze output
-#               (REAL-Video-Enhancer, lib/, backend/, ...)
+#               (REAL-Video-Enhancer, lib/, apps/backend/, ...)
 #   version   : app version, defaults to 2.4.2
 #   arch      : AppImage architecture, defaults to x86_64
 #

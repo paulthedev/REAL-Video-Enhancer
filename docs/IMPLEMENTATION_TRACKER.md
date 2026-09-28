@@ -14,26 +14,26 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 ## Phase 1: Foundation (Base Classes & Structure)
 
 ### 1.1 Create Directory Structure
-- [ ] Create `apps/gui/ui/{tabs,widgets}/`
-- [ ] Create `backend/models/{interpolate,upscale,restoration}/`
-- [ ] Create `backend/backends/{pytorch,onnx,ncnn}/`
-- [ ] Create `backend/converters/`
-- [ ] Create `tests/{unit,integration,benchmarks}/`
-- [ ] Create `scripts/`
-- [ ] Create `config/`
+- [x] Create `apps/gui/ui/{tabs,widgets}/`
+- [x] Create `apps/backend/models/{interpolate,upscale,restoration}/`
+- [x] Create `apps/backend/backends/{pytorch,onnx,ncnn}/`
+- [x] Create `apps/backend/converters/`
+- [x] Create `apps/backend/tests/{unit,integration,benchmarks}/`
+- [x] Create `scripts/`
+- [x] Create `config/`
 
 ### 1.2 Create Abstract Base Classes
-- [ ] `backend/models/base.py` - Abstract model interface
-- [ ] `backend/backends/base.py` - Abstract backend interface
-- [ ] `backend/converters/base.py` - Abstract converter interface
-- [ ] `backend/models/registry.py` - Model registry
+- [x] `apps/backend/models/base.py` - Abstract model interface
+- [x] `apps/backend/backends/base.py` - Abstract backend interface
+- [x] `apps/backend/converters/base.py` - Abstract converter interface
+- [x] `apps/backend/models/registry.py` - Model registry
 
 ### 1.3 Create Configuration
-- [ ] `config/models.yaml` - Model registry configuration
-- [ ] `config/backends.yaml` - Backend configuration
-- [ ] `backend/models/__init__.py`
-- [ ] `backend/backends/__init__.py`
-- [ ] `backend/converters/__init__.py`
+- [x] `config/models.yaml` - Model registry configuration
+- [x] `config/backends.yaml` - Backend configuration
+- [x] `apps/backend/models/__init__.py`
+- [x] `apps/backend/backends/__init__.py`
+- [x] `apps/backend/converters/__init__.py`
 
 **Phase 1 Status**: [x] 10/10 completed
 
@@ -42,33 +42,33 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 ## Phase 2: Migrate Models (Backend-Agnostic)
 
 ### 2.1 Interpolation Models
-- [x] Migrate RIFE architecture → `backend/models/interpolate/rife.py`
-- [x] Migrate IFRNet architecture → `backend/models/interpolate/ifrnet.py`
-- [x] Migrate GIMM architecture → `backend/models/interpolate/gimm.py`
-- [x] Migrate GMFSS architecture → `backend/models/interpolate/gmfss.py`
+- [x] Migrate RIFE architecture → `apps/backend/models/interpolate/rife.py`
+- [x] Migrate IFRNet architecture → `apps/backend/models/interpolate/ifrnet.py`
+- [x] Migrate GIMM architecture → `apps/backend/models/interpolate/gimm.py`
+- [x] Migrate GMFSS architecture → `apps/backend/models/interpolate/gmfss.py`
 - [x] Create model wrappers for each architecture
 - [x] Update model registry with interpolation models
 
 ### 2.2 Upscaling Models
-- [x] Migrate SPAN architecture → `backend/models/upscale/span.py`
-- [x] Migrate AnimeSR architecture → `backend/models/upscale/animesr.py`
-- [x] Migrate TSPAN architecture → `backend/models/upscale/tspan.py`
+- [x] Migrate SPAN architecture → `apps/backend/models/upscale/span.py`
+- [x] Migrate AnimeSR architecture → `apps/backend/models/upscale/animesr.py`
+- [x] Migrate TSPAN architecture → `apps/backend/models/upscale/tspan.py`
 - [x] Create model wrappers for each architecture
 - [x] Update model registry with upscaling models
 
 ### 2.3 Restoration Models
-- [x] Migrate FBCNN → `backend/models/restoration/fbcnn.py`
-- [x] Migrate NAFNet → `backend/models/restoration/nafnet.py`
+- [x] Migrate FBCNN → `apps/backend/models/restoration/fbcnn.py`
+- [x] Migrate NAFNet → `apps/backend/models/restoration/nafnet.py`
 - [x] Create model wrappers
 - [x] Update model registry with restoration models
 
 ### 2.4 Denoise Models
-- [x] Migrate DnCNN → `backend/models/denoise/dncnn.py`
+- [x] Migrate DnCNN → `apps/backend/models/denoise/dncnn.py`
 - [x] Create model wrappers
 - [x] Update model registry with denoise models
 
 ### 2.5 Scene Detection
-- [x] Migrate scene detection models → `backend/models/scene_detect/`
+- [x] Migrate scene detection models → `apps/backend/models/scene_detect/`
 - [x] Create scene detection wrappers
 
 **Phase 2 Status**: [x] 15/15 completed
@@ -78,20 +78,20 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 ## Phase 3: Create Thin Backends
 
 ### 3.1 PyTorch Backend
-- [x] Create `backend/backends/pytorch/loader.py`
-- [x] Create `backend/backends/pytorch/runner.py`
+- [x] Create `apps/backend/backends/pytorch/loader.py`
+- [x] Create `apps/backend/backends/pytorch/runner.py`
 - [x] Add DENOISE and SCENE_DETECT support
 - [x] Test PyTorch backend with migrated models
 
 ### 3.2 ONNX Backend
-- [x] Create `backend/backends/onnx/loader.py`
-- [x] Create `backend/backends/onnx/runner.py`
+- [x] Create `apps/backend/backends/onnx/loader.py`
+- [x] Create `apps/backend/backends/onnx/runner.py`
 - [x] Implement dynamic provider selection
 - [x] Add RESTORATION support
 
 ### 3.3 NCNN Backend
-- [x] Create `backend/backends/ncnn/loader.py`
-- [x] Create `backend/backends/ncnn/runner.py`
+- [x] Create `apps/backend/backends/ncnn/loader.py`
+- [x] Create `apps/backend/backends/ncnn/runner.py`
 - [x] Migrate existing NCNN code
 - [x] Test NCNN backend with converted models
 
@@ -102,13 +102,13 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 ## Phase 4: Create Converters
 
 ### 4.1 Torch to ONNX Converter
-- [x] Create `backend/converters/torch_to_onnx.py`
+- [x] Create `apps/backend/converters/torch_to_onnx.py`
 - [x] Implement `torch.onnx.export()` wrapper
 - [x] Add pnnx support
 - [x] Test conversion with RIFE model
 
 ### 4.2 ONNX to NCNN Converter
-- [x] Create `backend/converters/onnx_to_ncnn.py`
+- [x] Create `apps/backend/converters/onnx_to_ncnn.py`
 - [x] Implement pnnx wrapper
 - [x] Implement onnx2ncnn fallback
 - [x] Test conversion with RIFE ONNX model
@@ -126,60 +126,60 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 ## Phase 5: Migrate Frontend
 
 ### 5.1 UI Components
-- [ ] Move `src/ui/` → `apps/gui/ui/`
-- [ ] Update imports in UI components
-- [ ] Test UI functionality
+- [x] Move `src/ui/` → `apps/gui/ui/`
+- [x] Update imports in UI components
+- [x] Test UI functionality
 
 ### 5.2 Backend Integration
-- [ ] Move `src/Backendhandler.py` → `apps/gui/backend_handler.py`
-- [ ] Update backend detection logic
-- [ ] Test backend selection in UI
+- [x] Move `src/Backendhandler.py` → `apps/gui/backend_handler.py`
+- [x] Update backend detection logic
+- [x] Test backend selection in UI
 
 ### 5.3 Model Management
-- [ ] Move `src/ModelHandler.py` → `apps/gui/model_handler.py`
-- [ ] Update model loading logic
-- [ ] Test model selection in UI
+- [x] Move `src/ModelHandler.py` → `apps/gui/model_handler.py`
+- [x] Update model loading logic
+- [x] Test model selection in UI
 
 ### 5.4 Dependency Management
-- [ ] Move `src/DownloadDeps.py` → `apps/gui/download_deps.py`
-- [ ] Update download logic
-- [ ] Test dependency installation
+- [x] Move `src/DownloadDeps.py` → `apps/gui/download_deps.py`
+- [x] Update download logic
+- [x] Test dependency installation
 
-**Phase 5 Status**: [ ] 0/12 completed
+**Phase 5 Status**: [x] 12/12 completed
 
 ---
 
 ## Phase 6: Cleanup & Testing
 
 ### 6.1 Remove Old Structure
-- [ ] Delete `backend/src/pytorch/` (after migration)
-- [ ] Delete `backend/src/ncnn/` (after migration)
-- [ ] Delete `backend/src/onnx/` (after migration)
-- [ ] Delete `src/ui/` (after migration)
-- [ ] Delete `src/Backendhandler.py` (after migration)
-- [ ] Delete `src/ModelHandler.py` (after migration)
-- [ ] Delete `src/DownloadDeps.py` (after migration)
+- [x] Delete `backend/src/pytorch/` (after migration)
+- [x] Delete `backend/src/ncnn/` (after migration)
+- [x] Delete `backend/src/onnx/` (after migration)
+- [x] Delete `src/ui/` (after migration)
+- [x] Delete `src/Backendhandler.py` (after migration)
+- [x] Delete `src/ModelHandler.py` (after migration)
+- [x] Delete `src/DownloadDeps.py` (after migration)
 
 ### 6.2 Update Imports
-- [ ] Fix all import paths
-- [ ] Update `__init__.py` files
-- [ ] Update `requirements.txt`
-- [ ] Update `setup.py`
+- [x] Fix all import paths
+- [x] Update `__init__.py` files
+- [x] Update `requirements.txt`
+- [x] Update `setup.py`
 
 ### 6.3 Testing
-- [ ] Run unit tests
-- [ ] Run integration tests
-- [ ] Run benchmarks
-- [ ] Test full pipeline end-to-end
-- [ ] Test model conversion pipeline
+- [x] Run unit tests
+- [x] Run integration tests
+- [x] Run benchmarks
+- [x] Test full pipeline end-to-end
+- [x] Test model conversion pipeline
 
 ### 6.4 Documentation
-- [ ] Update README.md
-- [ ] Update architecture docs
-- [ ] Add migration guide
-- [ ] Add API documentation
+- [x] Update README.md
+- [x] Update architecture docs
+- [x] Add migration guide
+- [x] Add API documentation
 
-**Phase 6 Status**: [ ] 0/15 completed
+**Phase 6 Status**: [x] 15/15 completed
 
 ---
 

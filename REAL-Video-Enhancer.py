@@ -25,7 +25,7 @@ from PySide6.QtGui import QIcon
 from mainwindow import Ui_MainWindow
 from PySide6 import QtSvg  # Import the QtSvg module so svg icons can be used on windows
 from src.version import version
-from src.ModelHandler import getModels, getModelDisplayName
+from apps.gui.ModelHandler import getModels, getModelDisplayName
 
 # other imports
 from src.Util import (
@@ -43,17 +43,17 @@ createDirectory(os.path.join(CWD, "bin"))
 
 
 from src.DownloadModels import DownloadModel
-from src.DownloadDeps import Dependency, Python, DownloadDependencies
-from src.ui.ProcessTab import ProcessTab
-from src.ui.DownloadTab import DownloadTab
-from src.ui.SettingsTab import SettingsTab, Settings
-from src.ui.HomeTab import HomeTab
-from src.Backendhandler import BackendHandler
-from src.ModelHandler import totalModels
-from src.ui.AnimationHandler import AnimationHandler
-from src.ui.QTstyle import Palette
-from src.ui.QTcustom import RegularQTPopup, NotificationOverlay, TextOutputPopup
-from src.ui.RenderQueue import RenderQueue, RenderOptions
+from apps.gui.DownloadDeps import Dependency, Python, DownloadDependencies
+from apps.gui.ui.ProcessTab import ProcessTab
+from apps.gui.ui.DownloadTab import DownloadTab
+from apps.gui.ui.SettingsTab import SettingsTab, Settings
+from apps.gui.ui.HomeTab import HomeTab
+from apps.gui.Backendhandler import BackendHandler
+from apps.gui.ModelHandler import totalModels
+from apps.gui.ui.AnimationHandler import AnimationHandler
+from apps.gui.ui.QTstyle import Palette
+from apps.gui.ui.QTcustom import RegularQTPopup, NotificationOverlay, TextOutputPopup
+from apps.gui.ui.RenderQueue import RenderQueue, RenderOptions
 from src.VideoInfo import VideoLoader
 
 svg = (

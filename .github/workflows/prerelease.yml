@@ -69,8 +69,8 @@ jobs:
       - name: compress backend
         run: | # remove .github to save space
           git submodule update --init --recursive
-          rm -rf backend/src/pytorch/spandrel/.github 
-          tar czf backend-v${{ env.APP_VERSION }}.tar.gz backend/
+          rm -rf apps/backend/src/pytorch/spandrel/.github 
+          tar czf backend-v${{ env.APP_VERSION }}.tar.gz apps/backend/
 
       - name: Save Archive as artifact
         uses: actions/upload-artifact@v4
