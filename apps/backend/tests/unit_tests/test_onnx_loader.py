@@ -40,27 +40,27 @@ class TestOnnxModelLoader(unittest.TestCase):
         loader = OnnxModelLoader()
         
         priority = loader.PROVIDER_PRIORITY
-        self.assertEqual(priority[0], "TensorRTExecutionProvider")
+        self.assertEqual(priority[0], "TensorrtExecutionProvider")
         self.assertEqual(priority[1], "CUDAExecutionProvider")
         self.assertEqual(priority[2], "MIGraphXExecutionProvider")
         self.assertEqual(priority[3], "OpenVINOExecutionProvider")
-        self.assertEqual(priority[4], "QNNExecutionProvider")
+        self.assertEqual(priority[4], "QnnExecutionProvider")
         self.assertEqual(priority[5], "DmlExecutionProvider")
         self.assertEqual(priority[6], "CoreMLExecutionProvider")
-        self.assertEqual(priority[7], "WebGPUEexecutionProvider")
+        self.assertEqual(priority[7], "WebGPUExecutionProvider")
         self.assertEqual(priority[8], "CPUExecutionProvider")
     
     @patch('apps.backend.utils.OnnxLoader.ort')
     def test_select_provider_auto_tensorrt(self, mock_ort):
         """Test auto provider selection with TensorRT."""
         mock_ort.get_available_providers.return_value = [
-            "TensorRTExecutionProvider",
+            "TensorrtExecutionProvider",
             "CUDAExecutionProvider",
             "CPUExecutionProvider"
         ]
         
         loader = OnnxModelLoader(provider="auto")
-        self.assertEqual(loader.provider, "TensorRTExecutionProvider")
+        self.assertEqual(loader.provider, "TensorrtExecutionProvider")
     
     @patch('apps.backend.utils.OnnxLoader.ort')
     def test_select_provider_auto_cuda(self, mock_ort):
@@ -132,12 +132,12 @@ class TestOnnxModelLoader(unittest.TestCase):
     def test_select_provider_auto_webgpu(self, mock_ort):
         """Test auto provider selection with WebGPU."""
         mock_ort.get_available_providers.return_value = [
-            "WebGPUEexecutionProvider",
+            "WebGPUExecutionProvider",
             "CPUExecutionProvider"
         ]
         
         loader = OnnxModelLoader(provider="auto")
-        self.assertEqual(loader.provider, "WebGPUEexecutionProvider")
+        self.assertEqual(loader.provider, "WebGPUExecutionProvider")
     
     @patch('apps.backend.utils.OnnxLoader.ort')
     def test_select_provider_auto_cpu_fallback(self, mock_ort):
@@ -226,12 +226,14 @@ class TestOnnxModelLoader(unittest.TestCase):
         
         mock_session = Mock()
         loader.session = mock_session
+        loader.inputs = [Mock()]
+        loader.outputs = [Mock()]
         
         loader.unload()
         
         self.assertIsNone(loader.session)
-        self.assertIsNone(loader.inputs)
-        self.assertIsNone(loader.outputs)
+        self.assertEqual(loader.inputs, [])
+        self.assertEqual(loader.outputs, [])
 
 
 class TestLoadOnnxModel(unittest.TestCase):
