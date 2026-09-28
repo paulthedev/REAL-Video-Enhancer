@@ -6,7 +6,14 @@ REAL-Video-Enhancer is a cross-platform video enhancement application that provi
 
 ## Project Structure
 
-See [FOLDER_STRUCTURE.md](./FOLDER_STRUCTURE.md) for detailed folder layout.
+See [FOLDER_STRUCTURE.md](./docs/FOLDER_STRUCTURE.md) for detailed folder layout.
+
+## Documentation
+
+All documentation files must be placed in the `docs/` folder. This includes:
+- FOLDER_STRUCTURE.md
+- pytorch-optimizations.md
+- Any other documentation files
 
 ## Code Organization
 
@@ -98,4 +105,5 @@ See [FOLDER_STRUCTURE.md](./FOLDER_STRUCTURE.md) for detailed folder layout.
 ## Links
 - [GitHub Repository](https://github.com/paulthedev/REAL-Video-Enhancer)
 - [Discord Community](https://discord.gg/hwGHXga8ck)
+- [FOLDER_STRUCTURE.md](./docs/FOLDER_STRUCTURE.md) - Detailed folder layout
 - [Steam Page](https://store.steampowered.com/app/4087640/)
