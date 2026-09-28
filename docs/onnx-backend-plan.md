@@ -1,54 +1,56 @@
-# ONNX Backend — Implementation Plan (what needs to happen first)
+# ONNX Backend — Implementation Plan
 
-Goal: make ONNX a first-class backend selectable in the UI, with the correct
-`onnxruntime-*` wheel installed per platform/hardware at install time, mirroring
-how PyTorch builds are chosen (`BuiltInTorchVersions.py` / `downloadPythonDeps`).
+**Status**: Core implementation complete (2026-09-29)
+**Goal**: Make ONNX the primary backend with full hardware support and UI integration
 
-## 1. Naming decision (do this first)
+## Current Status
 
-The backend is currently registered as `"directml"`, but ONNX Runtime supports
-far more than DirectML. Decide on a single backend name — recommend renaming to
-`"onnx"` everywhere:
+### ✅ Completed
+- Backend architecture migrated to `apps/backend/backends/onnx/`
+- Provider selection implemented: TensorRT > CUDA > MIGraphX > OpenVINO > QNN > DirectML > CoreML > WebGPU > CPU
+- `OnnxModelLoader` utility created in `apps/backend/utils/OnnxLoader.py`
+- ONNX backend registered as `"onnx"` (not "directml")
+- Models implemented: RIFE interpolation, SPAN upscale, scene detection
+- Converters: PyTorch → ONNX, ONNX → NCNN
 
-- `backend/rve-backend.py`: help text for `--backend` (`pytorch/ncnn/tensorrt/directml`)
-  and the availability check that adds it to `availableBackends`.
-- `backend/src/RenderVideo.py`: all `self.backend == "directml"` branches.
-- `src/ModelHandler.py::getModels()`: `case "directml":` → `case "onnx":`.
-- UI: the DirectML installer row in `testRVEInterface.ui` / labels, and any
-  strings referencing "DirectML".
+### 🔄 In Progress
+- UI integration (DownloadTab, backend selection)
+- End-to-end testing with real models
+- Performance benchmarking
 
-## 2. Execution-provider matrix (pip package per platform)
+### ⏳ Pending
+- Full UI wiring (installer, model selection)
+- Scene detection ONNX integration
+- Interpolate ONNX refinement
 
-Verified against PyPI as of this writing; pin a single ORT version line for all
-variants so they can be swapped without ABI surprises:
+## 2. Execution Provider Matrix
 
-| OS | Hardware | pip package | Provider name at runtime |
-|----|----------|-------------|--------------------------|
-| Windows/Linux/macOS* | NVIDIA (CUDA 12.x) | `onnxruntime-gpu` | `CUDAExecutionProvider` |
-| Windows, Linux, macOS | AMD GPU (RX 6000+) | `onnxruntime-migraphx` | `MIGraphXExecutionProvider` |
-| Win/Linux/macOS | Intel CPU / iGPU / Arc / NPU | `onnxruntime-openvino` | `OpenVINOExecutionProvider` |
-| Windows (any DX12 GPU) | fallback / AMD/Intel on Win | `onnxruntime-directml` | `DmlExecutionProvider` (sustained engineering — optional, maybe skip for new installs) |
-| macOS | Apple Silicon | CoreML EP exists but is **not** a PyPI wheel; CPU (`onnxruntime`) or WebGPU only. Ship plain `onnxruntime`. |
-| any | baseline / no GPU detected | `onnxruntime` (CPU, oneDNN/MLAS) |
+**Status**: ✅ Implemented in `OnnxModelLoader.PROVIDER_PRIORITY`
 
-\* `onnxruntime-gpu` requires system CUDA + cuDNN on Linux (or torch-tensorrt's
-CUDA libs via LD_LIBRARY_PATH — needs testing since RVE bundles its own Python).
+| Priority | Provider | Hardware | pip package | Runtime name |
+|----------|----------|----------|-------------|--------------|
+| 1 | TensorRT | NVIDIA GPU (max throughput) | `onnxruntime-tensorrt` | `TensorrtExecutionProvider` |
+| 2 | CUDA | NVIDIA GPU (standard) | `onnxruntime-gpu` | `CUDAExecutionProvider` |
+| 3 | MIGraphX | AMD GPU (ROCm) | `onnxruntime-migraphx` | `MIGraphXExecutionProvider` |
+| 4 | OpenVINO | Intel CPU/iGPU/NPU | `onnxruntime-openvino` | `OpenVINOExecutionProvider` |
+| 5 | QNN | Qualcomm Snapdragon | `onnxruntime-qualcomm` | `QnnExecutionProvider` |
+| 6 | DirectML | Windows DX12 GPUs | `onnxruntime-directml` | `DmlExecutionProvider` |
+| 7 | CoreML | Apple Silicon | (built-in) | `CoreMLExecutionProvider` |
+| 8 | WebGPU | Browser/native | (built-in) | `WebGPUExecutionProvider` |
+| 9 | CPU | Universal fallback | `onnxruntime` | `CPUExecutionProvider` |
 
-Selection logic mirrors `GpuHardware.detect_gpu_hardware()`:
-- nvidia → `onnxruntime-gpu`
-- amd → `onnxruntime-migraphx` (Linux/Win), else DirectML on Windows, else CPU
-- intel discrete/iGPU/NPU → `onnxruntime-openvino`, else CPU
-- apple / no GPU → `onnxruntime`
+**Selection logic**: Automatic via `OnnxModelLoader._select_provider()` — checks availability and returns best match.
 
-## 3. Install path (`src/DownloadDeps.py`)
+## 3. Install Path
 
-- Add a case to `downloadPythonDeps()`: match on `"onnx"` (and legacy
-  `"directml"`) and pip-install the chosen package, plus platform-independent deps.
-- Decide version pinning strategy like torch: either hard-pin one ORT version for
-  all variants in constants (simplest), or a small `OnnxBuiltInVersions` dataclass
-  if per-variant versions diverge. Note variant wheels don't share the same latest
-  release date (`onnxruntime-migraphx` is newer than `onnxruntime-openvino`).
-- Reuse existing GPU vendor detection to pick the package; log which EP was chosen so users know what they got.
+**Status**: 🔄 In Progress
+
+- [ ] Add ONNX package selection to `DownloadDeps.py`
+- [ ] Implement per-hardware package selection (mirrors PyTorch strategy)
+- [ ] Version pinning strategy (single ORT version vs per-variant)
+- [ ] Log which EP was chosen at runtime
+
+**Note**: Variant wheels have different release dates (`onnxruntime-migraphx` is newer than `onnxruntime-openvino`).
 
 ## 4. Backend availability reporting (`backend/rve-backend.py`)
 
