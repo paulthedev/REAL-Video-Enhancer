@@ -107,5 +107,7 @@ is the documented API and covers CUDA/ROCm/XPU — confirmed by reading installe
   - **RX 6800 XT (cc 10.3):** eager 8208 ms; compile path fails at warmup trace and falls back to eager (renders fine, never compiled)
 - [ ] Real end-to-end render of a short clip with 4x-UltraSharpV2 — first frame slow (compile), rest fast; second run fast from cache
 
+> **Note**: See [TRACKER.md](TRACKER.md) for tracking this item.
+
 ## Known limitations / follow-ups
 - Pinned staging buffers are per-process (one TorchUtils instance per backend); no cross-process sharing needed since each render run owns its GPU context.

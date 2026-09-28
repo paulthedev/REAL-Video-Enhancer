@@ -168,9 +168,4 @@ The old `backend/src/` directory has been removed. All code should use the new i
 
 ## Future Work
 
-- [ ] Migrate remaining models (IFRNet, GIMM, GMFSS)
-- [ ] Add TensorRT backend
-- [ ] Create ONNX backend for all models
-- [ ] Add more unit tests
-- [ ] Create integration tests
-- [ ] Add benchmarks
+See [TRACKER.md](TRACKER.md) for current pending work and priorities.
