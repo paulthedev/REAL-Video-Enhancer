@@ -20,10 +20,11 @@ class ONNXBackendLoader(BaseBackend):
     ONNX Runtime backend loader.
     
     Supports multiple execution providers (priority order):
-    - CUDA (onnxruntime-gpu): NVIDIA GPU standard path
     - TensorRT (onnxruntime-tensorrt): NVIDIA GPU max throughput
+    - CUDA (onnxruntime-gpu): NVIDIA GPU standard path
     - MIGraphX (onnxruntime-migraphx): AMD GPU (ROCm)
-    - OpenVINO (onnxruntime-openvino): Intel CPU/GPU (oneDNN)
+    - OpenVINO (onnxruntime-openvino): Intel CPU / iGPU / NPU (Arc & Core Ultra)
+    - QNN (onnxruntime-qualcomm): Snapdragon HTP/NPU + Adreno GPU (ARM64 & Android)
     - DirectML (onnxruntime-directml): Any DirectX 12 GPU (Windows)
     - CoreML (onnxruntime-coreml): Apple Silicon (ANE/GPU/CPU)
     - WebGPU (onnxruntime-webgpu): Browser/native WebGPU
@@ -74,7 +75,8 @@ class ONNXBackendLoader(BaseBackend):
         - TensorRT: NVIDIA GPU max throughput (compiles subgraphs to TRT engines)
         - CUDA: NVIDIA GPU standard path
         - MIGraphX: AMD GPU (ROCm)
-        - OpenVINO: Intel CPU/GPU (oneDNN optimized)
+        - OpenVINO: Intel CPU / iGPU / NPU (best for Intel Arc & Core Ultra NPUs)
+        - QNN: Qualcomm Snapdragon HTP/NPU + Adreno GPU (Windows ARM64 & Android)
         - DirectML: Any DirectX 12 GPU (Windows cross-vendor)
         - CoreML: Apple Silicon (ANE/GPU/CPU)
         - WebGPU: Browser/native WebGPU
@@ -92,6 +94,8 @@ class ONNXBackendLoader(BaseBackend):
             return "MIGraphXExecutionProvider"
         elif "OpenVINOExecutionProvider" in self.available_providers:
             return "OpenVINOExecutionProvider"
+        elif "QnnExecutionProvider" in self.available_providers:
+            return "QnnExecutionProvider"
         elif "DmlExecutionProvider" in self.available_providers:
             return "DmlExecutionProvider"
         elif "CoreMLExecutionProvider" in self.available_providers:
