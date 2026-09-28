@@ -119,11 +119,11 @@ class BuildManager:
         os.makedirs(OUTPUT_FOLDER, exist_ok=True)
         if PLATFORM == "darwin" or PLATFORM == "linux":
             os.system(
-                f"{self.python_manager.get_venv_site_packages()}/PySide6/Qt/libexec/uic -g python testRVEInterface.ui > {OUTPUT_FOLDER}/mainwindow.py"
+                f"{self.python_manager.get_venv_site_packages()}/PySide6/Qt/libexec/uic -g python apps/gui/ui/testRVEInterface.ui > {OUTPUT_FOLDER}/mainwindow.py"
             )
         if PLATFORM == "win32":
             os.system(
-                r".\venv\Lib\site-packages\PySide6\uic.exe -g python testRVEInterface.ui > {OUTPUT_FOLDER}/mainwindow.py"
+                r".\venv\Lib\site-packages\PySide6\uic.exe -g python apps\gui\ui\testRVEInterface.ui > {OUTPUT_FOLDER}/mainwindow.py"
             )
     
     def build_resources(self):
@@ -131,11 +131,11 @@ class BuildManager:
         os.makedirs(OUTPUT_FOLDER, exist_ok=True)
         if PLATFORM == "darwin" or PLATFORM == "linux":
             os.system(
-                f"{self.python_manager.get_venv_site_packages()}/PySide6/Qt/libexec/rcc -g python resources.qrc > {OUTPUT_FOLDER}/resources_rc.py"
+                f"{self.python_manager.get_venv_site_packages()}/PySide6/Qt/libexec/rcc -g python apps/gui/ui/resources.qrc > {OUTPUT_FOLDER}/resources_rc.py"
             )
         if PLATFORM == "win32":
             os.system(
-                r".\venv\Lib\site-packages\PySide6\rcc.exe -g python resources.qrc > {OUTPUT_FOLDER}/resources_rc.py"
+                r".\venv\Lib\site-packages\PySide6\rcc.exe -g python apps\gui\ui\resources.qrc > {OUTPUT_FOLDER}/resources_rc.py"
             )
 
     
