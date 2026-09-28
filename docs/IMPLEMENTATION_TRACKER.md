@@ -71,7 +71,7 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 - [x] Migrate scene detection models → `backend/models/scene_detect/`
 - [x] Create scene detection wrappers
 
-**Phase 2 Status**: [x] 11/15 completed (RIFE, IFRNet, GIMM, GMFSS, SPAN, AnimeSR, TSPAN, FBCNN, NAFNet, DnCNN, MaxViT)
+**Phase 2 Status**: [x] 15/15 completed
 
 ---
 
@@ -95,7 +95,7 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 - [x] Migrate existing NCNN code
 - [x] Test NCNN backend with converted models
 
-**Phase 3 Status**: [x] 8/12 completed
+**Phase 3 Status**: [x] 12/12 completed
 
 ---
 
