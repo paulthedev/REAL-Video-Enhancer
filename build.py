@@ -75,16 +75,14 @@ class PythonManager:
 
     def __install_requirements_in_venv(self):
         print("Installing requirements in virtual environment")
-        if not os.path.isfile("requirements.txt"):
-            raise FileNotFoundError("No requirements.txt in current directory!")
         command = [
             "uv",
             "pip",
             "install",
             "--python",
             self.PYTHON_VENV_PATH,
-            "-r",
-            "requirements.txt",
+            "-e",
+            ".",
         ]
         subprocess.run(command)
         
@@ -217,7 +215,7 @@ class CxFreeze(BuildManager):
 
 def build_appimage(args):
     print("Packaging AppImage")
-    appimage_script = os.path.join("appimage", "build-appimage.sh")
+    appimage_script = os.path.join("installers", "build-appimage.sh")
     command = [
         appimage_script,
         f"{OUTPUT_FOLDER}",

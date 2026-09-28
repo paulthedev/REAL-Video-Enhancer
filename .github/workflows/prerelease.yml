@@ -98,7 +98,7 @@ jobs:
           path: dist/
 
       - name: Build AppImage
-        run: ./appimage/build-appimage.sh dist ${{ env.APP_VERSION }} x86_64
+        run: ./installers/build-appimage.sh dist ${{ env.APP_VERSION }} x86_64
 
       - name: Save AppImage as artifact
         uses: actions/upload-artifact@v4
