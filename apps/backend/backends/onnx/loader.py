@@ -19,10 +19,15 @@ class ONNXBackendLoader(BaseBackend):
     """
     ONNX Runtime backend loader.
     
-    Supports multiple execution providers:
-    - CUDA (onnxruntime-gpu)
-    - DirectML (onnxruntime-directml)
-    - CPU (onnxruntime)
+    Supports multiple execution providers (priority order):
+    - CUDA (onnxruntime-gpu): NVIDIA GPU standard path
+    - TensorRT (onnxruntime-tensorrt): NVIDIA GPU max throughput
+    - MIGraphX (onnxruntime-migraphx): AMD GPU (ROCm)
+    - OpenVINO (onnxruntime-openvino): Intel CPU/GPU (oneDNN)
+    - DirectML (onnxruntime-directml): Any DirectX 12 GPU (Windows)
+    - CoreML (onnxruntime-coreml): Apple Silicon (ANE/GPU/CPU)
+    - WebGPU (onnxruntime-webgpu): Browser/native WebGPU
+    - CPU (onnxruntime): MLAS + Eigen (x86), XNNPACK (Arm + x86)
     """
     
     def __init__(self):
@@ -65,7 +70,15 @@ class ONNXBackendLoader(BaseBackend):
         """
         Select the best available execution provider.
         
-        Priority order: CUDA > MIGraphX > OpenVINO > DirectML > CPU
+        Priority order based on ONNX Runtime execution providers:
+        - CUDA: NVIDIA GPU standard path
+        - TensorRT: NVIDIA GPU max throughput (compiles subgraphs to TRT engines)
+        - MIGraphX: AMD GPU (ROCm)
+        - OpenVINO: Intel CPU/GPU (oneDNN optimized)
+        - DirectML: Any DirectX 12 GPU (Windows cross-vendor)
+        - CoreML: Apple Silicon (ANE/GPU/CPU)
+        - WebGPU: Browser/native WebGPU
+        - CPU: MLAS + Eigen (x86), XNNPACK (Arm + x86), always available fallback
         
         Returns:
             Best provider name
@@ -73,12 +86,18 @@ class ONNXBackendLoader(BaseBackend):
         # Priority order based on hardware capabilities
         if "CUDAExecutionProvider" in self.available_providers:
             return "CUDAExecutionProvider"
+        elif "TensorrtExecutionProvider" in self.available_providers:
+            return "TensorrtExecutionProvider"
         elif "MIGraphXExecutionProvider" in self.available_providers:
             return "MIGraphXExecutionProvider"
         elif "OpenVINOExecutionProvider" in self.available_providers:
             return "OpenVINOExecutionProvider"
         elif "DmlExecutionProvider" in self.available_providers:
             return "DmlExecutionProvider"
+        elif "CoreMLExecutionProvider" in self.available_providers:
+            return "CoreMLExecutionProvider"
+        elif "WebGPUExecutionProvider" in self.available_providers:
+            return "WebGPUExecutionProvider"
         else:
             return "CPUExecutionProvider"
     

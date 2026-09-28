@@ -15,20 +15,35 @@ class OnnxModelLoader:
     """
     Reusable ONNX model loader with automatic provider selection.
     
-    Supports multiple execution providers:
-    - CUDA (onnxruntime-gpu)
-    - MIGraphX (onnxruntime-migraphx)
-    - OpenVINO (onnxruntime-openvino)
-    - DirectML (onnxruntime-directml)
-    - CPU (onnxruntime)
+    Supports multiple execution providers (priority order):
+    - CUDA (onnxruntime-gpu): NVIDIA GPU standard path
+    - TensorRT (onnxruntime-tensorrt): NVIDIA GPU max throughput
+    - MIGraphX (onnxruntime-migraphx): AMD GPU (ROCm)
+    - OpenVINO (onnxruntime-openvino): Intel CPU/GPU (oneDNN)
+    - DirectML (onnxruntime-directml): Any DirectX 12 GPU (Windows)
+    - CoreML (onnxruntime-coreml): Apple Silicon (ANE/GPU/CPU)
+    - WebGPU (onnxruntime-webgpu): Browser/native WebGPU
+    - CPU (onnxruntime): MLAS + Eigen (x86), XNNPACK (Arm + x86)
     """
     
     # Provider priority order
+    # Based on ONNX Runtime execution providers:
+    # - CUDA: NVIDIA GPU standard path
+    # - TensorRT: NVIDIA GPU max throughput (compiles subgraphs to TRT engines)
+    # - MIGraphX: AMD GPU (ROCm)
+    # - OpenVINO: Intel CPU/GPU (oneDNN optimized)
+    # - DirectML: Any DirectX 12 GPU (Windows cross-vendor)
+    # - CoreML: Apple Silicon (ANE/GPU/CPU)
+    # - WebGPU: Browser/native WebGPU
+    # - CPU: MLAS + Eigen (x86), XNNPACK (Arm + x86), always available fallback
     PROVIDER_PRIORITY = [
         "CUDAExecutionProvider",
+        "TensorrtExecutionProvider",
         "MIGraphXExecutionProvider",
         "OpenVINOExecutionProvider",
         "DmlExecutionProvider",
+        "CoreMLExecutionProvider",
+        "WebGPUExecutionProvider",
         "CPUExecutionProvider",
     ]
     
