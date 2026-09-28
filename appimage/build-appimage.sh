@@ -66,7 +66,9 @@ echo "Building AppImage (${VERSION}, ${ARCH})..."
 ARCH="$ARCH" "$APPIMAGETOOL" "$ROOT_DIR" "$APPIMAGE_OUT"
 
 # --- final output -------------------------------------------------------
-FINAL="$SCRIPT_DIR/${APP_NAME}-${VERSION}-linux-${ARCH}.AppImage"
+# Output to dist/ to keep all build artifacts in one place
+FINAL="$(dirname "$SCRIPT_DIR")/dist/${APP_NAME}-${VERSION}-linux-${ARCH}.AppImage"
+mkdir -p "$(dirname "$FINAL")"
 mv "$APPIMAGE_OUT" "$FINAL"
 chmod +x "$FINAL"
 echo "Done: $FINAL"
