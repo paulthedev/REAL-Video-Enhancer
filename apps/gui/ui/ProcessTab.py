@@ -34,11 +34,11 @@ from src.constants import (
 from src.Util import (
     log,
 )
-from ..DownloadModels import DownloadModel
-from .SettingsTab import Settings
-from ..DiscordRPC import DiscordRPC
-from ..ModelHandler import getModels
-from .RenderQueue import RenderOptions
+from src.DownloadModels import DownloadModel
+from apps.gui.ui.SettingsTab import Settings
+from src.DiscordRPC import DiscordRPC
+from apps.gui.ModelHandler import getModels
+from apps.gui.ui.RenderQueue import RenderOptions
 
 
 class ProcessTab:
