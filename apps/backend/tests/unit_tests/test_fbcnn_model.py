@@ -82,6 +82,7 @@ class TestFBCNNModel(unittest.TestCase):
         # Create a small test model
         test_model = FBCNN(scale=1)
         model.model = test_model
+        model.backend = "pytorch"
         
         # Test forward
         input_tensor = torch.zeros(1, 3, 64, 64)
@@ -97,6 +98,7 @@ class TestFBCNNModel(unittest.TestCase):
         # Create a small test model
         test_model = FBCNN(scale=1)
         model.model = test_model
+        model.backend = "pytorch"
         
         # Test restore
         input_tensor = torch.zeros(1, 3, 64, 64)
