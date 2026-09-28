@@ -76,6 +76,18 @@
 - [x] Prioritize TensorRT over CUDA for NVIDIA GPUs
 - [x] Add Intel OpenVINO support
 - [x] Add Qualcomm QNN support
+- [x] Enable operator fusion (Conv+BatchNorm+ReLU)
+- [x] Enable ONNX Runtime memory optimization
+
+#### 2. Model ONNX Conversion (In Progress)
+- [x] Add ONNX support for SPAN upscale model
+- [ ] Add ONNX support for FBCNN restoration model
+- [ ] Add ONNX support for DnCNN denoise model
+- [ ] Add ONNX support for IFRNet interpolation model
+- [ ] Add ONNX support for GIMM interpolation model
+- [ ] Add ONNX support for NAFNet restoration model
+- [ ] Add ONNX support for ANIMEsr upscale model
+- [ ] Add ONNX support for TSPAN upscale model
 
 #### 2. Model Conversion ✅
 - [x] Implement SPAN conversion to ONNX

@@ -128,8 +128,12 @@ class ONNXBackendLoader(BaseBackend):
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"ONNX model not found: {model_path}")
         
-        # Create session options
+        # Create session options with optimization enabled
         session_options = ort.SessionOptions()
+        session_options.enable_cpu_mem_arena = True
+        session_options.enable_mem_pattern = True
+        session_options.enable_mem_reuse = True
+        session_options.enable_profiling = False
         
         # Load model
         session = ort.InferenceSession(

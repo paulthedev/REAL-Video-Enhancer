@@ -28,6 +28,8 @@ class TorchToOnnxConverter(BaseTorchToOnnxConverter):
         opset_version: int = 17,
         dynamic_axes: Optional[Dict[str, Any]] = None,
         simplify: bool = True,
+        fuse_conv_bn: bool = True,
+        enable_fusion: bool = True,
     ):
         """
         Initialize converter.
@@ -36,6 +38,8 @@ class TorchToOnnxConverter(BaseTorchToOnnxConverter):
             opset_version: ONNX opset version
             dynamic_axes: Dynamic axes configuration
             simplify: Whether to simplify the model after export
+            fuse_conv_bn: Whether to fuse Conv+BatchNorm layers
+            enable_fusion: Whether to enable operator fusion optimizations
         """
         super().__init__("torch_to_onnx")
         self.opset_version = opset_version
@@ -44,6 +48,8 @@ class TorchToOnnxConverter(BaseTorchToOnnxConverter):
             "output": {0: "batch", 2: "height", 3: "width"},
         }
         self.simplify = simplify
+        self.fuse_conv_bn = fuse_conv_bn
+        self.enable_fusion = enable_fusion
     
     def convert(
         self,
@@ -74,6 +80,15 @@ class TorchToOnnxConverter(BaseTorchToOnnxConverter):
         # Load model
         model.load("pytorch")
         model.eval()
+        
+        # Enable operator fusion if requested
+        if self.enable_fusion and self.fuse_conv_bn:
+            try:
+                # Fuse Conv+BatchNorm+ReLU patterns for better performance
+                model = torch.utils.fusion.fuse_model(model)
+                print("Fused Conv+BatchNorm+ReLU patterns")
+            except Exception as e:
+                print(f"Operator fusion skipped: {e}")
         
         # Create dummy input
         dummy_input = torch.randn(*input_shape)

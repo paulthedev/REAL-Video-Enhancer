@@ -67,7 +67,12 @@ class OnnxModelLoader:
         self.available_providers: List[str] = ort.get_available_providers()
         self.provider: str = self._select_provider(provider)
         self.provider_options: Dict[str, Any] = provider_options or {}
+        # Configure session options with optimization enabled
         self.session_options: ort.SessionOptions = session_options or ort.SessionOptions()
+        self.session_options.enable_cpu_mem_arena = True
+        self.session_options.enable_mem_pattern = True
+        self.session_options.enable_mem_reuse = True
+        self.session_options.enable_profiling = False
         self.session: Optional[ort.InferenceSession] = None
         self.inputs: List[ort.ValueInfo] = []
         self.outputs: List[ort.ValueInfo] = []
