@@ -25,7 +25,7 @@ class PyTorchBackendLoader(BaseBackend):
         super().__init__(
             name="pytorch",
             backend_type=BackendType.TORCH,
-            supported_tasks=[ModelTask.INTERPOLATE, ModelTask.UPSCALE, ModelTask.RESTORATION, ModelTask.SCENE_DETECT],
+            supported_tasks=[ModelTask.INTERPOLATE, ModelTask.UPSCALE, ModelTask.RESTORATION, ModelTask.DENOISE, ModelTask.SCENE_DETECT],
         )
         self.models: Dict[str, BaseModel] = {}
         self.device: Optional[torch.device] = None

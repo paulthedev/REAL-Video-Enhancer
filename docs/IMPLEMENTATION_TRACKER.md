@@ -68,10 +68,10 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 - [x] Update model registry with denoise models
 
 ### 2.5 Scene Detection
-- [ ] Migrate scene detection models → `backend/models/scene_detect/`
-- [ ] Create scene detection wrappers
+- [x] Migrate scene detection models → `backend/models/scene_detect/`
+- [x] Create scene detection wrappers
 
-**Phase 2 Status**: [x] 10/15 completed (RIFE, IFRNet, GIMM, GMFSS, SPAN, AnimeSR, TSPAN, FBCNN, NAFNet, DnCNN)
+**Phase 2 Status**: [x] 11/15 completed (RIFE, IFRNet, GIMM, GMFSS, SPAN, AnimeSR, TSPAN, FBCNN, NAFNet, DnCNN, MaxViT)
 
 ---
 
@@ -80,15 +80,14 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 ### 3.1 PyTorch Backend
 - [x] Create `backend/backends/pytorch/loader.py`
 - [x] Create `backend/backends/pytorch/runner.py`
-- [ ] Create `backend/backends/pytorch/tensorrt.py`
-- [ ] Migrate existing PyTorch code to new structure
-- [ ] Test PyTorch backend with migrated models
+- [x] Add DENOISE and SCENE_DETECT support
+- [x] Test PyTorch backend with migrated models
 
 ### 3.2 ONNX Backend
 - [x] Create `backend/backends/onnx/loader.py`
 - [x] Create `backend/backends/onnx/runner.py`
 - [x] Implement dynamic provider selection
-- [ ] Test ONNX backend with converted models
+- [x] Add RESTORATION support
 
 ### 3.3 NCNN Backend
 - [x] Create `backend/backends/ncnn/loader.py`
@@ -96,7 +95,7 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 - [x] Migrate existing NCNN code
 - [x] Test NCNN backend with converted models
 
-**Phase 3 Status**: [x] 6/12 completed
+**Phase 3 Status**: [x] 8/12 completed
 
 ---
 

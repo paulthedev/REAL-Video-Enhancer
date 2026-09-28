@@ -24,7 +24,7 @@ class NCNNBackendLoader(BaseBackend):
         super().__init__(
             name="ncnn",
             backend_type=BackendType.NCNN,
-            supported_tasks=[ModelTask.INTERPOLATE, ModelTask.UPSCALE, ModelTask.RESTORATION],
+            supported_tasks=[ModelTask.INTERPOLATE, ModelTask.UPSCALE, ModelTask.RESTORATION, ModelTask.DENOISE],
         )
         self.models: Dict[str, Dict[str, Any]] = {}
         self.ncnn = None

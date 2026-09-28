@@ -29,7 +29,7 @@ class ONNXBackendLoader(BaseBackend):
         super().__init__(
             name="onnx",
             backend_type=BackendType.ONNX,
-            supported_tasks=[ModelTask.INTERPOLATE, ModelTask.UPSCALE],
+            supported_tasks=[ModelTask.INTERPOLATE, ModelTask.UPSCALE, ModelTask.RESTORATION],
         )
         self.models: Dict[str, Dict[str, Any]] = {}
         self.providers: List[str] = []
