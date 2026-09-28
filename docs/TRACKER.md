@@ -100,7 +100,15 @@ Verify `supports_half` flags for these architectures:
 - [x] Fix FIXME in `Swin2SR/__arch/Swin2SR.py:637`
 - [x] Fix FIXME in `timm/__drop.py:163`
 
-#### 6. Future Enhancements
+#### 6. TODO/FIXME Review
+- [ ] Fix `GRL/__arch/grl.py:502` - `except BaseException` is suspicious
+- [ ] Fix `sudo_SPANPlus/__init__.py:68-70` - Hardcoded scale/input_channels/output_channels
+- [ ] Fix `PLKSR/__arch/RealPLKSR.py:145` - Hardcoded in_ch/out_ch
+- [ ] Fix `FBCNN/__init__.py:76` - Verify supports_bfloat16
+- [ ] Review `GRL/__arch/ops.py:201-203` - Pretrained window size TODOs
+- [ ] Review `RestoreFormer/__arch/restoreformer_arch.py:98` - nn.Embedding handling
+
+#### 7. Future Enhancements
 - [ ] Add TensorRT backend
 - [ ] Create integration tests
 - [ ] Add more unit tests
@@ -124,7 +132,11 @@ Verify `supports_half` flags for these architectures:
 ### PyTorch Limitations
 - Pinned staging buffers are per-process (no cross-process sharing)
 - torch.compile warmup can be slow on first run (~125s on 9070 XT)
-
+### Code Quality Issues
+- `GRL/__arch/grl.py:502` - `except BaseException` catches all exceptions including SystemExit
+- `sudo_SPANPlus/__init__.py:68-70` - Hardcoded scale, input_channels, output_channels
+- `PLKSR/__arch/RealPLKSR.py:145` - Hardcoded in_ch/out_ch (3 channels)
+- `FBCNN/__init__.py:76` - supports_bfloat16 needs verification
 ---
 
 ## References
