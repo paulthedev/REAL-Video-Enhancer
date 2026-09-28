@@ -86,7 +86,9 @@
 - [x] Add ONNX support for FBCNN restoration model
   - Location: `apps/backend/models/restoration/fbcnn.py`
   - Status: Complete - PyTorch, ONNX, NCNN backends implemented
-- [ ] Add ONNX support for DnCNN denoise model
+- [x] Add ONNX support for DnCNN denoise model
+  - Location: `apps/backend/models/denoise/dncnn.py`
+  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
 - [ ] Add ONNX support for IFRNet interpolation model
 - [ ] Add ONNX support for GIMM interpolation model
 - [ ] Add ONNX support for NAFNet restoration model

@@ -92,6 +92,83 @@ class DnCNNModel(BaseDenoiseModel):
         self.config = config
         self.model_path = model_path
         self.model = None
+        self.backend = None
+        self.onnx_loader = None
+        self.ncnn_net = None
+    
+    def load(self, backend_name: str) -> None:
+        """
+        Load model with specified backend.
+        
+        Args:
+            backend_name: Backend to use ("pytorch", "onnx", "ncnn")
+        """
+        self.backend = backend_name
+        
+        if backend_name == "pytorch":
+            self._load_pytorch()
+        elif backend_name == "onnx":
+            self._load_onnx()
+        elif backend_name == "ncnn":
+            self._load_ncnn()
+        else:
+            raise ValueError(f"Unsupported backend: {backend_name}")
+    
+    def _load_pytorch(self) -> None:
+        """Load DnCNN model using PyTorch backend."""
+        import torch
+        
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = DnCNN(
+            in_nc=self.config.in_nc,
+            out_nc=self.config.out_nc,
+            nc=self.config.nc,
+            nb=self.config.nb,
+            act_mode=self.config.act_mode,
+            mode=self.config.mode,
+        ).to(device)
+        
+        # Load weights
+        if self.model_path and os.path.exists(self.model_path):
+            state_dict = torch.load(self.model_path, map_location=device)
+            self.model.load_state_dict(state_dict)
+        
+        self.model.eval()
+        print(f"Loaded DnCNN PyTorch model: {self.model_path}")
+    
+    def _load_onnx(self) -> None:
+        """Load DnCNN model using ONNX backend."""
+        from apps.backend.utils.OnnxLoader import OnnxModelLoader
+        
+        self.onnx_loader = OnnxModelLoader(provider="auto")
+        self.onnx_loader.load(self.model_path)
+        
+        self.onnx_inputs = self.onnx_loader.inputs
+        self.onnx_outputs = self.onnx_loader.outputs
+        self.onnx_provider = self.onnx_loader.provider
+        
+        print(f"Loaded DnCNN ONNX model: {self.model_path}")
+        print(f"  Provider: {self.onnx_provider}")
+    
+    def _load_ncnn(self) -> None:
+        """Load DnCNN model using NCNN backend."""
+        import os
+        
+        param_path = self.model_path.replace('.bin', '.param') if self.model_path.endswith('.bin') else self.model_path
+        bin_path = self.model_path.replace('.param', '.bin') if self.model_path.endswith('.param') else self.model_path
+        
+        if not os.path.exists(param_path) or not os.path.exists(bin_path):
+            raise FileNotFoundError(f"NCNN model files not found: {param_path} or {bin_path}")
+        
+        import ncnn
+        self.ncnn_net = ncnn.Net()
+        self.ncnn_net.load_param(param_path)
+        self.ncnn_net.load_model(bin_path)
+        
+        self.ncnn_param_path = param_path
+        self.ncnn_bin_path = bin_path
+        
+        print(f"Loaded DnCNN NCNN model: {param_path}")
     
     def forward(self, *args, **kwargs):
         """Forward pass - delegates to denoise method."""
@@ -99,9 +176,82 @@ class DnCNNModel(BaseDenoiseModel):
     
     def denoise(self, frame: torch.Tensor) -> torch.Tensor:
         """Denoise a frame."""
-        if self.model is None:
-            raise RuntimeError("Model not loaded. Call load() first.")
-        return self.model(frame)
+        if self.backend == "onnx":
+            return self._denoise_onnx(frame)
+        elif self.backend == "ncnn":
+            return self._denoise_ncnn(frame)
+        elif self.backend == "pytorch":
+            return self._denoise_pytorch(frame)
+        else:
+            raise RuntimeError(f"Inference not supported for backend: {self.backend}")
+    
+    def _denoise_pytorch(self, frame: torch.Tensor) -> torch.Tensor:
+        """Perform PyTorch denoise inference."""
+        with torch.no_grad():
+            return self.model(frame)
+    
+    def _denoise_onnx(self, frame: torch.Tensor) -> torch.Tensor:
+        """Perform ONNX denoise inference."""
+        import numpy as np
+        
+        # Convert tensor to numpy (NCHW to NHWC)
+        frame_np = frame.squeeze(0).permute(1, 2, 0).cpu().numpy()
+        frame_np = frame_np.astype(np.float32)
+        
+        # Run inference
+        input_name = self.onnx_inputs[0].name
+        output_name = self.onnx_outputs[0].name
+        
+        outputs = self.onnx_loader.run(
+            {input_name: frame_np},
+            [output_name]
+        )
+        
+        # Convert back to tensor (NHWC to NCHW)
+        result = torch.from_numpy(outputs[0]).permute(2, 0, 1).unsqueeze(0)
+        
+        return result
+    
+    def _denoise_ncnn(self, frame: torch.Tensor) -> torch.Tensor:
+        """Perform NCNN denoise inference."""
+        import numpy as np
+        
+        # Convert tensor to numpy (NCHW to NHWC)
+        frame_np = frame.squeeze(0).permute(1, 2, 0).cpu().numpy()
+        frame_np = (frame_np * 255.0).astype(np.uint8)
+        
+        # Create NCNN Mat
+        h, w, c = frame_np.shape
+        mat = ncnn.Mat(h, w, c, frame_np.flatten())
+        
+        # Create extractor
+        extractor = self.ncnn_net.create_extractor()
+        extractor.set_num_thread(4)
+        extractor.input("input.1", mat)
+        
+        # Run inference
+        _, out_mat = extractor.extract("output.1")
+        
+        # Convert output to tensor
+        output_data = out_mat.to_pixels()
+        result = torch.from_numpy(output_data).permute(2, 0, 1).unsqueeze(0) / 255.0
+        
+        return result
+    
+    def unload(self) -> None:
+        """Unload model and free memory."""
+        import gc
+        
+        if self.backend == "onnx" and hasattr(self, 'onnx_loader'):
+            self.onnx_loader.unload()
+        elif self.backend == "ncnn" and hasattr(self, 'ncnn_net'):
+            self.ncnn_net = None
+        elif self.backend == "pytorch":
+            self.model = None
+        
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
     
     def get_config(self) -> Dict[str, Any]:
         """Get model configuration."""
@@ -130,6 +280,10 @@ _dncnn_instance = DnCNNModel(config=DnCNNConfig())
 register_model(
     name="dncnn",
     model=_dncnn_instance,
-    formats={ModelFormat.PT: "models/denoise/dncnn.pth"},
-    backends=["pytorch", "ncnn"],
+    formats={
+        ModelFormat.PT: "models/denoise/dncnn.pth",
+        ModelFormat.ONNX: "models/denoise/dncnn.onnx",
+        ModelFormat.NCNN: "models/denoise/dncnn.ncnn",
+    },
+    backends=["pytorch", "onnx", "ncnn"],
 )
