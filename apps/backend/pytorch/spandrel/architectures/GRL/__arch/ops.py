@@ -198,9 +198,9 @@ def get_relative_coords_table_all(
     ts_n = [-(w2 - 1) - (w1 - w2) // 2 for w1, w2 in zip(ws, aws)]
     pts = [w1 - 1 - (w1 - w2) // 2 for w1, w2 in zip(pws, paws)]
 
-    # TODO: pretrained window size and pretrained anchor window size is only used here.
-    # TODO: Investigate whether it is really important to use this setting when finetuning large window size
-    # TODO: based on pretrained weights with small window size.
+    # Pretrained window size and pretrained anchor window size are only used here.
+    # Note: These settings may need investigation for finetuning with large window sizes
+    # based on pretrained weights with small window sizes.
 
     coord_h = torch.arange(ts_n[0], ts_p[0] + 1, dtype=torch.float32)
     coord_w = torch.arange(ts_n[1], ts_p[1] + 1, dtype=torch.float32)

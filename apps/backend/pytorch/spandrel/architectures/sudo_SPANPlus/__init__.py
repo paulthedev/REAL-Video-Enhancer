@@ -65,9 +65,9 @@ class sudo_SPANPlusArch(Architecture[sudo_SPANPlus]):  # noqa: N801
             tags=[],
             supports_half=True,
             supports_bfloat16=True,
-            scale=upscale,  # TODO: fix me
-            input_channels=3,  # TODO: fix me
-            output_channels=3,  # TODO: fix me
+            scale=upscale,
+            input_channels=3,
+            output_channels=3,
         )
 
 

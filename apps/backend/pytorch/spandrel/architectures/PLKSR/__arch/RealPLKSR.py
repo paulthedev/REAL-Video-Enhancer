@@ -141,8 +141,7 @@ class RealPLKSR(nn.Module):
     ):
         super().__init__()
 
-        # Perhaps some day in the future we can make these user-customizable,
-        # but for now I just want to leave them hardcoded and focus on dysample detection
+        # Hardcoded for dysample detection focus
         in_ch: int = 3
         out_ch: int = 3
 

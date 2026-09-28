@@ -499,7 +499,7 @@ class GRL(nn.Module):
     def check_image_size(self, x):
         try:
             return pad_to_multiple(x, self.pad_size, mode="reflect")
-        except BaseException:  # TODO: this is suspicious
+        except Exception:
             return pad_to_multiple(x, self.pad_size, mode="constant")
 
     def forward_features(self, x):
