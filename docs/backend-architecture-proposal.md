@@ -27,15 +27,19 @@ PyTorch remains as a **fallback backend** for:
 - Complex control flow or dynamic shapes
 - Development and debugging
 
-### Deprecated: NCNN
+### Tertiary Backend: NCNN
 
-NCNN is **deprecated for desktop use**. It was designed for mobile/embedded deployment. For desktop applications, ONNX Runtime with TensorRT provides superior performance.
+NCNN remains as the **tertiary backend** for:
+- Mobile/embedded deployment
+- Vulkan-based GPU inference
+- Low-latency scenarios
+- Platforms where ONNX Runtime has limitations
 
 ### Backend Priority Order
 
 1. **ONNX Runtime** (primary) - Automatic provider selection: TensorRT > CUDA > MIGraphX > OpenVINO > QNN > DirectML > CoreML > WebGPU > CPU
 2. **PyTorch** (fallback) - For models that can't use ONNX
-3. **NCNN** (deprecated) - Mobile/embedded only
+3. **NCNN** (tertiary) - Mobile/embedded, Vulkan GPU inference
 
 ## Proposed Structure
 
