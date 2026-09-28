@@ -105,21 +105,21 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 - [x] Create `backend/converters/torch_to_onnx.py`
 - [x] Implement `torch.onnx.export()` wrapper
 - [x] Add pnnx support
-- [ ] Test conversion with RIFE model
+- [x] Test conversion with RIFE model
 
 ### 4.2 ONNX to NCNN Converter
 - [x] Create `backend/converters/onnx_to_ncnn.py`
 - [x] Implement pnnx wrapper
 - [x] Implement onnx2ncnn fallback
-- [ ] Test conversion with RIFE ONNX model
+- [x] Test conversion with RIFE ONNX model
 
 ### 4.3 CLI Tool
 - [x] Create `scripts/convert_model.py`
 - [x] Add model conversion CLI
-- [ ] Add model listing CLI
-- [ ] Document usage
+- [x] Add model listing CLI
+- [x] Document usage
 
-**Phase 4 Status**: [~] 7/8 completed
+**Phase 4 Status**: [x] 8/8 completed
 
 ---
 
