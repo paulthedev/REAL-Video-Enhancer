@@ -1,3 +1,11 @@
+# RVE 2.4.3
+### Changed
+ - Restructured repository with apps/ directory
+ - Migrated backend to backend-agnostic architecture
+ - Co-located tests with their respective apps
+ - Updated all import paths
+ - Added backend version module
+
 # RVE 2.4.2
 ### Changed
  - Restructured repository with apps/ directory

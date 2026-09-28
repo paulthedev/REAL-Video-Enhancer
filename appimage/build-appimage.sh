@@ -16,7 +16,7 @@
 set -euo pipefail
 
 BUILD_DIR="${1:?Usage: build-appimage.sh <build-dir> [version] [arch]}"
-VERSION="${2:-2.4.2}"
+VERSION="${2:-2.4.3}"
 ARCH="${3:-x86_64}"
 APP_NAME="REAL-Video-Enhancer"
 
