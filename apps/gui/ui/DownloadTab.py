@@ -3,10 +3,10 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox
 from .QTcustom import RegularQTPopup, NetworkCheckPopup, remove_combobox_item_by_text
 from ..DownloadDeps import DownloadDependencies
 from .Updater import ApplicationUpdater
-from src.constants import IS_FLATPAK, PLATFORM, CWD, USE_LOCAL_BACKEND, HOME_PATH, PLATFORM, IS_FLATPAK, CWD, CPU_ARCH
+from apps.gui.constants import IS_FLATPAK, PLATFORM, CWD, USE_LOCAL_BACKEND, HOME_PATH, PLATFORM, IS_FLATPAK, CWD, CPU_ARCH
 from ..BuiltInTorchVersions import TorchVersion
 from .GPUDetect import GPUDetect
-from src.Util import FileHandler
+from apps.gui.Util import FileHandler
 
 
 class DownloadTab:

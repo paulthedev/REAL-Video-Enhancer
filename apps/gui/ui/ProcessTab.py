@@ -19,7 +19,7 @@ from .QTcustom import (
     show_layout_widgets,
     hide_layout_widgets,
 )
-from src.constants import (
+from apps.gui.constants import (
     BACKEND_PATH,
     PYTHON_EXECUTABLE_PATH,
     MODELS_PATH,
@@ -31,12 +31,12 @@ from src.constants import (
     CWD,
     PLATFORM,
 )
-from src.Util import (
+from apps.gui.Util import (
     log,
 )
-from src.DownloadModels import DownloadModel
+from apps.gui.DownloadModels import DownloadModel
 from apps.gui.ui.SettingsTab import Settings
-from src.DiscordRPC import DiscordRPC
+from apps.gui.DiscordRPC import DiscordRPC
 from apps.gui.ModelHandler import getModels
 from apps.gui.ui.RenderQueue import RenderOptions
 

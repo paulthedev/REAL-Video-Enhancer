@@ -146,7 +146,7 @@ class RifeIFNet(nn.Module):
         
     def forward(self, img0, img1, timestep, tenFlow_div, backwarp_tenGrid, f0, f1, scale=None):
         """Forward pass for RIFE interpolation."""
-        from apps.backend.src.pytorch.InterpolateArchs.RIFE.warplayer import warp
+        from apps.backend.pytorch.InterpolateArchs.RIFE.warplayer import warp
         from torch.nn.functional import interpolate
         
         img0 = img0.clamp(0., 1.)
@@ -268,27 +268,27 @@ class RifeModel(BaseInterpolateModel):
     
     def _load_pytorch(self) -> None:
         """Load RIFE model using PyTorch backend."""
-        from apps.backend.src.pytorch.InterpolateArchs.RIFE.warplayer import warp
-        from apps.backend.src.pytorch.TorchUtils import TorchUtils
+        from apps.backend.pytorch.InterpolateArchs.RIFE.warplayer import warp
+        from apps.backend.pytorch.TorchUtils import TorchUtils
         
         device = TorchUtils.handle_device(self.device_type, gpu_id=self.gpu_id)
         dtype = TorchUtils.handle_precision(self.dtype_str)
         
         # Detect architecture version
-        from apps.backend.src.pytorch.InterpolateArchs.DetectInterpolateArch import ArchDetect
+        from apps.backend.pytorch.InterpolateArchs.DetectInterpolateArch import ArchDetect
         ad = ArchDetect(self.model_path)
         arch_name = ad.getArchName().lower()
         
         # Import appropriate architecture
         arch_map = {
-            "rife46": "backend.src.pytorch.InterpolateArchs.RIFE.rife46IFNET",
-            "rife47": "backend.src.pytorch.InterpolateArchs.RIFE.rife47IFNET",
-            "rife413": "backend.src.pytorch.InterpolateArchs.RIFE.rife413IFNET",
-            "rife420": "backend.src.pytorch.InterpolateArchs.RIFE.rife420IFNET",
-            "rife421": "backend.src.pytorch.InterpolateArchs.RIFE.rife421IFNET",
-            "rife422lite": "backend.src.pytorch.InterpolateArchs.RIFE.rife422_liteIFNET",
-            "rife425": "backend.src.pytorch.InterpolateArchs.RIFE.rife425IFNET",
-            "rife425_heavy": "backend.src.pytorch.InterpolateArchs.RIFE.rife425_heavyIFNET",
+            "rife46": "apps.backend.pytorch.InterpolateArchs.RIFE.rife46IFNET",
+            "rife47": "apps.backend.pytorch.InterpolateArchs.RIFE.rife47IFNET",
+            "rife413": "apps.backend.pytorch.InterpolateArchs.RIFE.rife413IFNET",
+            "rife420": "apps.backend.pytorch.InterpolateArchs.RIFE.rife420IFNET",
+            "rife421": "apps.backend.pytorch.InterpolateArchs.RIFE.rife421IFNET",
+            "rife422lite": "apps.backend.pytorch.InterpolateArchs.RIFE.rife422_liteIFNET",
+            "rife425": "apps.backend.pytorch.InterpolateArchs.RIFE.rife425IFNET",
+            "rife425_heavy": "apps.backend.pytorch.InterpolateArchs.RIFE.rife425_heavyIFNET",
         }
         
         if arch_name not in arch_map:
@@ -374,7 +374,7 @@ class RifeModel(BaseInterpolateModel):
         
         # DRBA setup
         if self.config.drba:
-            from apps.backend.src.pytorch.DRBA.infer import DRBA_RVE
+            from apps.backend.pytorch.DRBA.infer import DRBA_RVE
             self.drba = DRBA_RVE(
                 model_type="rife",
                 model_path=self.config.drba_model_path or "./flownet.pkl",

@@ -2,11 +2,11 @@ import os
 import re
 
 from PySide6.QtWidgets import QMainWindow, QFileDialog
-from src.constants import PLATFORM, HOME_PATH
-from src.Util import currentDirectory, checkForWritePermissions, open_folder, log, FileHandler
+from apps.gui.constants import PLATFORM, HOME_PATH
+from apps.gui.Util import currentDirectory, checkForWritePermissions, open_folder, log, FileHandler
 from .QTcustom import RegularQTPopup
-from src.GenerateFFMpegCommand import FFMpegCommand
-from src.VideoInfo import VideoLoader
+from apps.gui.GenerateFFMpegCommand import FFMpegCommand
+from apps.gui.VideoInfo import VideoLoader
 
 class SettingsTab:
     def __init__(

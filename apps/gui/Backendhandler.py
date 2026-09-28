@@ -1,11 +1,11 @@
 import os
 
-from src.constants import BACKEND_PATH, PYTHON_EXECUTABLE_PATH, PYTHON_DIRECTORY, PLATFORM, IS_INSTALLED, IS_FLATPAK, HAS_NETWORK_ON_STARTUP, CWD
-from src.Util import (
+from apps.gui.constants import BACKEND_PATH, PYTHON_EXECUTABLE_PATH, PYTHON_DIRECTORY, PLATFORM, IS_INSTALLED, IS_FLATPAK, HAS_NETWORK_ON_STARTUP, CWD
+from apps.gui.Util import (
     FileHandler
 )
 from PySide6.QtWidgets import QMessageBox
-from src.version import version
+from apps.gui.version import version
 
 
 class BackendHandler:

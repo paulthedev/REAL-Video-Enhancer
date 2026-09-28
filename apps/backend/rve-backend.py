@@ -1,8 +1,8 @@
 import os
 import argparse
 import sys
-from src.version import __version__
-from src.utils.Util import log
+from apps.backend.version import __version__
+from apps.backend.utils.Util import log
 
 
 class HandleApplication:
@@ -17,12 +17,12 @@ class HandleApplication:
             profiler = Profiler()
             profiler.start()"""
             if self.args.ffmpeg_path == None:
-                from src.utils.GetFFMpeg import download_ffmpeg
+                from apps.backend.utils.GetFFMpeg import download_ffmpeg
                 self.ffmpeg_path = download_ffmpeg()
             else:
                 self.ffmpeg_path = self.args.ffmpeg_path
 
-            from src.utils.VideoInfo import OpenCVInfo, print_video_info
+            from apps.backend.utils.VideoInfo import OpenCVInfo, print_video_info
             
             if self.args.print_video_info:
                 video_info = OpenCVInfo(self.args.print_video_info, ffmpeg_path=self.ffmpeg_path)
@@ -74,7 +74,7 @@ class HandleApplication:
             return False
 
     def listBackends(self):
-        from src.utils.BackendDetect import (
+        from apps.backend.utils.BackendDetect import (
             BackendDetect,
             MINIMUM_PYTORCH_CAP,
         )
@@ -130,7 +130,7 @@ class HandleApplication:
 
     def renderVideo(self):
         
-        from src.RenderVideo import Render
+        from apps.backend.RenderVideo import Render
         
 
         Render(

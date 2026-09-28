@@ -193,8 +193,8 @@ class TestRifeModel(unittest.TestCase):
         self.assertEqual(model.height, 720)
         self.assertEqual(model.scale, 1.0)
     
-    @patch('apps.backend.src.pytorch.InterpolateArchs.DetectInterpolateArch.ArchDetect')
-    @patch('apps.backend.src.pytorch.TorchUtils.TorchUtils')
+    @patch('apps.backend.pytorch.InterpolateArchs.DetectInterpolateArch.ArchDetect')
+    @patch('apps.backend.pytorch.TorchUtils.TorchUtils')
     def test_load_pytorch(self, mock_torch_utils, mock_arch_detect):
         """Test PyTorch loading (mocked)."""
         config = RifeConfig(version=RifeVersion.RIFE422_LITE)

@@ -65,8 +65,8 @@ def main():
 
     import torch
 
-    from src.pytorch.UpscaleModelWrapper import UpscaleModelWrapper
-    from src.pytorch.TorchUtils import TorchUtils
+    from apps.backend.pytorch.UpscaleModelWrapper import UpscaleModelWrapper
+    from apps.backend.pytorch.TorchUtils import TorchUtils
 
     device = torch.device("cuda", args.gpu_id)
     print(f"device: {device} | name: {torch.cuda.get_device_name(args.gpu_id)}")

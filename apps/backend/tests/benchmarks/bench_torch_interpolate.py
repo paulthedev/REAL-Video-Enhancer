@@ -49,8 +49,8 @@ def parse_args():
 def main():
     args = parse_args()
 
-    from src.pytorch.InterpolateTorch import InterpolateFactory
-    from src.utils.Frame import Frame
+    from apps.backend.pytorch.InterpolateTorch import InterpolateFactory
+    from apps.backend.utils.Frame import Frame
 
     device_name = torch.cuda.get_device_name(args.gpu_id) if torch.cuda.is_available() else "cpu"
     print(f"device: cuda:{args.gpu_id} | name: {device_name}")

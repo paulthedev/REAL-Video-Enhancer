@@ -1,4 +1,4 @@
-from src.Util import openLink, networkCheck
+from apps.gui.Util import openLink, networkCheck
 import requests
 
 

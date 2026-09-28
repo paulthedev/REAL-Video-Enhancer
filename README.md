@@ -3,7 +3,7 @@
 [![pypresence](https://img.shields.io/badge/using-pypresence-00bb88.svg?style=for-the-badge&logo=discord&logoWidth=20)](https://github.com/qwertyquerty/pypresence)
 
 ![license](https://img.shields.io/github/license/tntwise/real-video-enhancer)
-![Version](https://img.shields.io/badge/Version-2.4.1-blue)
+![Version](https://img.shields.io/badge/Version-2.4.2-blue)
 ![downloads_total](https://img.shields.io/github/downloads/tntwise/REAL-Video-Enhancer/total.svg?label=downloads%40total)
 <a href="https://discord.gg/hwGHXga8ck">
       <img src="https://img.shields.io/discord/1041502781808328704?label=Discord" alt="Discord Shield"/></a>
@@ -131,13 +131,33 @@
   | Why am I getting (Insert Vulkan Error here)? | This usually is an OOM (Out Of Memory) error, this can indicate a weak iGPU or very old GPU, I recommeding trying out the <a href="https://github.com/TNTwise/REAL-Video-Enhancer-Colab">Colab Notebook</a>  instead.
 
 
+# Repository Structure
+```
+REAL-Video-Enhancer/
+├── apps/
+│   ├── gui/              # Main GUI application
+│   │   ├── ui/           # UI components
+│   │   ├── Backendhandler.py
+│   │   ├── ModelHandler.py
+│   │   └── ...
+│   └── backend/          # Backend processing library
+│       ├── models/       # Backend-agnostic model definitions
+│       ├── backends/     # PyTorch, ONNX, NCNN backends
+│       ├── converters/   # Model format converters
+│       ├── pytorch/      # PyTorch utilities and architectures
+│       └── utils/        # Shared utilities
+├── config/               # Configuration files
+├── scripts/              # CLI tools
+└── docs/                 # Documentation
+```
+
 # Cloning:
 ```
 # Nightly
 git clone --recurse-submodules https://github.com/TNTwise/REAL-Video-Enhancer 
 
 # Stable
-git clone --recurse-submodules https://github.com/TNTwise/REAL-Video-Enhancer --branch 2.4.1
+git clone --recurse-submodules https://github.com/TNTwise/REAL-Video-Enhancer --branch 2.4.2
 ```
 # Building:
 

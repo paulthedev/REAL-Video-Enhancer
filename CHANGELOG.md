@@ -1,3 +1,10 @@
+# RVE 2.4.2
+### Changed
+ - Restructured repository with apps/ directory
+ - Migrated backend to backend-agnostic architecture
+ - Co-located tests with their respective apps
+ - Updated all import paths
+
 # RVE 2.4.1
 ### Fixed
  - Sudo scene detect models on non-nvidia gpus.

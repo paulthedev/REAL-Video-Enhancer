@@ -27,7 +27,7 @@ class TestPyTorchBackendLoader(unittest.TestCase):
         self.assertIsNone(loader.device)
         self.assertIsNone(loader.dtype)
     
-    @patch('apps.backend.src.pytorch.TorchUtils.TorchUtils')
+    @patch('apps.backend.pytorch.TorchUtils.TorchUtils')
     def test_initialize(self, mock_torch_utils):
         """Test backend initialization."""
         loader = PyTorchBackendLoader()

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 from PySide6.QtWidgets import QMessageBox
 
-from src.constants import (
+from apps.gui.constants import (
     PLATFORM,
     PYTHON_DIRECTORY,
     PYTHON_EXECUTABLE_PATH,
@@ -16,13 +16,13 @@ from src.constants import (
     USE_LOCAL_BACKEND,
     IS_STEAM
 )
-from src.version import version, backend_dev_version
-from src.GpuHardware import (
+from apps.gui.version import version, backend_dev_version
+from apps.gui.GpuHardware import (
     detect_gpu_hardware,
     FAMILY_HARDWARE,
     HARDWARE_FAMILIES,
 )
-from src.Util import (
+from apps.gui.Util import (
     FileHandler,
     log,
     extractTarGZ,

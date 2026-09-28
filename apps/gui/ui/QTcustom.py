@@ -59,8 +59,8 @@ from PySide6.QtWidgets import (
 )
 from multiprocessing import Process
 from .QTstyle import styleSheet, Palette
-from src.constants import HAS_NETWORK_ON_STARTUP, PLATFORM
-from src.Util import log, networkCheck, subprocess_popen_without_terminal
+from apps.gui.constants import HAS_NETWORK_ON_STARTUP, PLATFORM
+from apps.gui.Util import log, networkCheck, subprocess_popen_without_terminal
 
 def disable_combobox_item(combobox: QComboBox, index):
     """

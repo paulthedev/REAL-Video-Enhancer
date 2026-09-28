@@ -78,20 +78,20 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 ## Phase 3: Create Thin Backends
 
 ### 3.1 PyTorch Backend
-- [x] Create `apps/backend/backends/pytorch/loader.py`
-- [x] Create `apps/backend/backends/pytorch/runner.py`
+- [x] Create `backend/backends/pytorch/loader.py`
+- [x] Create `backend/backends/pytorch/runner.py`
 - [x] Add DENOISE and SCENE_DETECT support
 - [x] Test PyTorch backend with migrated models
 
 ### 3.2 ONNX Backend
-- [x] Create `apps/backend/backends/onnx/loader.py`
-- [x] Create `apps/backend/backends/onnx/runner.py`
+- [x] Create `backend/backends/onnx/loader.py`
+- [x] Create `backend/backends/onnx/runner.py`
 - [x] Implement dynamic provider selection
 - [x] Add RESTORATION support
 
 ### 3.3 NCNN Backend
-- [x] Create `apps/backend/backends/ncnn/loader.py`
-- [x] Create `apps/backend/backends/ncnn/runner.py`
+- [x] Create `backend/backends/ncnn/loader.py`
+- [x] Create `backend/backends/ncnn/runner.py`
 - [x] Migrate existing NCNN code
 - [x] Test NCNN backend with converted models
 
@@ -102,13 +102,13 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 ## Phase 4: Create Converters
 
 ### 4.1 Torch to ONNX Converter
-- [x] Create `apps/backend/converters/torch_to_onnx.py`
+- [x] Create `backend/converters/torch_to_onnx.py`
 - [x] Implement `torch.onnx.export()` wrapper
 - [x] Add pnnx support
 - [x] Test conversion with RIFE model
 
 ### 4.2 ONNX to NCNN Converter
-- [x] Create `apps/backend/converters/onnx_to_ncnn.py`
+- [x] Create `backend/converters/onnx_to_ncnn.py`
 - [x] Implement pnnx wrapper
 - [x] Implement onnx2ncnn fallback
 - [x] Test conversion with RIFE ONNX model
@@ -131,17 +131,17 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 - [x] Test UI functionality
 
 ### 5.2 Backend Integration
-- [x] Move `src/Backendhandler.py` → `apps/gui/backend_handler.py`
+- [x] Move `src/Backendhandler.py` → `apps/gui/Backendhandler.py`
 - [x] Update backend detection logic
 - [x] Test backend selection in UI
 
 ### 5.3 Model Management
-- [x] Move `src/ModelHandler.py` → `apps/gui/model_handler.py`
+- [x] Move `src/ModelHandler.py` → `apps/gui/ModelHandler.py`
 - [x] Update model loading logic
 - [x] Test model selection in UI
 
 ### 5.4 Dependency Management
-- [x] Move `src/DownloadDeps.py` → `apps/gui/download_deps.py`
+- [x] Move `src/DownloadDeps.py` → `apps/gui/DownloadDeps.py`
 - [x] Update download logic
 - [x] Test dependency installation
 
@@ -151,35 +151,26 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 
 ## Phase 6: Cleanup & Testing
 
-### 6.1 Remove Old Structure
-- [x] Delete `backend/src/pytorch/` (after migration)
-- [x] Delete `backend/src/ncnn/` (after migration)
-- [x] Delete `backend/src/onnx/` (after migration)
-- [x] Delete `src/ui/` (after migration)
-- [x] Delete `src/Backendhandler.py` (after migration)
-- [x] Delete `src/ModelHandler.py` (after migration)
-- [x] Delete `src/DownloadDeps.py` (after migration)
+### 6.1 Update Imports
+- [ ] Fix all import paths
+- [ ] Update `__init__.py` files
+- [ ] Update `requirements.txt`
+- [ ] Update `setup.py`
 
-### 6.2 Update Imports
-- [x] Fix all import paths
-- [x] Update `__init__.py` files
-- [x] Update `requirements.txt`
-- [x] Update `setup.py`
+### 6.2 Testing
+- [ ] Run unit tests
+- [ ] Run integration tests
+- [ ] Run benchmarks
+- [ ] Test full pipeline end-to-end
+- [ ] Test model conversion pipeline
 
-### 6.3 Testing
-- [x] Run unit tests
-- [x] Run integration tests
-- [x] Run benchmarks
-- [x] Test full pipeline end-to-end
-- [x] Test model conversion pipeline
+### 6.3 Documentation
+- [ ] Update README.md
+- [ ] Update architecture docs
+- [ ] Add migration guide
+- [ ] Add API documentation
 
-### 6.4 Documentation
-- [x] Update README.md
-- [x] Update architecture docs
-- [x] Add migration guide
-- [x] Add API documentation
-
-**Phase 6 Status**: [x] 15/15 completed
+**Phase 6 Status**: [ ] 0/12 completed
 
 ---
 
@@ -200,6 +191,21 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 
 ---
 
+## Phase 8: Final Cleanup
+
+### 8.1 Remove Old Structure
+- [ ] Delete `backend/src/pytorch/` (after migration)
+- [ ] Delete `backend/src/ncnn/` (after migration)
+- [ ] Delete `backend/src/onnx/` (after migration)
+- [ ] Delete `src/ui/` (after migration)
+- [ ] Delete `src/Backendhandler.py` (after migration)
+- [ ] Delete `src/ModelHandler.py` (after migration)
+- [ ] Delete `src/DownloadDeps.py` (after migration)
+
+**Phase 8 Status**: [ ] 0/7 completed
+
+---
+
 ## Summary
 
 | Phase | Status | Progress |
@@ -209,10 +215,11 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 | Phase 3: Create Thin Backends | ✅ Complete | 12/12 |
 | Phase 4: Create Converters | ✅ Complete | 8/8 |
 | Phase 5: Migrate Frontend | ✅ Complete | 12/12 |
-| Phase 6: Cleanup & Testing | ✅ Complete | 15/15 |
+| Phase 6: Cleanup & Testing | ⏳ Not Started | 0/12 |
 | Phase 7: Release | ⏳ Not Started | 0/5 |
+| Phase 8: Final Cleanup | ⏳ Not Started | 0/7 |
 
-**Total Progress**: 72/77 tasks completed (94%)
+**Total Progress**: 57/69 tasks completed (83%)
 
 ---
 
@@ -239,9 +246,10 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 | Phase 3: Create Backends | [ ] | 0/12 |
 | Phase 4: Create Converters | [ ] | 0/8 |
 | Phase 5: Migrate Frontend | [ ] | 0/12 |
-| Phase 6: Cleanup & Testing | [ ] | 0/15 |
+| Phase 6: Cleanup & Testing | [ ] | 0/12 |
 | Phase 7: Release | [ ] | 0/5 |
-| **TOTAL** | | **0/77** |
+| Phase 8: Final Cleanup | [ ] | 0/7 |
+| **TOTAL** | | **0/81** |
 
 ---
 

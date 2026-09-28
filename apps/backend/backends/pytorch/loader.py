@@ -45,7 +45,7 @@ class PyTorchBackendLoader(BaseBackend):
             dtype: Data type ("auto", "fp16", "fp32")
             gpu_id: GPU ID
         """
-        from apps.backend.src.pytorch.TorchUtils import TorchUtils
+        from apps.backend.pytorch.TorchUtils import TorchUtils
         
         self.device = TorchUtils.handle_device(device, gpu_id=gpu_id)
         self.dtype = TorchUtils.handle_precision(dtype)

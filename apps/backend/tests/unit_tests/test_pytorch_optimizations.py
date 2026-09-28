@@ -85,7 +85,7 @@ def width_height():
 
 
 def _make_upscale(model_path, device, W, H, tilesize=0, torch_compile=True):
-    from src.pytorch.UpscaleTorch import UpscalePytorch
+    from apps.backend.pytorch.UpscaleTorch import UpscalePytorch
 
     kwargs = dict(device=str(device.type), width=W, height=H, tilesize=tilesize)
     if "cuda" in str(device):
@@ -223,7 +223,7 @@ def test_compile_disabled_restores_eager(device, model_path, width_height):
 def test_enable_compile_skips_temporal_models(device):
     """enable_compile() must return None (helper untouched) for non-spandrel
     models, so AnimeSR/TSPAN temporal helpers keep running eager."""
-    from src.pytorch.UpscaleModelWrapper import UpscaleModelWrapper
+    from apps.backend.pytorch.UpscaleModelWrapper import UpscaleModelWrapper
 
     class _Stub:
         pass

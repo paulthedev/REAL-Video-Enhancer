@@ -14,8 +14,8 @@ import os
 # Add backend to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from backend.converters.torch_to_onnx import convert_model as convert_torch_to_onnx
-from backend.converters.onnx_to_ncnn import convert_model as convert_onnx_to_ncnn
+from apps.backend.converters.torch_to_onnx import convert_model as convert_torch_to_onnx
+from apps.backend.converters.onnx_to_ncnn import convert_model as convert_onnx_to_ncnn
 
 
 def main():

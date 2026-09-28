@@ -1,4 +1,4 @@
-from src.ModelHandler import (
+from apps.gui.ModelHandler import (
     ncnnInterpolateModels,
     pytorchInterpolateModels,
     ncnnUpscaleModels,

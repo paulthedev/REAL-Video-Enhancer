@@ -1,2 +1,0 @@
-__version__ = "2.4.2-dev1" # this is the version of the backend, this is compared to the version of the front end. need to be the same
-

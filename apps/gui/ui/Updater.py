@@ -5,7 +5,7 @@ import subprocess
 import shutil
 
 from .QTcustom import DownloadProgressPopup, NetworkCheckPopup, RegularQTPopup
-from src.constants import (
+from apps.gui.constants import (
     PYTHON_EXECUTABLE_PATH,
     PYTHON_DIRECTORY,
     BACKEND_PATH,
@@ -20,8 +20,8 @@ from src.constants import (
     
 )
 from ..DownloadDeps import DownloadDependencies
-from src.version import version, backend_dev_version
-from src.Util import FileHandler, networkCheck, log
+from apps.gui.version import version, backend_dev_version
+from apps.gui.Util import FileHandler, networkCheck, log
 
 # version = "2.1.0" # for debugging
 
