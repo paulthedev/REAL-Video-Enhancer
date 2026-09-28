@@ -12,6 +12,7 @@ class ModelTask(Enum):
     INTERPOLATE = "interpolate"
     UPSCALE = "upscale"
     RESTORATION = "restoration"
+    DENOISE = "denoise"
     SCENE_DETECT = "scene_detect"
 
 
