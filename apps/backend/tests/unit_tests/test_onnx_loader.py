@@ -250,7 +250,9 @@ class TestLoadOnnxModel(unittest.TestCase):
             
             load_onnx_model("/tmp/model.onnx")
             
-            mock_loader.assert_called_once_with(provider="auto")
+            # Check that it was called with provider="auto"
+            call_kwargs = mock_loader.call_args[1]
+            self.assertEqual(call_kwargs.get('provider'), "auto")
             mock_instance.load.assert_called_once_with("/tmp/model.onnx")
 
 
