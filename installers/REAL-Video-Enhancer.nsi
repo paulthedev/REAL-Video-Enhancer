@@ -30,7 +30,7 @@
 
 ; UI
   
-  !define MUI_ICON "icons/logo-v2.ico"
+  !define MUI_ICON "apps/gui/icons/logo-v2.ico"
   !define MUI_WELCOMEPAGE_TITLE "${SLUG} Setup"
 
 ;--------------------------------
@@ -57,7 +57,7 @@ Section "install"
     SectionIn RO
     SetOutPath "$INSTDIR"
     File /r "dist\REAL-Video-Enhancer\*.*" 
-    File /r "icons\logo-v2.ico" 
+    File /r "apps\gui\icons\logo-v2.ico" 
     createDirectory "$COMMONSMPROGRAMS\${COMPANYNAME}"
 	  createShortCut "$COMMONSMPROGRAMS\${COMPANYNAME}\${NAME}.lnk" "$INSTDIR\REAL-Video-Enhancer.exe" "" "$INSTDIR\logo-v2.ico"
     writeUninstaller "$INSTDIR\Uninstall.exe"
