@@ -8,6 +8,35 @@ The current structure mixes model logic with backend logic:
 - Models can't be easily converted between backends
 - Each backend reimplements model loading/running logic
 
+## Backend Strategy
+
+### Primary Backend: ONNX Runtime
+
+ONNX Runtime is now the **primary backend** for all model inference. It provides:
+
+- **Universal hardware support**: TensorRT (NVIDIA), CUDA, MIGraphX (AMD), OpenVINO (Intel), QNN (Qualcomm), DirectML (Windows), CoreML (Apple), WebGPU, CPU
+- **Best performance**: TensorRT compiles subgraphs to optimized engines
+- **Cross-platform**: Windows, macOS, Linux, ARM64
+- **Mature ecosystem**: Well-maintained, extensive documentation
+
+### Fallback Backend: PyTorch
+
+PyTorch remains as a **fallback backend** for:
+- Models that don't export well to ONNX
+- Training workflows
+- Complex control flow or dynamic shapes
+- Development and debugging
+
+### Deprecated: NCNN
+
+NCNN is **deprecated for desktop use**. It was designed for mobile/embedded deployment. For desktop applications, ONNX Runtime with TensorRT provides superior performance.
+
+### Backend Priority Order
+
+1. **ONNX Runtime** (primary) - Automatic provider selection: TensorRT > CUDA > MIGraphX > OpenVINO > QNN > DirectML > CoreML > WebGPU > CPU
+2. **PyTorch** (fallback) - For models that can't use ONNX
+3. **NCNN** (deprecated) - Mobile/embedded only
+
 ## Proposed Structure
 
 ```

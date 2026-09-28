@@ -25,6 +25,12 @@
 - [x] Phase 7: Release - 5/5
 - [x] Phase 8: Final Cleanup - 7/7
 
+### Backend Strategy (2026-09-29)
+- [x] ONNX Runtime designated as primary backend
+- [x] PyTorch retained as fallback for complex models
+- [x] NCNN deprecated for desktop use
+- [x] Updated provider selection: TensorRT > CUDA > MIGraphX > OpenVINO > QNN > DirectML > CoreML > WebGPU > CPU
+
 ### Repository Cleanup (100%)
 - [x] Consolidate build artifacts to `dist/`
 - [x] Remove empty `models/` directory
