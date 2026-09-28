@@ -81,6 +81,8 @@
 
 #### 2. Model ONNX Conversion (In Progress)
 - [x] Add ONNX support for SPAN upscale model
+  - Location: `apps/backend/models/upscale/span.py`
+  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
 - [ ] Add ONNX support for FBCNN restoration model
 - [ ] Add ONNX support for DnCNN denoise model
 - [ ] Add ONNX support for IFRNet interpolation model
