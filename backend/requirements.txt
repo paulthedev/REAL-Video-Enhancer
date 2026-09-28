@@ -13,6 +13,7 @@ cupy-cuda12x==13.3.0
 ncnn
 upscale_ncnn_py
 rife-ncnn-vulkan-python-tntwise
+pnnx
 scenedetect
 torch==2.7.0
 torchvision==0.22.0

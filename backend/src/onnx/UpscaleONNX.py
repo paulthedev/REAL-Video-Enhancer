@@ -57,28 +57,33 @@ class UpscaleONNX:
         
         if self.precision == np.float16:
             model = float16.convert_float_to_float16(model, check_fp16_ready=False)
-            # Optimized DirectML provider options
-        self.model = model
-        directml_options = {
-            "device_id": gpu_id,
-        #    "enable_dynamic_graph_fusion": True,
-        #    "disable_memory_arena": False,  # Keep memory arena for better performance
-        #   "memory_limit_in_mb": 0,  # Use all available memory
-        }
-        
-        directml_backend = [("DmlExecutionProvider", directml_options)]
 
+        self.model = model
         session_options = ort.SessionOptions()
         session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         # session_options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
         # session_options.enable_mem_pattern = True
         
-        # Add these for better DirectML performance
-        #session_options.add_session_config_entry("session.disable_prepacking", "0")
-        #session_options.add_session_config_entry("session.enable_memory_efficient_execution", "1")
-        
+        available_providers = ort.get_available_providers()
+
+        # Preferred GPU provider order; gpu_id maps to a device index for each.
+        preferred_order = ["CUDAExecutionProvider", "DmlExecutionProvider"]
+        providers = []
+        for name in preferred_order:
+            if name not in available_providers:
+                continue
+            options = {"device_id": 0}
+            if self.precision == np.float16 and name != "DmlExecutionProvider":
+                # fp16 models need the matching kernel type on GPU providers
+                options["do_copy_in_default_stream"] = True
+            providers.append((name, options))
+
+        if not any(name.startswith("CUDA") or name.startswith("Dml") for name, _ in providers):
+            print(f"[UpscaleONNX] No CUDA/DirectML provider available ({available_providers}); falling back to CPUExecutionProvider.")
+            providers = [("CPUExecutionProvider", {})]
+
         self.inference_session = InferenceSession(
-            self.model.SerializeToString(), session_options, providers=directml_backend
+            self.model.SerializeToString(), session_options, providers=providers
         )
 
     

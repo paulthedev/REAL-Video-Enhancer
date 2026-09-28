@@ -1,0 +1,638 @@
+# Model Registry Configuration
+# This file defines available models, their properties, and download sources
+#
+# For tests: models are referenced from local paths (models/ directory in repo)
+# For app: models are downloaded from GitHub releases
+
+models:
+  # ============================================
+  # INTERPOLATION MODELS
+  # ============================================
+  
+  # RIFE Models
+  rife422_lite:
+    name: "rife422_lite"
+    display_name: "RIFE 4.22-lite (Latest LITE model)"
+    architecture: "rife"
+    arch_variant: "rife422-lite"
+    task: "interpolate"
+    scale: 1
+    description: "Latest RIFE LITE model, good balance of speed and quality"
+    formats:
+      pytorch:
+        file: "rife4.22-lite.pkl"
+        path: "models/interpolate/rife4.22-lite.pkl"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/rife4.22-lite.pkl"
+      onnx:
+        file: "rife422-lite.onnx"
+        path: "models/interpolate/rife422-lite.onnx"
+        download: null
+      ncnn:
+        file: "rife422-lite.ncnn"
+        path: "models/interpolate/rife422-lite.ncnn"
+        download: null
+    backends:
+      - pytorch
+      - onnx
+      - ncnn
+    recommended: true
+    
+  rife426:
+    name: "rife426"
+    display_name: "RIFE 4.26 (Latest General Model, Recommended)"
+    architecture: "rife"
+    arch_variant: "rife425"
+    task: "interpolate"
+    scale: 1
+    description: "Latest general RIFE model, recommended for most use cases"
+    formats:
+      pytorch:
+        file: "rife4.26.pkl"
+        path: "models/interpolate/rife4.26.pkl"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/rife4.26.pkl"
+      onnx:
+        file: "rife426.onnx"
+        path: "models/interpolate/rife426.onnx"
+        download: null
+      ncnn:
+        file: "rife426.ncnn"
+        path: "models/interpolate/rife426.ncnn"
+        download: null
+    backends:
+      - pytorch
+      - onnx
+      - ncnn
+    recommended: true
+    
+  rife425:
+    name: "rife425"
+    display_name: "RIFE 4.25"
+    architecture: "rife"
+    arch_variant: "rife425"
+    task: "interpolate"
+    scale: 1
+    description: "RIFE 4.25 model"
+    formats:
+      pytorch:
+        file: "rife4.25.pkl"
+        path: "models/interpolate/rife4.25.pkl"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/rife4.25.pkl"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+    
+  rife425_heavy:
+    name: "rife425_heavy"
+    display_name: "RIFE 4.26 Heavy (Slowest RIFE Model, Animation)"
+    architecture: "rife"
+    arch_variant: "rife425-heavy"
+    task: "interpolate"
+    scale: 1
+    description: "Slowest RIFE model, best for animation"
+    formats:
+      pytorch:
+        file: "rife4.26.heavy.pkl"
+        path: "models/interpolate/rife4.26.heavy.pkl"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/rife4.26.heavy.pkl"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+    
+  rife422:
+    name: "rife422"
+    display_name: "RIFE 4.22 (Slow, Animation)"
+    architecture: "rife"
+    arch_variant: "rife421"
+    task: "interpolate"
+    scale: 1
+    description: "RIFE 4.22, good for animation"
+    formats:
+      pytorch:
+        file: "rife4.22.pkl"
+        path: "models/interpolate/rife4.22.pkl"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/rife4.22.pkl"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+    
+  rife418:
+    name: "rife418"
+    display_name: "RIFE 4.18 (Realistic)"
+    architecture: "rife"
+    arch_variant: "rife413"
+    task: "interpolate"
+    scale: 1
+    description: "RIFE 4.18, good for realistic content"
+    formats:
+      pytorch:
+        file: "rife4.18.pkl"
+        path: "models/interpolate/rife4.18.pkl"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/rife4.18.pkl"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+    
+  rife415:
+    name: "rife415"
+    display_name: "RIFE 4.15"
+    architecture: "rife"
+    arch_variant: "rife413"
+    task: "interpolate"
+    scale: 1
+    description: "RIFE 4.15 model"
+    formats:
+      pytorch:
+        file: "rife4.15.pkl"
+        path: "models/interpolate/rife4.15.pkl"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/rife4.15.pkl"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+    
+  rife47:
+    name: "rife47"
+    display_name: "RIFE 4.7 (Smoothest Model)"
+    architecture: "rife"
+    arch_variant: "rife47"
+    task: "interpolate"
+    scale: 1
+    description: "RIFE 4.7, smoothest interpolation"
+    formats:
+      pytorch:
+        file: "rife4.7.pkl"
+        path: "models/interpolate/rife4.7.pkl"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/rife4.7.pkl"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+    
+  rife46:
+    name: "rife46"
+    display_name: "RIFE 4.6 (Fastest Model)"
+    architecture: "rife"
+    arch_variant: "rife46"
+    task: "interpolate"
+    scale: 1
+    description: "RIFE 4.6, fastest interpolation"
+    formats:
+      pytorch:
+        file: "rife4.6.pkl"
+        path: "models/interpolate/rife4.6.pkl"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/rife4.6.pkl"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+    
+  # IFRNet
+  ifrnet:
+    name: "ifrnet"
+    display_name: "IFRNet (Fast Model, Realistic only)"
+    architecture: "ifrnet"
+    arch_variant: "ifrnet"
+    task: "interpolate"
+    scale: 1
+    description: "IFRNet, fast model for realistic content"
+    formats:
+      pytorch:
+        file: "IFRNet_Vimeo90K.pth"
+        path: "models/interpolate/IFRNet_Vimeo90K.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/IFRNet_Vimeo90K.pth"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+    
+  # GIMM
+  gimm:
+    name: "gimm"
+    display_name: "GIMM (Slow Model, Realistic/General)"
+    architecture: "gimm"
+    arch_variant: "gimm"
+    task: "interpolate"
+    scale: 1
+    description: "GIMM, slow but high quality for realistic content"
+    formats:
+      pytorch:
+        file: "GIMMVFI_RAFT.pth"
+        path: "models/interpolate/GIMMVFI_RAFT.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/GIMMVFI_RAFT.pth"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+    
+  # GMFSS
+  gmfss:
+    name: "gmfss"
+    display_name: "GMFSS (Slow Model, Animation/Realistic)"
+    architecture: "gmfss"
+    arch_variant: "gmfss"
+    task: "interpolate"
+    scale: 1
+    description: "GMFSS, slow but good for animation and realistic content"
+    formats:
+      pytorch:
+        file: "GMFSS.pkl"
+        path: "models/interpolate/GMFSS.pkl"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/GMFSS.pkl"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+    
+  gmfss_pro:
+    name: "gmfss_pro"
+    display_name: "GMFSS Pro (Slow Model, Animation/Realistic) (Helps with text warping)"
+    architecture: "gmfss"
+    arch_variant: "gmfss"
+    task: "interpolate"
+    scale: 1
+    description: "GMFSS Pro, helps with text warping"
+    formats:
+      pytorch:
+        file: "GMFSS_PRO.pkl"
+        path: "models/interpolate/GMFSS_PRO.pkl"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/GMFSS_PRO.pkl"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+  
+  # ============================================
+  # UPSCALE MODELS
+  # ============================================
+  
+  # SPAN Models
+  span_nomos8k_weak:
+    name: "span_nomos8k_weak"
+    display_name: "Nomos8k (Realistic) (High Quality Source) (4X) (Fast)"
+    architecture: "span"
+    arch_variant: "SPAN"
+    task: "upscale"
+    scale: 4
+    description: "SPAN for Nomos8k dataset, high quality source"
+    formats:
+      pytorch:
+        file: "4xNomos8k_span_otf_weak_no_update_params.pth"
+        path: "models/upscale/4xNomos8k_span_otf_weak_no_update_params.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/4xNomos8k_span_otf_weak_no_update_params.pth"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: "4xNomos8k_span_otf_weak"
+        path: "models/upscale/4xNomos8k_span_otf_weak"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/4xNomos8k_span_otf_weak.tar.gz"
+    backends:
+      - pytorch
+      - ncnn
+    recommended: false
+    
+  span_nomos8k_medium:
+    name: "span_nomos8k_medium"
+    display_name: "Nomos8k (Realistic) (Medium Quality Source) (4X) (Fast)"
+    architecture: "span"
+    arch_variant: "SPAN"
+    task: "upscale"
+    scale: 4
+    description: "SPAN for Nomos8k dataset, medium quality source"
+    formats:
+      pytorch:
+        file: "4xNomos8k_span_otf_medium_no_update_params.pth"
+        path: "models/upscale/4xNomos8k_span_otf_medium_no_update_params.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/4xNomos8k_span_otf_medium_no_update_params.pth"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: "4xNomos8k_span_otf_medium"
+        path: "models/upscale/4xNomos8k_span_otf_medium"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/4xNomos8k_span_otf_medium.tar.gz"
+    backends:
+      - pytorch
+      - ncnn
+    recommended: false
+    
+  span_nomos8k_strong:
+    name: "span_nomos8k_strong"
+    display_name: "Nomos8k (Realistic) (Low Quality Source) (4X) (Fast)"
+    architecture: "span"
+    arch_variant: "SPAN"
+    task: "upscale"
+    scale: 4
+    description: "SPAN for Nomos8k dataset, low quality source"
+    formats:
+      pytorch:
+        file: "4xNomos8k_span_otf_strong_no_update_params.pth"
+        path: "models/upscale/4xNomos8k_span_otf_strong_no_update_params.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/4xNomos8k_span_otf_strong_no_update_params.pth"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: "4xNomos8k_span_otf_strong"
+        path: "models/upscale/4xNomos8k_span_otf_strong"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/4xNomos8k_span_otf_strong.tar.gz"
+    backends:
+      - pytorch
+      - ncnn
+    recommended: false
+    
+  span_animation:
+    name: "span_animation"
+    display_name: "Spanimation (Animation) (2X) (Fast)"
+    architecture: "span"
+    arch_variant: "SPAN"
+    task: "upscale"
+    scale: 2
+    description: "SPAN for animation content"
+    formats:
+      pytorch:
+        file: "2x_ModernSpanimationV2.pth"
+        path: "models/upscale/2x_ModernSpanimationV2.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/2x_ModernSpanimationV2.pth"
+      onnx:
+        file: "2x_ModernSpanimationV2_clamp_op20.onnx"
+        path: "models/upscale/2x_ModernSpanimationV2_clamp_op20.onnx"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/2x_ModernSpanimationV2_clamp_op20.onnx"
+      ncnn:
+        file: "2x_ModernSpanimationV2"
+        path: "models/upscale/2x_ModernSpanimationV2"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/2x_ModernSpanimationV2.tar.gz"
+    backends:
+      - pytorch
+      - onnx
+      - ncnn
+    recommended: true
+    
+  esrgan_anime:
+    name: "esrgan_anime"
+    display_name: "ESRGAN AnimeVideo V3 (Animation) (2X) (Fast)"
+    architecture: "esrgan"
+    arch_variant: "compact"
+    task: "upscale"
+    scale: 2
+    description: "ESRGAN for anime/animation content"
+    formats:
+      pytorch:
+        file: "realesr-animevideov3-x2.pth"
+        path: "models/upscale/realesr-animevideov3-x2.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/realesr-animevideov3-x2.pth"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: "realesr-animevideov3-x2"
+        path: "models/upscale/realesr-animevideov3-x2"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/realesr-animevideov3-x2.tar.gz"
+    backends:
+      - pytorch
+      - ncnn
+    recommended: false
+    
+  esrgan_general:
+    name: "esrgan_general"
+    display_name: "ESRGAN Plus (General Model) (4X) (Slow)"
+    architecture: "esrgan"
+    arch_variant: "esrgan"
+    task: "upscale"
+    scale: 4
+    description: "ESRGAN general purpose model"
+    formats:
+      pytorch:
+        file: "realesrgan-x4plus.pth"
+        path: "models/upscale/realesrgan-x4plus.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/realesrgan-x4plus.pth"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+  
+  # ============================================
+  # RESTORATION MODELS
+  # ============================================
+  
+  fbcnn:
+    name: "fbcnn"
+    display_name: "FBCNN"
+    architecture: "fbcnn"
+    arch_variant: "fbcnn"
+    task: "restoration"
+    scale: 1
+    description: "FBCNN restoration model"
+    formats:
+      pytorch:
+        file: "fbcnn.pth"
+        path: "models/restoration/fbcnn.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/fbcnn.pth"
+      onnx:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+      - onnx
+    recommended: false
+    
+  nafnet:
+    name: "nafnet"
+    display_name: "NAFNet GoPro (Deblur)"
+    architecture: "nafnet"
+    arch_variant: "nafnet"
+    task: "restoration"
+    scale: 1
+    description: "NAFNet for deblurring"
+    formats:
+      pytorch:
+        file: "nafnet_gopro1x.pth"
+        path: "models/restoration/nafnet_gopro1x.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/nafnet_gopro1x.pth"
+      onnx:
+        file: null
+        path: null
+        download: null
+      ncnn:
+        file: "nafnet_gopro1x.ncnn"
+        path: "models/restoration/nafnet_gopro1x.ncnn"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/nafnet_gopro1x.ncnn.tar.gz"
+    backends:
+      - pytorch
+      - ncnn
+    recommended: false
+  
+  # ============================================
+  # DENOISE MODELS
+  # ============================================
+  
+  dncnn:
+    name: "dncnn"
+    display_name: "DnCNN (Fast)"
+    architecture: "dncnn"
+    arch_variant: "dncnn"
+    task: "denoise"
+    scale: 1
+    description: "DnCNN denoising model"
+    formats:
+      pytorch:
+        file: "dncnn_color_blind.pth"
+        path: "models/denoise/dncnn_color_blind.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/dncnn_color_blind.pth"
+      ncnn:
+        file: "dncnn_color_blind.pth.ncnn"
+        path: "models/denoise/dncnn_color_blind.pth.ncnn"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/dncnn_color_blind.pth.ncnn.tar.gz"
+    backends:
+      - pytorch
+      - ncnn
+    recommended: false
+    
+  scunet:
+    name: "scunet"
+    display_name: "SCUNet Color (Slow)"
+    architecture: "scunet"
+    arch_variant: "scunet"
+    task: "denoise"
+    scale: 1
+    description: "SCUNet color denoising model"
+    formats:
+      pytorch:
+        file: "scunet_color_real_psnr.pth"
+        path: "models/denoise/scunet_color_real_psnr.pth"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/scunet_color_real_psnr.pth"
+      onnx:
+        file: null
+        path: null
+        download: null
+    backends:
+      - pytorch
+    recommended: false
+  
+  # ============================================
+  # SCENE DETECTION MODELS
+  # ============================================
+  
+  scene_detect:
+    name: "scene_detect"
+    display_name: "Scene Detection (MaxViT)"
+    architecture: "maxvit"
+    arch_variant: "sudo_maxxvit"
+    task: "scene_detect"
+    scale: 1
+    description: "MaxViT scene detection model"
+    formats:
+      pytorch:
+        file: "sudo_maxxvit_scenedetect.pt"
+        path: "models/scene_detect/sudo_maxxvit_scenedetect.pt"
+        download: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/sudo_maxxvit_scenedetect.pt"
+    backends:
+      - pytorch
+    recommended: true
+
+# Default model selections
+defaults:
+  interpolate: "rife426"
+  upscale: "span_animation"
+  restoration: "fbcnn"
+  denoise: "dncnn"
+  scene_detect: "scene_detect"
+
+# Download configuration
+download:
+  base_url: "https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models"
+  # For tests, use local paths instead
+  test_mode: false

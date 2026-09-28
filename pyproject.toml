@@ -1,0 +1,67 @@
+[project]
+name = "REAL-Video-Enhancer"
+version = "2.4.2"
+description = "Real-time video enhancement and upscaling application"
+requires-python = ">=3.12"
+dependencies = [
+    "PySide6-essentials>=6.11.2",
+    "requests>=2.34.2",
+    "numpy>=2.5.3",
+    "lief>=1.0.0",
+    "psutil>=7.2.2",
+    "py-cpuinfo>=9.0.0",
+    "distro>=1.9.0",
+    "pypresence>=4.6.2",
+    "certifi>=2026.7.22",
+    "yt-dlp>=2026.8.19",
+    "validators>=0.35.0",
+    "packaging>=26.3",
+    "pillow>=12.3.0",
+]
+
+[project.optional-dependencies]
+pytorch = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+]
+onnx = [
+    "onnxruntime>=1.15.0",
+    "onnx>=1.14.0",
+    "onnxsim>=0.4.0",
+]
+ncnn = [
+    "ncnn>=1.0.20240101",
+    "pnnx>=20240101",
+]
+all = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "onnxruntime>=1.15.0",
+    "onnx>=1.14.0",
+    "onnxsim>=0.4.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "backend"]
+addopts = "-v --tb=short"
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true

@@ -1,0 +1,58 @@
+# Backend Configuration
+# This file defines available backends and their settings
+
+backends:
+  pytorch:
+    name: "pytorch"
+    display_name: "PyTorch"
+    description: "PyTorch backend with CUDA/ROCm/XPU support"
+    enabled: true
+    priority: 1
+    settings:
+      device: "auto"  # auto, cuda, rocm, xpu, mps, cpu
+      precision: "auto"  # auto, float32, float16, bfloat16
+      tensorrt: false
+      torch_compile: true
+  
+  onnx:
+    name: "onnx"
+    display_name: "ONNX Runtime"
+    description: "ONNX Runtime with CUDA/DirectML/OpenVINO/MIGraphX support"
+    enabled: true
+    priority: 2
+    settings:
+      device: "auto"  # auto, cuda, directml, openvino, migraphx, cpu
+      precision: "auto"  # auto, float32, float16
+      providers:
+        - CUDAExecutionProvider
+        - DmlExecutionProvider
+        - MIGraphXExecutionProvider
+        - OpenVINOExecutionProvider
+        - CPUExecutionProvider
+  
+  ncnn:
+    name: "ncnn"
+    display_name: "NCNN"
+    description: "NCNN backend for Vulkan GPU acceleration"
+    enabled: true
+    priority: 3
+    settings:
+      device: "auto"  # auto, vulkan, cpu
+      num_threads: 1
+      precision: "float32"
+
+# Backend selection logic
+selection:
+  # Auto-select backend based on hardware
+  auto:
+    nvidia: "pytorch"  # or "onnx" with CUDA
+    amd: "pytorch"     # or "onnx" with MIGraphX
+    intel: "onnx"      # OpenVINO
+    apple: "pytorch"   # MPS
+    default: "ncnn"    # Fallback
+
+# Performance preferences
+performance:
+  fastest: "pytorch"
+  smallest: "ncnn"
+  most_compatible: "onnx"
