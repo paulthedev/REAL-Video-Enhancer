@@ -194,15 +194,15 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 ## Phase 8: Final Cleanup
 
 ### 8.1 Remove Old Structure
-- [ ] Delete `backend/src/pytorch/` (after migration)
-- [ ] Delete `backend/src/ncnn/` (after migration)
-- [ ] Delete `backend/src/onnx/` (after migration)
-- [ ] Delete `src/ui/` (after migration)
-- [ ] Delete `src/Backendhandler.py` (after migration)
-- [ ] Delete `src/ModelHandler.py` (after migration)
-- [ ] Delete `src/DownloadDeps.py` (after migration)
+- [>] Delete `backend/src/pytorch/` (after migration)
+- [>] Delete `backend/src/ncnn/` (after migration)
+- [>] Delete `backend/src/onnx/` (after migration)
+- [>] Delete `src/ui/` (after migration)
+- [>] Delete `src/Backendhandler.py` (after migration)
+- [>] Delete `src/ModelHandler.py` (after migration)
+- [>] Delete `src/DownloadDeps.py` (after migration)
 
-**Phase 8 Status**: [ ] 0/7 completed
+**Phase 8 Status**: [>] In progress
 
 ---
 
@@ -217,7 +217,7 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 | Phase 5: Migrate Frontend | ✅ Complete | 12/12 |
 | Phase 6: Cleanup & Testing | ✅ Complete | 12/12 |
 | Phase 7: Release | ✅ Complete | 5/5 |
-| Phase 8: Final Cleanup | ⏳ Not Started | 0/7 |
+| Phase 8: Final Cleanup | 🔄 In Progress | 0/7 |
 
 **Total Progress**: 74/81 tasks completed (91%)
 
@@ -234,11 +234,11 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 - Updated all import paths from src. to apps.gui.
 
 ### Next Steps
-1. Move to Phase 8: Final cleanup
-2. Delete old backend/src directory
-3. Delete old src/ directory
-4. Final verification
-5. Create release tag
+1. Delete old backend/src directory
+2. Delete old src/ directory
+3. Final verification
+4. Create release tag
+5. Push to remote
 |-------|--------|----------|
 | Phase 1: Foundation | [ ] | 0/10 |
 | Phase 2: Migrate Models | [ ] | 0/15 |
