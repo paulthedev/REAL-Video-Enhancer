@@ -175,15 +175,17 @@ class FileHandler:
         return videos_folder
 
 def log(message: str):
-    
+
     try:
-        with open(os.path.join(CWD, "log.txt"), "a") as f:
+        os.makedirs(os.path.join(CWD, "logs"), exist_ok=True)
+        with open(os.path.join(CWD, "logs", "log.txt"), "a") as f:
             f.write(message + "\n")
     except Exception as e:
         print(f"An error occurred while logging: {e}", file=sys.stderr)
 
 
-with open(os.path.join(CWD, "log.txt"), "w") as f:
+os.makedirs(os.path.join(CWD, "logs"), exist_ok=True)
+with open(os.path.join(CWD, "logs", "log.txt"), "w") as f:
     pass
 
 

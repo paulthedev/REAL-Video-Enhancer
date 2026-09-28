@@ -19,6 +19,6 @@ resources_rc.py
 appimage/*.AppImage
 
 # Logs
-log.txt
+logs/
 
 .zvec-grep/
