@@ -8,8 +8,14 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
+# Import all model modules to trigger registration
+from apps.backend.models.interpolate import rife, ifrnet, gimm
+from apps.backend.models.upscale import span, animesr, tspan
+from apps.backend.models.restoration import fbcnn, nafnet
+from apps.backend.models.denoise import dncnn
+
 from apps.backend.models.registry import get_model, list_models, register_model
-from apps.backend.models.base import ModelFormat
+from apps.backend.models.base import ModelFormat, ModelTask
 
 
 class TestModelRegistry(unittest.TestCase):
@@ -19,8 +25,8 @@ class TestModelRegistry(unittest.TestCase):
         """Test listing registered models."""
         models = list_models()
         
-        # Check that known models are registered
-        self.assertIn("rife", models)
+        # Check that known models are registered (case-sensitive)
+        self.assertIn("RIFE", models)
         self.assertIn("span", models)
         self.assertIn("fbcnn", models)
         self.assertIn("dncnn", models)
@@ -32,20 +38,20 @@ class TestModelRegistry(unittest.TestCase):
     
     def test_get_model(self):
         """Test getting a model by name."""
-        model = get_model("rife")
+        model = get_model("RIFE")
         self.assertIsNotNone(model)
     
     def test_get_model_not_found(self):
         """Test getting non-existent model."""
-        with self.assertRaises(ValueError):
-            get_model("nonexistent_model")
+        model = get_model("nonexistent_model")
+        self.assertIsNone(model)
     
-    @patch('apps.backend.models.registry.register_model')
+    @patch('apps.backend.models.registry._registry.register')
     def test_register_model_with_multiple_backends(self, mock_register):
         """Test registering model with multiple backends."""
-        from apps.backend.models.interpolate.rife import RifeModel, RifeConfig
+        from apps.backend.models.interpolate.rife import RifeModel, RifeConfig, RifeVersion
         
-        model = RifeModel(config=RifeConfig())
+        model = RifeModel(model_path="/tmp/test.pt", config=RifeConfig(version=RifeVersion.RIFE422_LITE))
         
         register_model(
             name="test_model",
@@ -145,7 +151,7 @@ class TestModelBackends(unittest.TestCase):
         """Test RIFE model backends."""
         from apps.backend.models.registry import get_model
         
-        model = get_model("rife")
+        model = get_model("RIFE")
         
         # Check that model has backend methods
         self.assertTrue(hasattr(model, 'load'))

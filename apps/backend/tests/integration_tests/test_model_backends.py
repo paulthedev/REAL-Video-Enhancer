@@ -23,6 +23,7 @@ from apps.backend.models.upscale.tspan import TSPANModel, TSPANConfig
 from apps.backend.models.restoration.fbcnn import FBCNNModel, FBCNNConfig
 from apps.backend.models.restoration.nafnet import NAFNetModel, NAFNetConfig
 from apps.backend.models.denoise.dncnn import DnCNNModel, DnCNNConfig
+from apps.backend.models.base import ModelTask, ModelFormat
 
 
 class TestModelBackendSelection(unittest.TestCase):
@@ -30,7 +31,7 @@ class TestModelBackendSelection(unittest.TestCase):
     
     def test_rife_backend_selection(self):
         """Test RIFE model backend selection."""
-        model = RifeModel(config=RifeConfig())
+        model = RifeModel(model_path="/tmp/test.pt", config=RifeConfig(version=RifeVersion.RIFE422_LITE))
         
         # Test that backend can be set
         model.backend = "pytorch"
@@ -152,7 +153,7 @@ class TestModelInferenceMethods(unittest.TestCase):
     
     def test_rife_inference_methods_exist(self):
         """Test RIFE has all inference methods."""
-        model = RifeModel(config=RifeConfig())
+        model = RifeModel(model_path="/tmp/test.pt", config=RifeConfig(version=RifeVersion.RIFE422_LITE))
         
         self.assertTrue(hasattr(model, '_load_pytorch'))
         self.assertTrue(hasattr(model, '_load_onnx'))
@@ -258,13 +259,21 @@ class TestModelUnload(unittest.TestCase):
         """Test RIFE model unload."""
         mock_cuda.return_value = False
         
-        model = RifeModel(config=RifeConfig())
+        model = RifeModel(model_path="/tmp/test.pt", config=RifeConfig(version=RifeVersion.RIFE422_LITE))
         model.backend = "pytorch"
-        model.model = Mock()
+        model.flownet = Mock()
+        model.encode = Mock()
+        model.tenFlow_div = Mock()
+        model.backwarp_tenGrid = Mock()
+        model.timestep_dict = {"key": "value"}
         
         model.unload()
         
-        self.assertIsNone(model.model)
+        self.assertIsNone(model.flownet)
+        self.assertIsNone(model.encode)
+        self.assertIsNone(model.tenFlow_div)
+        self.assertIsNone(model.backwarp_tenGrid)
+        self.assertEqual(len(model.timestep_dict), 0)
     
     @patch('torch.cuda.is_available')
     def test_span_unload(self, mock_cuda):
@@ -324,12 +333,12 @@ class TestModelConfig(unittest.TestCase):
     
     def test_rife_config(self):
         """Test RIFE model config."""
-        model = RifeModel(config=RifeConfig())
-        cfg = model.get_config()
+        model = RifeModel(model_path="/tmp/test.pt", config=RifeConfig(version=RifeVersion.RIFE422_LITE))
+        info = model.get_info()
         
-        self.assertEqual(cfg["task"], "interpolate")
-        self.assertEqual(cfg["format"], "pt")
-        self.assertEqual(cfg["scale"], 1.0)
+        self.assertEqual(info.name, "RIFE")
+        self.assertEqual(info.task, ModelTask.INTERPOLATE)
+        self.assertIn("pytorch", info.supported_backends)
     
     def test_ifrnet_config(self):
         """Test IFRNet model config."""
@@ -345,16 +354,16 @@ class TestModelConfig(unittest.TestCase):
         model = GimmModel(config=GimmConfig())
         cfg = model.get_config()
         
-        self.assertEqual(cfg["task"], "interpolate")
-        self.assertEqual(cfg["format"], "pt")
+        self.assertEqual(cfg["task"], ModelTask.INTERPOLATE)
+        self.assertEqual(cfg["format"], ModelFormat.PT)
     
     def test_span_config(self):
         """Test SPAN model config."""
         model = SPANModel(config=SPANConfig())
         cfg = model.get_config()
         
-        self.assertEqual(cfg["task"], "upscale")
-        self.assertEqual(cfg["format"], "pt")
+        self.assertEqual(cfg["task"], ModelTask.UPSCALE)
+        self.assertEqual(cfg["format"], ModelFormat.PT)
         self.assertEqual(cfg["scale"], 4)
     
     def test_animesr_config(self):
@@ -362,8 +371,8 @@ class TestModelConfig(unittest.TestCase):
         model = AnimeSRModel(config=AnimeSRConfig())
         cfg = model.get_config()
         
-        self.assertEqual(cfg["task"], "upscale")
-        self.assertEqual(cfg["format"], "pt")
+        self.assertEqual(cfg["task"], ModelTask.UPSCALE)
+        self.assertEqual(cfg["format"], ModelFormat.PT)
         self.assertEqual(cfg["scale"], 4)
     
     def test_tspan_config(self):
@@ -371,8 +380,8 @@ class TestModelConfig(unittest.TestCase):
         model = TSPANModel(config=TSPANConfig())
         cfg = model.get_config()
         
-        self.assertEqual(cfg["task"], "upscale")
-        self.assertEqual(cfg["format"], "pt")
+        self.assertEqual(cfg["task"], ModelTask.UPSCALE)
+        self.assertEqual(cfg["format"], ModelFormat.PT)
         self.assertEqual(cfg["scale"], 2)
     
     def test_fbcnn_config(self):
@@ -380,24 +389,24 @@ class TestModelConfig(unittest.TestCase):
         model = FBCNNModel(config=FBCNNConfig())
         cfg = model.get_config()
         
-        self.assertEqual(cfg["task"], "restoration")
-        self.assertEqual(cfg["format"], "pt")
+        self.assertEqual(cfg["task"], ModelTask.RESTORATION)
+        self.assertEqual(cfg["format"], ModelFormat.PT)
     
     def test_nafnet_config(self):
         """Test NAFNet model config."""
         model = NAFNetModel(config=NAFNetConfig())
         cfg = model.get_config()
         
-        self.assertEqual(cfg["task"], "restoration")
-        self.assertEqual(cfg["format"], "pt")
+        self.assertEqual(cfg["task"], ModelTask.RESTORATION)
+        self.assertEqual(cfg["format"], ModelFormat.PT)
     
     def test_dncnn_config(self):
         """Test DnCNN model config."""
         model = DnCNNModel(config=DnCNNConfig())
         cfg = model.get_config()
         
-        self.assertEqual(cfg["task"], "denoise")
-        self.assertEqual(cfg["format"], "pt")
+        self.assertEqual(cfg["task"], ModelTask.DENOISE)
+        self.assertEqual(cfg["format"], ModelFormat.PT)
 
 
 if __name__ == "__main__":

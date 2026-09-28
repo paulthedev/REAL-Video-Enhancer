@@ -5,6 +5,7 @@ Unit tests for ONNX model loader utility.
 import unittest
 from unittest.mock import Mock, patch, MagicMock
 import os
+import numpy as np
 
 import sys
 import os
@@ -99,12 +100,12 @@ class TestOnnxModelLoader(unittest.TestCase):
     def test_select_provider_auto_qnn(self, mock_ort):
         """Test auto provider selection with QNN."""
         mock_ort.get_available_providers.return_value = [
-            "QNNExecutionProvider",
+            "QnnExecutionProvider",
             "CPUExecutionProvider"
         ]
         
         loader = OnnxModelLoader(provider="auto")
-        self.assertEqual(loader.provider, "QNNExecutionProvider")
+        self.assertEqual(loader.provider, "QnnExecutionProvider")
     
     @patch('apps.backend.utils.OnnxLoader.ort')
     def test_select_provider_auto_directml(self, mock_ort):
@@ -172,13 +173,14 @@ class TestOnnxModelLoader(unittest.TestCase):
         mock_session.get_inputs.return_value = [mock_input]
         mock_session.get_outputs.return_value = [mock_output]
         
-        with patch('apps.backend.utils.OnnxLoader.ort.InferenceSession') as mock_session_class:
-            mock_session_class.return_value = mock_session
-            loader.load("/tmp/test_model.onnx")
-            
-            self.assertEqual(loader.session, mock_session)
-            self.assertEqual(loader.inputs, [mock_input])
-            self.assertEqual(loader.outputs, [mock_output])
+        with patch('os.path.exists', return_value=True):
+            with patch('apps.backend.utils.OnnxLoader.ort.InferenceSession') as mock_session_class:
+                mock_session_class.return_value = mock_session
+                loader.load("/tmp/test_model.onnx")
+                
+                self.assertEqual(loader.session, mock_session)
+                self.assertEqual(loader.inputs, [mock_input])
+                self.assertEqual(loader.outputs, [mock_output])
     
     @patch('apps.backend.utils.OnnxLoader.ort')
     def test_load_model_not_found(self, mock_ort):
@@ -211,7 +213,6 @@ class TestOnnxModelLoader(unittest.TestCase):
         loader.inputs = [mock_input]
         loader.outputs = [mock_output]
         
-        import numpy as np
         input_data = {"input": np.zeros((1, 3, 64, 64))}
         output_names = ["output"]
         

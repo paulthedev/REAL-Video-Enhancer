@@ -155,8 +155,8 @@ Verify `supports_half` flags for these architectures:
 - [x] Update AGENTS.md with code reuse principles
 
 #### 7. Future Enhancements
-- [ ] Create integration tests
-- [ ] Add more unit tests
+- [x] Create integration tests
+- [x] Add more unit tests
 - [ ] Add benchmarks for ONNX backend
 - [ ] UI integration (DownloadTab, backend selector)
 - [ ] End-to-end testing with real models

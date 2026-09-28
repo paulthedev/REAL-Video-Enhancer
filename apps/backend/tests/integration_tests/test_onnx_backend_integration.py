@@ -27,7 +27,7 @@ class TestOnnxModelLoader(unittest.TestCase):
         loader = OnnxModelLoader(provider="auto")
         
         # Check that provider priority is set
-        self.assertIn("TensorRTExecutionProvider", loader.PROVIDER_PRIORITY)
+        self.assertIn("TensorrtExecutionProvider", loader.PROVIDER_PRIORITY)
         self.assertIn("CUDAExecutionProvider", loader.PROVIDER_PRIORITY)
         self.assertIn("CPUExecutionProvider", loader.PROVIDER_PRIORITY)
     
@@ -59,7 +59,7 @@ class TestOnnxBackendLoader(unittest.TestCase):
     def test_initialize_with_tensorrt(self, mock_ort):
         """Test initialization with TensorRT provider."""
         mock_ort.get_available_providers.return_value = [
-            "TensorRTExecutionProvider",
+            "TensorrtExecutionProvider",
             "CUDAExecutionProvider",
             "CPUExecutionProvider"
         ]
@@ -67,7 +67,7 @@ class TestOnnxBackendLoader(unittest.TestCase):
         loader = ONNXBackendLoader()
         loader.initialize(provider="auto")
         
-        self.assertEqual(loader.provider, "TensorRTExecutionProvider")
+        self.assertEqual(loader.provider, "TensorrtExecutionProvider")
     
     @patch('apps.backend.backends.onnx.loader.ort')
     def test_initialize_with_cuda(self, mock_ort):
@@ -112,14 +112,14 @@ class TestOnnxBackendLoader(unittest.TestCase):
     def test_initialize_with_qnn(self, mock_ort):
         """Test initialization with QNN provider."""
         mock_ort.get_available_providers.return_value = [
-            "QNNExecutionProvider",
+            "QnnExecutionProvider",
             "CPUExecutionProvider"
         ]
         
         loader = ONNXBackendLoader()
         loader.initialize(provider="auto")
         
-        self.assertEqual(loader.provider, "QNNExecutionProvider")
+        self.assertEqual(loader.provider, "QnnExecutionProvider")
     
     @patch('apps.backend.backends.onnx.loader.ort')
     def test_initialize_with_directml(self, mock_ort):
@@ -151,14 +151,14 @@ class TestOnnxBackendLoader(unittest.TestCase):
     def test_initialize_with_webgpu(self, mock_ort):
         """Test initialization with WebGPU provider."""
         mock_ort.get_available_providers.return_value = [
-            "WebGPUEexecutionProvider",
+            "WebGPUExecutionProvider",
             "CPUExecutionProvider"
         ]
         
         loader = ONNXBackendLoader()
         loader.initialize(provider="auto")
         
-        self.assertEqual(loader.provider, "WebGPUEexecutionProvider")
+        self.assertEqual(loader.provider, "WebGPUExecutionProvider")
     
     @patch('apps.backend.backends.onnx.loader.ort')
     def test_initialize_cpu_fallback(self, mock_ort):
@@ -178,35 +178,48 @@ class TestOnnxInterpolateRunner(unittest.TestCase):
     
     def test_init(self):
         """Test runner initialization."""
-        runner = ONNXInterpolateRunner()
+        mock_loader = Mock()
+        runner = ONNXInterpolateRunner(loader=mock_loader)
         self.assertEqual(runner.name, "onnx_interpolate")
     
-    @patch('apps.backend.backends.onnx.runner.ort')
-    def test_run_inference(self, mock_ort):
+    def test_run_inference(self):
         """Test inference execution."""
-        runner = ONNXInterpolateRunner()
+        mock_loader = Mock()
+        runner = ONNXInterpolateRunner(loader=mock_loader)
         
         # Mock session
         mock_session = Mock()
-        mock_input = Mock()
-        mock_input.name = "input.1"
+        mock_input1 = Mock()
+        mock_input1.name = "input.1"
+        mock_input2 = Mock()
+        mock_input2.name = "input.2"
+        mock_input3 = Mock()
+        mock_input3.name = "input.3"
         mock_output = Mock()
         mock_output.name = "output.1"
-        mock_session.get_inputs.return_value = [mock_input]
+        mock_session.get_inputs.return_value = [mock_input1, mock_input2, mock_input3]
         mock_session.get_outputs.return_value = [mock_output]
         
         runner.session = mock_session
-        runner.inputs = [mock_input]
+        runner.inputs = [mock_input1, mock_input2, mock_input3]
         runner.outputs = [mock_output]
         
         # Mock run
         mock_session.run.return_value = [np.zeros((1, 3, 1080, 1920))]
         
-        frame1 = torch.zeros(1, 3, 1080, 1920)
-        frame2 = torch.zeros(1, 3, 1080, 1920)
+        # Create model dict
+        model = {
+            'session': mock_session,
+            'inputs': [mock_input1, mock_input2, mock_input3],
+            'outputs': [mock_output],
+        }
+        
+        # Convert to numpy (runner expects numpy arrays)
+        frame1 = torch.zeros(1, 3, 1080, 1920).numpy()
+        frame2 = torch.zeros(1, 3, 1080, 1920).numpy()
         timestep = 0.5
         
-        result = runner.run(frame1, frame2, timestep)
+        result = runner.run(model, frame1, frame2, timestep)
         
         self.assertEqual(result.shape, (1, 3, 1080, 1920))
 
@@ -216,13 +229,14 @@ class TestOnnxUpscaleRunner(unittest.TestCase):
     
     def test_init(self):
         """Test runner initialization."""
-        runner = ONNXUpscaleRunner()
+        mock_loader = Mock()
+        runner = ONNXUpscaleRunner(loader=mock_loader)
         self.assertEqual(runner.name, "onnx_upscale")
     
-    @patch('apps.backend.backends.onnx.runner.ort')
-    def test_run_inference(self, mock_ort):
+    def test_run_inference(self):
         """Test inference execution."""
-        runner = ONNXUpscaleRunner()
+        mock_loader = Mock()
+        runner = ONNXUpscaleRunner(loader=mock_loader)
         
         # Mock session
         mock_session = Mock()
@@ -240,9 +254,17 @@ class TestOnnxUpscaleRunner(unittest.TestCase):
         # Mock run
         mock_session.run.return_value = [np.zeros((1, 3, 2160, 3840))]
         
-        frame = torch.zeros(1, 3, 1080, 1920)
+        # Create model dict
+        model = {
+            'session': mock_session,
+            'inputs': [mock_input],
+            'outputs': [mock_output],
+        }
         
-        result = runner.run(frame)
+        # Convert to numpy (runner expects numpy arrays)
+        frame = torch.zeros(1, 3, 1080, 1920).numpy()
+        
+        result = runner.run(model, frame)
         
         self.assertEqual(result.shape, (1, 3, 2160, 3840))
 
