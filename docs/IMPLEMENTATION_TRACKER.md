@@ -62,11 +62,16 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 - [x] Create model wrappers
 - [x] Update model registry with restoration models
 
-### 2.4 Scene Detection
+### 2.4 Denoise Models
+- [x] Migrate DnCNN → `backend/models/denoise/dncnn.py`
+- [x] Create model wrappers
+- [x] Update model registry with denoise models
+
+### 2.5 Scene Detection
 - [ ] Migrate scene detection models → `backend/models/scene_detect/`
 - [ ] Create scene detection wrappers
 
-**Phase 2 Status**: [x] 9/15 completed (RIFE, IFRNet, GIMM, GMFSS, SPAN, AnimeSR, TSPAN, FBCNN, NAFNet)
+**Phase 2 Status**: [x] 10/15 completed (RIFE, IFRNet, GIMM, GMFSS, SPAN, AnimeSR, TSPAN, FBCNN, NAFNet, DnCNN)
 
 ---
 
@@ -86,12 +91,12 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 - [ ] Test ONNX backend with converted models
 
 ### 3.3 NCNN Backend
-- [ ] Create `backend/backends/ncnn/loader.py`
-- [ ] Create `backend/backends/ncnn/runner.py`
-- [ ] Migrate existing NCNN code
-- [ ] Test NCNN backend with converted models
+- [x] Create `backend/backends/ncnn/loader.py`
+- [x] Create `backend/backends/ncnn/runner.py`
+- [x] Migrate existing NCNN code
+- [x] Test NCNN backend with converted models
 
-**Phase 3 Status**: [~] 4/12 completed
+**Phase 3 Status**: [x] 6/12 completed
 
 ---
 
