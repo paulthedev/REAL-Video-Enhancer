@@ -84,6 +84,7 @@ class TestNAFNetModel(unittest.TestCase):
         # Create a small test model
         test_model = NAFNet(width=8, enc_blk_nums=[1, 1], middle_blk_num=1, dec_blk_nums=[1, 1])
         model.model = test_model
+        model.backend = "pytorch"
         
         # Test forward
         input_tensor = torch.zeros(1, 3, 64, 64)
@@ -99,6 +100,7 @@ class TestNAFNetModel(unittest.TestCase):
         # Create a small test model
         test_model = NAFNet(width=8, enc_blk_nums=[1, 1], middle_blk_num=1, dec_blk_nums=[1, 1])
         model.model = test_model
+        model.backend = "pytorch"
         
         # Test restore
         input_tensor = torch.zeros(1, 3, 64, 64)
