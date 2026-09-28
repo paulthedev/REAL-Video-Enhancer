@@ -57,16 +57,16 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 - [x] Update model registry with upscaling models
 
 ### 2.3 Restoration Models
-- [ ] Migrate FBCNN → `backend/models/restoration/fbcnn.py`
-- [ ] Migrate NAFNet → `backend/models/restoration/nafnet.py`
-- [ ] Create model wrappers
-- [ ] Update model registry with restoration models
+- [x] Migrate FBCNN → `backend/models/restoration/fbcnn.py`
+- [x] Migrate NAFNet → `backend/models/restoration/nafnet.py`
+- [x] Create model wrappers
+- [x] Update model registry with restoration models
 
 ### 2.4 Scene Detection
 - [ ] Migrate scene detection models → `backend/models/scene_detect/`
 - [ ] Create scene detection wrappers
 
-**Phase 2 Status**: [~] 7/15 completed (RIFE, IFRNet, GIMM, GMFSS, SPAN, AnimeSR, TSPAN)
+**Phase 2 Status**: [x] 9/15 completed (RIFE, IFRNet, GIMM, GMFSS, SPAN, AnimeSR, TSPAN, FBCNN, NAFNet)
 
 ---
 
