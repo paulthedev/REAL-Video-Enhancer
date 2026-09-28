@@ -28,8 +28,8 @@ class OnnxModelLoader:
     
     # Provider priority order
     # Based on ONNX Runtime execution providers:
-    # - CUDA: NVIDIA GPU standard path
     # - TensorRT: NVIDIA GPU max throughput (compiles subgraphs to TRT engines)
+    # - CUDA: NVIDIA GPU standard path
     # - MIGraphX: AMD GPU (ROCm)
     # - OpenVINO: Intel CPU/GPU (oneDNN optimized)
     # - DirectML: Any DirectX 12 GPU (Windows cross-vendor)
@@ -37,8 +37,8 @@ class OnnxModelLoader:
     # - WebGPU: Browser/native WebGPU
     # - CPU: MLAS + Eigen (x86), XNNPACK (Arm + x86), always available fallback
     PROVIDER_PRIORITY = [
-        "CUDAExecutionProvider",
         "TensorrtExecutionProvider",
+        "CUDAExecutionProvider",
         "MIGraphXExecutionProvider",
         "OpenVINOExecutionProvider",
         "DmlExecutionProvider",

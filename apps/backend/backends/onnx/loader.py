@@ -71,8 +71,8 @@ class ONNXBackendLoader(BaseBackend):
         Select the best available execution provider.
         
         Priority order based on ONNX Runtime execution providers:
-        - CUDA: NVIDIA GPU standard path
         - TensorRT: NVIDIA GPU max throughput (compiles subgraphs to TRT engines)
+        - CUDA: NVIDIA GPU standard path
         - MIGraphX: AMD GPU (ROCm)
         - OpenVINO: Intel CPU/GPU (oneDNN optimized)
         - DirectML: Any DirectX 12 GPU (Windows cross-vendor)
@@ -84,10 +84,10 @@ class ONNXBackendLoader(BaseBackend):
             Best provider name
         """
         # Priority order based on hardware capabilities
-        if "CUDAExecutionProvider" in self.available_providers:
-            return "CUDAExecutionProvider"
-        elif "TensorrtExecutionProvider" in self.available_providers:
+        if "TensorrtExecutionProvider" in self.available_providers:
             return "TensorrtExecutionProvider"
+        elif "CUDAExecutionProvider" in self.available_providers:
+            return "CUDAExecutionProvider"
         elif "MIGraphXExecutionProvider" in self.available_providers:
             return "MIGraphXExecutionProvider"
         elif "OpenVINOExecutionProvider" in self.available_providers:
