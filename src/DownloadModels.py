@@ -1,8 +1,8 @@
 import os
 
-from .constants import MODELS_PATH
-from .Util import createDirectory, extractTarGZ, networkCheck
-from .ui.QTcustom import DownloadProgressPopup
+from src.constants import MODELS_PATH
+from src.Util import createDirectory, extractTarGZ, networkCheck
+from apps.gui.ui.QTcustom import DownloadProgressPopup
 
 
 class DownloadModel:

@@ -1,10 +1,10 @@
 import requests
 try:
-    from .constants import HAS_NETWORK_ON_STARTUP
+    from src.constants import HAS_NETWORK_ON_STARTUP
 except ImportError:
     from constants import HAS_NETWORK_ON_STARTUP
 from dataclasses import dataclass
-from .ui.SettingsTab import Settings
+from apps.gui.ui.SettingsTab import Settings
 
 @dataclass
 class TorchVersion:
