@@ -106,6 +106,76 @@ class FBCNNModel(BaseRestorationModel):
         self.config = config
         self.model_path = model_path
         self.model = None
+        self.backend = None
+        self.onnx_loader = None
+        self.ncnn_net = None
+    
+    def load(self, backend_name: str) -> None:
+        """
+        Load model with specified backend.
+        
+        Args:
+            backend_name: Backend to use ("pytorch", "onnx", "ncnn")
+        """
+        self.backend = backend_name
+        
+        if backend_name == "pytorch":
+            self._load_pytorch()
+        elif backend_name == "onnx":
+            self._load_onnx()
+        elif backend_name == "ncnn":
+            self._load_ncnn()
+        else:
+            raise ValueError(f"Unsupported backend: {backend_name}")
+    
+    def _load_pytorch(self) -> None:
+        """Load FBCNN model using PyTorch backend."""
+        import torch
+        
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = FBCNN(scale=self.config.scale).to(device)
+        
+        # Load weights
+        if self.model_path and os.path.exists(self.model_path):
+            state_dict = torch.load(self.model_path, map_location=device)
+            self.model.load_state_dict(state_dict)
+        
+        self.model.eval()
+        print(f"Loaded FBCNN PyTorch model: {self.model_path}")
+    
+    def _load_onnx(self) -> None:
+        """Load FBCNN model using ONNX backend."""
+        from apps.backend.utils.OnnxLoader import OnnxModelLoader
+        
+        self.onnx_loader = OnnxModelLoader(provider="auto")
+        self.onnx_loader.load(self.model_path)
+        
+        self.onnx_inputs = self.onnx_loader.inputs
+        self.onnx_outputs = self.onnx_loader.outputs
+        self.onnx_provider = self.onnx_loader.provider
+        
+        print(f"Loaded FBCNN ONNX model: {self.model_path}")
+        print(f"  Provider: {self.onnx_provider}")
+    
+    def _load_ncnn(self) -> None:
+        """Load FBCNN model using NCNN backend."""
+        import os
+        
+        param_path = self.model_path.replace('.bin', '.param') if self.model_path.endswith('.bin') else self.model_path
+        bin_path = self.model_path.replace('.param', '.bin') if self.model_path.endswith('.param') else self.model_path
+        
+        if not os.path.exists(param_path) or not os.path.exists(bin_path):
+            raise FileNotFoundError(f"NCNN model files not found: {param_path} or {bin_path}")
+        
+        import ncnn
+        self.ncnn_net = ncnn.Net()
+        self.ncnn_net.load_param(param_path)
+        self.ncnn_net.load_model(bin_path)
+        
+        self.ncnn_param_path = param_path
+        self.ncnn_bin_path = bin_path
+        
+        print(f"Loaded FBCNN NCNN model: {param_path}")
     
     def forward(self, *args, **kwargs):
         """Forward pass - delegates to restore method."""
@@ -113,9 +183,82 @@ class FBCNNModel(BaseRestorationModel):
     
     def restore(self, frame: torch.Tensor) -> torch.Tensor:
         """Restore a frame."""
-        if self.model is None:
-            raise RuntimeError("Model not loaded. Call load() first.")
-        return self.model(frame)
+        if self.backend == "onnx":
+            return self._restore_onnx(frame)
+        elif self.backend == "ncnn":
+            return self._restore_ncnn(frame)
+        elif self.backend == "pytorch":
+            return self._restore_pytorch(frame)
+        else:
+            raise RuntimeError(f"Inference not supported for backend: {self.backend}")
+    
+    def _restore_pytorch(self, frame: torch.Tensor) -> torch.Tensor:
+        """Perform PyTorch restoration inference."""
+        with torch.no_grad():
+            return self.model(frame)
+    
+    def _restore_onnx(self, frame: torch.Tensor) -> torch.Tensor:
+        """Perform ONNX restoration inference."""
+        import numpy as np
+        
+        # Convert tensor to numpy (NCHW to NHWC)
+        frame_np = frame.squeeze(0).permute(1, 2, 0).cpu().numpy()
+        frame_np = frame_np.astype(np.float32)
+        
+        # Run inference
+        input_name = self.onnx_inputs[0].name
+        output_name = self.onnx_outputs[0].name
+        
+        outputs = self.onnx_loader.run(
+            {input_name: frame_np},
+            [output_name]
+        )
+        
+        # Convert back to tensor (NHWC to NCHW)
+        result = torch.from_numpy(outputs[0]).permute(2, 0, 1).unsqueeze(0)
+        
+        return result
+    
+    def _restore_ncnn(self, frame: torch.Tensor) -> torch.Tensor:
+        """Perform NCNN restoration inference."""
+        import numpy as np
+        
+        # Convert tensor to numpy (NCHW to NHWC)
+        frame_np = frame.squeeze(0).permute(1, 2, 0).cpu().numpy()
+        frame_np = (frame_np * 255.0).astype(np.uint8)
+        
+        # Create NCNN Mat
+        h, w, c = frame_np.shape
+        mat = ncnn.Mat(h, w, c, frame_np.flatten())
+        
+        # Create extractor
+        extractor = self.ncnn_net.create_extractor()
+        extractor.set_num_thread(4)
+        extractor.input("input.1", mat)
+        
+        # Run inference
+        _, out_mat = extractor.extract("output.1")
+        
+        # Convert output to tensor
+        output_data = out_mat.to_pixels()
+        result = torch.from_numpy(output_data).permute(2, 0, 1).unsqueeze(0) / 255.0
+        
+        return result
+    
+    def unload(self) -> None:
+        """Unload model and free memory."""
+        import gc
+        
+        if self.backend == "onnx" and hasattr(self, 'onnx_loader'):
+            self.onnx_loader.unload()
+        elif self.backend == "ncnn" and hasattr(self, 'ncnn_net'):
+            self.ncnn_net = None
+        elif self.backend == "pytorch":
+            self.model = None
+        
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
     
     def get_config(self) -> Dict[str, Any]:
         """Get model configuration."""
@@ -141,6 +284,10 @@ _fbcnn_instance = FBCNNModel(config=FBCNNConfig())
 register_model(
     name="fbcnn",
     model=_fbcnn_instance,
-    formats={ModelFormat.PT: "models/restoration/fbcnn.pth"},
-    backends=["pytorch"],
+    formats={
+        ModelFormat.PT: "models/restoration/fbcnn.pth",
+        ModelFormat.ONNX: "models/restoration/fbcnn.onnx",
+        ModelFormat.NCNN: "models/restoration/fbcnn.ncnn",
+    },
+    backends=["pytorch", "onnx", "ncnn"],
 )
