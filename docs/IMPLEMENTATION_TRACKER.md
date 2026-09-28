@@ -43,17 +43,18 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 
 ### 2.1 Interpolation Models
 - [x] Migrate RIFE architecture → `backend/models/interpolate/rife.py`
-- [ ] Migrate IFRNet architecture → `backend/models/interpolate/ifrnet.py`
-- [ ] Migrate GIMM architecture → `backend/models/interpolate/gimm.py`
-- [ ] Migrate GMFSS architecture → `backend/models/interpolate/gmfss.py`
-- [ ] Create model wrappers for each architecture
-- [ ] Update model registry with interpolation models
+- [x] Migrate IFRNet architecture → `backend/models/interpolate/ifrnet.py`
+- [x] Migrate GIMM architecture → `backend/models/interpolate/gimm.py`
+- [x] Migrate GMFSS architecture → `backend/models/interpolate/gmfss.py`
+- [x] Create model wrappers for each architecture
+- [x] Update model registry with interpolation models
 
 ### 2.2 Upscaling Models
-- [ ] Migrate SPAN architecture → `backend/models/upscale/span.py`
-- [ ] Migrate ESRGAN variants → `backend/models/upscale/esrgan.py`
-- [ ] Create model wrappers for each architecture
-- [ ] Update model registry with upscaling models
+- [x] Migrate SPAN architecture → `backend/models/upscale/span.py`
+- [x] Migrate AnimeSR architecture → `backend/models/upscale/animesr.py`
+- [x] Migrate TSPAN architecture → `backend/models/upscale/tspan.py`
+- [x] Create model wrappers for each architecture
+- [x] Update model registry with upscaling models
 
 ### 2.3 Restoration Models
 - [ ] Migrate FBCNN → `backend/models/restoration/fbcnn.py`
@@ -65,7 +66,7 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 - [ ] Migrate scene detection models → `backend/models/scene_detect/`
 - [ ] Create scene detection wrappers
 
-**Phase 2 Status**: [~] 1/15 completed (RIFE proof of concept)
+**Phase 2 Status**: [~] 7/15 completed (RIFE, IFRNet, GIMM, GMFSS, SPAN, AnimeSR, TSPAN)
 
 ---
 
