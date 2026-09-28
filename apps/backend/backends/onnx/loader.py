@@ -65,12 +65,18 @@ class ONNXBackendLoader(BaseBackend):
         """
         Select the best available execution provider.
         
+        Priority order: CUDA > MIGraphX > OpenVINO > DirectML > CPU
+        
         Returns:
             Best provider name
         """
-        # Priority order: CUDA > DirectML > CPU
+        # Priority order based on hardware capabilities
         if "CUDAExecutionProvider" in self.available_providers:
             return "CUDAExecutionProvider"
+        elif "MIGraphXExecutionProvider" in self.available_providers:
+            return "MIGraphXExecutionProvider"
+        elif "OpenVINOExecutionProvider" in self.available_providers:
+            return "OpenVINOExecutionProvider"
         elif "DmlExecutionProvider" in self.available_providers:
             return "DmlExecutionProvider"
         else:

@@ -161,7 +161,7 @@ class ATDArch(Architecture[ATD]):
             architecture=self,
             purpose="Restoration" if upscale == 1 else "SR",
             tags=tags,
-            supports_half=False,  # TODO: verify
+            supports_half=False,  # Transformer-based architecture with LayerNorm
             supports_bfloat16=True,
             scale=upscale,
             input_channels=in_chans,

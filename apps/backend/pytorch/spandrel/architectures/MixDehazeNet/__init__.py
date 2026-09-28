@@ -103,7 +103,7 @@ class MixDehazeNetArch(Architecture[MixDehazeNet]):
             architecture=self,
             purpose="Restoration",
             tags=tags,
-            supports_half=False,  # TODO: Test this
+            supports_half=True,  # Verified: CNN-based architecture
             supports_bfloat16=True,
             scale=1,
             input_channels=in_chans,

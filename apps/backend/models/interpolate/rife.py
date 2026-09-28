@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, Dict, Any, List
+import os
 import torch
 import torch.nn as nn
 import math
@@ -386,13 +387,51 @@ class RifeModel(BaseInterpolateModel):
     
     def _load_onnx(self) -> None:
         """Load RIFE model using ONNX backend."""
-        # TODO: Implement ONNX loading
-        raise NotImplementedError("ONNX backend for RIFE not yet implemented")
+        from apps.backend.utils.OnnxLoader import OnnxModelLoader
+        
+        # Load ONNX model using reusable loader
+        self.onnx_loader = OnnxModelLoader(provider="auto")
+        self.onnx_loader.load(self.model_path)
+        
+        # Store model info
+        self.onnx_inputs = self.onnx_loader.inputs
+        self.onnx_outputs = self.onnx_loader.outputs
+        self.onnx_provider = self.onnx_loader.provider
+        self.onnx_width = self.width
+        self.onnx_height = self.height
+        
+        print(f"Loaded RIFE ONNX model: {self.model_path}")
+        print(f"  Provider: {self.onnx_provider}")
     
     def _load_ncnn(self) -> None:
         """Load RIFE model using NCNN backend."""
-        # TODO: Implement NCNN loading
-        raise NotImplementedError("NCNN backend for RIFE not yet implemented")
+        import numpy as np
+        
+        # Check if ncnn is available
+        try:
+            import ncnn
+        except ImportError:
+            raise ImportError("NCNN package not installed. Install with: pip install ncnn")
+        
+        # Check if model files exist
+        param_path = self.model_path.replace('.bin', '.param') if self.model_path.endswith('.bin') else self.model_path
+        bin_path = self.model_path.replace('.param', '.bin') if self.model_path.endswith('.param') else self.model_path
+        
+        if not os.path.exists(param_path) or not os.path.exists(bin_path):
+            raise FileNotFoundError(f"NCNN model files not found: {param_path} or {bin_path}")
+        
+        # Load NCNN model
+        self.ncnn_net = ncnn.Net()
+        self.ncnn_net.load_param(param_path)
+        self.ncnn_net.load_model(bin_path)
+        
+        # Store model info
+        self.ncnn_param_path = param_path
+        self.ncnn_bin_path = bin_path
+        self.ncnn_width = self.width
+        self.ncnn_height = self.height
+        
+        print(f"Loaded RIFE NCNN model: {param_path}")
     
     def infer(
         self,
@@ -411,8 +450,23 @@ class RifeModel(BaseInterpolateModel):
         Returns:
             Interpolated frame tensor [B, C, H, W]
         """
-        if self.backend != "pytorch":
+        if self.backend == "onnx":
+            return self._infer_onnx(img0, img1, timestep)
+        elif self.backend == "ncnn":
+            return self._infer_ncnn(img0, img1, timestep)
+        elif self.backend == "pytorch":
+            return self._infer_pytorch(img0, img1, timestep)
+        else:
             raise RuntimeError(f"Inference not supported for backend: {self.backend}")
+    
+    def _infer_pytorch(
+        self,
+        img0: torch.Tensor,
+        img1: torch.Tensor,
+        timestep: float,
+    ) -> torch.Tensor:
+        """Perform PyTorch interpolation inference."""
+        from apps.backend.pytorch.InterpolateArchs.RIFE.warplayer import warp
         
         # Get pre-computed timestep tensor
         timestep_tensor = self.timestep_dict.get(timestep)
@@ -446,17 +500,120 @@ class RifeModel(BaseInterpolateModel):
             
         return img
     
+    def _infer_onnx(
+        self,
+        img0: torch.Tensor,
+        img1: torch.Tensor,
+        timestep: float,
+    ) -> torch.Tensor:
+        """Perform ONNX interpolation inference."""
+        import numpy as np
+        
+        # Convert tensors to numpy
+        img0_np = img0.squeeze(0).permute(1, 2, 0).clamp(0, 1).cpu().numpy()
+        img1_np = img1.squeeze(0).permute(1, 2, 0).clamp(0, 1).cpu().numpy()
+        
+        # Normalize to [0, 1]
+        img0_tensor = img0_np.astype(np.float32)
+        img1_tensor = img1_np.astype(np.float32)
+        
+        # Prepare timestep
+        timestep_array = np.array([[timestep]], dtype=np.float32)
+        
+        # Run inference using loader
+        input_names = self.onnx_loader.get_input_names()
+        output_names = self.onnx_loader.get_output_names()
+        
+        # Handle different input signatures
+        if len(self.onnx_inputs) == 3:
+            # Standard RIFE ONNX: img0, img1, timestep
+            outputs = self.onnx_loader.run(
+                {
+                    input_names[0]: img0_tensor,
+                    input_names[1]: img1_tensor,
+                    input_names[2]: timestep_array,
+                }
+            )
+        else:
+            # Fallback: try with just img0 and img1
+            outputs = self.onnx_loader.run(
+                {
+                    input_names[0]: img0_tensor,
+                    input_names[1]: img1_tensor,
+                }
+            )
+        
+        # Get result
+        result = outputs[0]
+        
+        # Convert back to tensor
+        if isinstance(result, np.ndarray):
+            result = torch.from_numpy(result).permute(2, 0, 1).unsqueeze(0)
+        else:
+            result = torch.from_numpy(result.cpu().numpy()).permute(2, 0, 1).unsqueeze(0)
+        
+        return result
+    
+    def _infer_ncnn(
+        self,
+        img0: torch.Tensor,
+        img1: torch.Tensor,
+        timestep: float,
+    ) -> torch.Tensor:
+        """Perform NCNN interpncnn" and hasattr(self, 'ncnn_net'):
+            self.ncnn_net = None
+        elif self.backend == "olation inference."""
+        import numpy as np
+        
+        # Convert tensors to numpy (NHWC format for NCNN)
+        img0_np = img0.squeeze(0).permute(1, 2, 0).clamp(0, 1).cpu().numpy()
+        img1_np = img1.squeeze(0).permute(1, 2, 0).clamp(0, 1).cpu().numpy()
+        
+        # Create NCNN mats
+        mat0 = self.ncnn_net.create_input("input.1")
+        mat0.from_pixels(img0_np)
+        
+        mat1 = self.ncnn_net.create_input("input.2")
+        mat1.from_pixels(img1_np)
+        
+        # Create timestep mat
+        timestep_array = np.array([[timestep]], dtype=np.float32)
+        mat_t = self.ncnn_net.create_input("input.3")
+        mat_t.from_pixels_blocking(timestep_array.flatten().astype(np.float32))
+        
+        # Run inference
+        extractor = self.ncnn_net.create_extractor()
+        extractor.set_input(mat0, "input.1")
+        extractor.set_input(mat1, "input.2")
+        extractor.set_input(mat_t, "input.3")
+        
+        # Extract output
+        _, out_mat = extractor.extract("output.1")
+        
+        # Convert output to tensor
+        output_data = out_mat.to_pixels()
+        result = torch.from_numpy(output_data).permute(2, 0, 1).unsqueeze(0)
+        
+        return result
+    
     def unload(self) -> None:
         """Unload model and free memory."""
         import gc
-        self.flownet = None
-        self.encode = None
-        self.tenFlow_div = None
-        self.backwarp_tenGrid = None
-        self.timestep_dict.clear()
+        
+        if self.backend == "onnx" and hasattr(self, 'onnx_loader'):
+            self.onnx_loader.unload()
+        elif self.backend == "ncnn" and hasattr(self, 'ncnn_net'):
+            self.ncnn_net = None
+        elif self.backend == "pytorch":
+            self.flownet = None
+            self.encode = None
+            self.tenFlow_div = None
+            self.backwarp_tenGrid = None
+            self.timestep_dict.clear()
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
         gc.collect()
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
     
     def forward(self, *args, **kwargs):
         """Forward pass (delegates to backend)."""

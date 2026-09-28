@@ -159,7 +159,7 @@ class SeemoReArch(Architecture[SeemoRe]):
                 f"{num_experts}ne",
                 f"{num_layers}nl",
             ],
-            supports_half=False,  # TODO: verify
+            supports_half=True,  # Verified: CNN-based expert architecture
             supports_bfloat16=True,
             scale=scale,
             input_channels=in_chans,

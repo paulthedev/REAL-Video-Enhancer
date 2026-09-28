@@ -91,7 +91,7 @@ class FFTformerArch(Architecture[FFTformer]):
             architecture=self,
             purpose="Restoration",
             tags=[f"{dim}dim"],
-            supports_half=False,  # TODO: verify
+            supports_half=False,  # FFT operations may not be stable in fp16
             supports_bfloat16=True,
             scale=1,
             input_channels=inp_channels,

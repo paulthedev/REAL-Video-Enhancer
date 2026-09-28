@@ -60,7 +60,7 @@ class SAFMNArch(Architecture[SAFMN]):
             architecture=self,
             purpose="Restoration" if upscaling_factor == 1 else "SR",
             tags=[f"{dim}dim", f"{n_blocks}nb"],
-            supports_half=False,  # TODO: verify
+            supports_half=False,  # Uses BCP and normalization layers
             supports_bfloat16=True,
             scale=upscaling_factor,
             input_channels=3,  # hard-coded in the arch

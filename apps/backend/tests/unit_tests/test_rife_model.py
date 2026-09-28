@@ -240,6 +240,9 @@ class TestRifeModel(unittest.TestCase):
             dtype="fp32",
         )
         
+        # Set backend to pytorch for unload test
+        model.backend = "pytorch"
+        
         # Set some attributes
         model.flownet = Mock()
         model.encode = Mock()
@@ -253,7 +256,7 @@ class TestRifeModel(unittest.TestCase):
         self.assertEqual(len(model.timestep_dict), 0)
     
     def test_infer_not_pytorch(self):
-        """Test inference raises error for non-PyTorch backend."""
+        """Test inference raises error for unsupported backend."""
         config = RifeConfig(version=RifeVersion.RIFE422_LITE)
         model = RifeModel(
             config=config,
@@ -261,7 +264,7 @@ class TestRifeModel(unittest.TestCase):
             device="cpu",
             dtype="fp32",
         )
-        model.backend = "onnx"
+        model.backend = "unsupported"
         
         img0 = torch.randn(1, 3, 1080, 1920)
         img1 = torch.randn(1, 3, 1080, 1920)

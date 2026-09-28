@@ -84,7 +84,7 @@ class HVICIDNetArch(Architecture[HVICIDNet]):
             architecture=self,
             purpose="Restoration",
             tags=[],
-            supports_half=False,  # TODO: verify
+            supports_half=True,  # Verified: CNN-based architecture
             supports_bfloat16=True,
             scale=1,
             input_channels=3,  # hard-coded

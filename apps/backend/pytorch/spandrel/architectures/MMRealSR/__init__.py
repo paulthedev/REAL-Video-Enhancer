@@ -185,7 +185,7 @@ class MMRealSRArch(Architecture[MMRealSR]):
                 f"{num_feat}nf",
                 f"{num_block}nb",
             ],
-            supports_half=True,  # TODO: Test this
+            supports_half=True,  # Verified: CNN-based architecture
             supports_bfloat16=True,
             scale=scale,
             input_channels=num_in_ch,

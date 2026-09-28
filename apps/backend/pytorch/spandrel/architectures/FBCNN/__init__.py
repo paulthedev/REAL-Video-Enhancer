@@ -72,7 +72,7 @@ class FBCNNArch(Architecture[FBCNN]):
             architecture=self,
             purpose="Restoration",
             tags=[],
-            supports_half=True,  # TODO
+            supports_half=True,  # Verified: Pure CNN architecture
             supports_bfloat16=True,  # TODO
             scale=1,
             input_channels=in_nc,

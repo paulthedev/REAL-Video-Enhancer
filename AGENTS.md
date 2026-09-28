@@ -42,6 +42,32 @@ All documentation files must be placed in the `docs/` folder. This includes:
 
 ## Development Rules
 
+### Code Reuse Principles
+**Always consider code reuse before writing new code or refactoring.**
+
+1. **Check for existing utilities first**: Before implementing new functionality, search `apps/backend/utils/` for existing utilities that might already solve the problem.
+
+2. **Extract common patterns**: When you notice similar code patterns in multiple places, extract them into shared utilities in `apps/backend/utils/`.
+
+3. **Reusable utilities location**: All shared utilities should be placed in `apps/backend/utils/` and exported from `apps/backend/utils/__init__.py`.
+
+4. **Examples of reusable utilities**:
+   - `OnnxLoader.py` - Reusable ONNX model loading with automatic provider selection
+   - `Util.py` - General utility functions
+   - `Frame.py` - Frame handling utilities
+   - `VideoInfo.py` - Video information utilities
+   - `Encoders.py` - Encoding utilities
+
+5. **Refactoring rule**: When refactoring code, look for opportunities to:
+   - Replace duplicated logic with calls to shared utilities
+   - Extract common patterns into utility functions
+   - Use existing utilities instead of reimplementing functionality
+
+6. **Before writing new code**:
+   - Search for existing utilities using `zvec_grep_search` with semantic queries
+   - Check if the functionality already exists in `apps/backend/utils/`
+   - If not, consider whether it should be added as a reusable utility
+
 ### Dependencies
 - Use `pyproject.toml` for all dependencies
 - Run Python with `uv run python` instead of direct `python`

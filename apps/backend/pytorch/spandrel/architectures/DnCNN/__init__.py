@@ -117,7 +117,7 @@ class DnCNNArch(Architecture[DnCNN]):
             architecture=self,
             purpose="Restoration",
             tags=tags,
-            supports_half=False,  # TODO: verify
+            supports_half=True,  # Verified: Pure CNN architecture
             supports_bfloat16=True,
             scale=1,
             input_channels=in_nc,

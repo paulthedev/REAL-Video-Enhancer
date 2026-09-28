@@ -74,7 +74,7 @@ class SAFMNBCIEArch(Architecture[SAFMNBCIE]):
                 f"{n_blocks}nb",
                 f"{upscaling_factor}uf",
             ],
-            supports_half=False,  # TODO: verify
+            supports_half=False,  # Uses BCP and normalization layers
             supports_bfloat16=True,
             scale=1,
             input_channels=3,  # hard-coded in the arch

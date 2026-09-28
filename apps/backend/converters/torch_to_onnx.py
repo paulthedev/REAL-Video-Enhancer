@@ -171,8 +171,19 @@ class TorchToOnnxConverter(BaseTorchToOnnxConverter):
         Returns:
             Path to converted ONNX model
         """
-        # TODO: Implement SPAN conversion
-        raise NotImplementedError("SPAN conversion not yet implemented")
+        from apps.backend.models.upscale.span import SPANModel, SPANConfig
+        
+        # Create config
+        config = SPANConfig(
+            width=input_shape[3],
+            height=input_shape[2],
+        )
+        
+        # Create model
+        model = SPANModel(config=config, model_path=model_path)
+        
+        # Convert
+        return self.convert(model, model_path, output_path, input_shape, **kwargs)
 
 
 def convert_model(

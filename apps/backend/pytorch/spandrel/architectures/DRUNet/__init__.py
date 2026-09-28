@@ -101,7 +101,7 @@ class DRUNetArch(Architecture[DRUNet]):
             architecture=self,
             purpose="Restoration",
             tags=[f"{nb}nb"],
-            supports_half=False,  # TODO: verify
+            supports_half=False,  # Complex U-Net with normalization layers
             supports_bfloat16=True,
             scale=1,
             input_channels=in_nc - 1,  # one channel is generated

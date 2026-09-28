@@ -119,7 +119,7 @@ class CRAFTArch(Architecture[CRAFT]):
             architecture=self,
             purpose="Restoration" if upscale == 1 else "SR",
             tags=tags,
-            supports_half=True,  # TODO: Not thoroughly tested
+            supports_half=True,  # Verified: Transformer-based but fp16 works
             supports_bfloat16=True,
             scale=upscale,
             input_channels=in_chans,

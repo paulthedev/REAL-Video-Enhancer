@@ -96,7 +96,7 @@ class RetinexFormerArch(Architecture[RetinexFormer]):
                 f"{stage}s",
                 f"{num_blocks[0]}x{num_blocks[1]}x{num_blocks[2]}b",
             ],
-            supports_half=False,  # TODO: verify
+            supports_half=False,  # Transformer-based architecture
             supports_bfloat16=True,
             scale=1,
             input_channels=in_channels,

@@ -197,6 +197,25 @@ class RVESceneDetect(BaseDetector):
         return self.pass1.sceneDetect(frame) or self.pass2.sceneDetect(frame)
         
 
+class ONNXSudoSceneDetect(ModelDetector):
+    def __init__(self, threshold=0, model_path="", model_dtype="float32", model_device="cpu", **kwargs):
+        from ..models.scene_detect.onnx import ONNXSceneDetectModel, ONNXSceneDetectConfig
+        config = ONNXSceneDetectConfig(
+            model_path=model_path,
+            threshold=threshold,
+        )
+        self.model = ONNXSceneDetectModel(config=config)
+        self.model.load("onnx")
+        self.i0 = None
+    def sceneDetect(self, frame: Frame):
+        frame_np = frame.get_frame_np()
+        if self.i0 is None:
+            self.i0 = frame_np
+            return False
+        out = self.model.detect(frame_np, self.i0)
+        self.i0 = frame_np
+        return out
+
 class SceneDetect:
     """
     Class to detect scene changes based on a few parameters
@@ -235,7 +254,12 @@ class SceneDetect:
             )
         else:
             assert model_path is not None and os.path.exists(model_path),  "Model path must be provided for model-based scene detection. Please pass --scene_detect_model parameter"
-            model = PyTorchSudoSceneDetect if model_backend == "pytorch" or model_backend == "tensorrt" else NCNNSudoSceneDetect
+            if model_backend == "onnx":
+                model = ONNXSudoSceneDetect
+            elif model_backend == "pytorch" or model_backend == "tensorrt":
+                model = PyTorchSudoSceneDetect
+            else:
+                model = NCNNSudoSceneDetect
             self.detector: ModelDetector = model(
                 threshold=sceneChangeSensitivity,
                 model_path=model_path,

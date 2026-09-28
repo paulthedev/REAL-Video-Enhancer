@@ -52,18 +52,18 @@
 ### High Priority
 
 #### 1. ONNX Backend Completion
-- [ ] Implement ONNX loading for RIFE model
+- [x] Implement ONNX loading for RIFE model
   - Location: `apps/backend/models/interpolate/rife.py:389`
-- [ ] Implement NCNN loading for RIFE model
+- [x] Implement NCNN loading for RIFE model
   - Location: `apps/backend/models/interpolate/rife.py:394`
-- [ ] Add MIGraphX and OpenVINO execution providers
-- [ ] Fix provider selection logic
-- [ ] Wire up scene detection for ONNX backend
+- [x] Add MIGraphX and OpenVINO execution providers
+- [x] Fix provider selection logic
+- [x] Wire up scene detection for ONNX backend
 
 #### 2. Model Conversion
-- [ ] Implement SPAN conversion to ONNX
+- [x] Implement SPAN conversion to ONNX
   - Location: `apps/backend/converters/torch_to_onnx.py:174`
-- [ ] Test full conversion pipeline: PyTorch → ONNX → NCNN
+- [x] Test full conversion pipeline: PyTorch → ONNX → NCNN
 
 #### 3. Documentation Cleanup
 - [ ] Remove stale content from IMPLEMENTATION_TRACKER.md
@@ -74,31 +74,31 @@
 
 #### 4. Spandrel Half-Precision Verification
 Verify `supports_half` flags for these architectures:
-- [ ] ATD
-- [ ] CRAFT (marked as not thoroughly tested)
-- [ ] DCTLSA
-- [ ] DnCNN
-- [ ] DRUNet
-- [ ] FBCNN
-- [ ] FFTformer
-- [ ] HVICIDNet
-- [ ] IPT
-- [ ] MixDehazeNet
-- [ ] MMRealSR
-- [ ] NAFNet
-- [ ] OmniSR
-- [ ] RetinexFormer
-- [ ] RGT
-- [ ] SAFMN
-- [ ] SAFMNBCIE
-- [ ] SeemoRe
+- [x] ATD
+- [x] CRAFT (marked as not thoroughly tested)
+- [x] DCTLSA
+- [x] DnCNN
+- [x] DRUNet
+- [x] FBCNN
+- [x] FFTformer
+- [x] HVICIDNet
+- [x] IPT
+- [x] MixDehazeNet
+- [x] MMRealSR
+- [x] NAFNet
+- [x] OmniSR
+- [x] RetinexFormer
+- [x] RGT
+- [x] SAFMN
+- [x] SAFMNBCIE
+- [x] SeemoRe
 
 ### Low Priority
 
 #### 5. Code Cleanup
-- [ ] Fix FIXME: MULTI-DIMENSION in `GIMM/raft.py:64`
-- [ ] Fix FIXME in `Swin2SR/__arch/Swin2SR.py:637`
-- [ ] Fix FIXME in `timm/__drop.py:163`
+- [x] Fix FIXME: MULTI-DIMENSION in `GIMM/raft.py:64`
+- [x] Fix FIXME in `Swin2SR/__arch/Swin2SR.py:637`
+- [x] Fix FIXME in `timm/__drop.py:163`
 
 #### 6. Future Enhancements
 - [ ] Add TensorRT backend
@@ -115,9 +115,11 @@ Verify `supports_half` flags for these architectures:
 - Some architectures may crash in fp16 mode on certain GPUs
 
 ### ONNX Backend Issues
-- Provider selection needs refinement for AMD GPUs
-- Scene detection not wired up for ONNX
-- InterpolateONNX.py has hardcoded dimensions
+- InterpolateONNX.py has hardcoded dimensions (legacy code, new backend handles this)
+
+### Code Reuse
+- Created `apps/backend/utils/OnnxLoader.py` for reusable ONNX model loading
+- Refactored RIFE and scene detection models to use shared loader
 
 ### PyTorch Limitations
 - Pinned staging buffers are per-process (no cross-process sharing)
@@ -136,4 +138,4 @@ Verify `supports_half` flags for these architectures:
 ---
 
 ## Last Updated
-2026-09-28
+2026-09-29

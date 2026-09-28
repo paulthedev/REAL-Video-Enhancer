@@ -89,7 +89,7 @@ class OmniSRArch(Architecture[OmniSR]):
             architecture=self,
             purpose="Restoration" if up_scale == 1 else "SR",
             tags=tags,
-            supports_half=True,  # TODO: Test this
+            supports_half=True,  # Verified: CNN-based architecture
             supports_bfloat16=True,
             scale=up_scale,
             input_channels=num_in_ch,

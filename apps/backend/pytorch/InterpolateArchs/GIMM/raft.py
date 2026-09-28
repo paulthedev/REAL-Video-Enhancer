@@ -61,12 +61,13 @@ def warp(tenInput, tenFlow):
 
 
 def normalize_flow(flows):
-    # FIXME: MULTI-DIMENSION
-    flow_scaler = torch.max(torch.abs(flows).flatten(1), dim=-1)[0].reshape(
-        -1, 1, 1, 1, 1
-    )
+    """Normalize flow to [-1, 1] range, then scale to [0, 1]."""
+    # Compute max absolute value per sample (across all spatial dimensions and channels)
+    flow_scaler = torch.max(torch.abs(flows), dim=[1, 2, 3], keepdim=True)[0]
+    # Avoid division by zero
+    flow_scaler = torch.clamp(flow_scaler, min=1e-8)
     flows = flows / flow_scaler  # [-1,1]
-    # # Adapt to [0,1]
+    # Adapt to [0,1]
     flows = (flows + 1.0) / 2.0
     return flows, flow_scaler
 

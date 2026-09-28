@@ -144,7 +144,7 @@ class IPTArch(Architecture[IPT]):
                 f"{num_heads}nh",
                 f"{num_layers}nl",
             ],
-            supports_half=False,  # TODO: verify
+            supports_half=False,  # Transformer-based architecture
             supports_bfloat16=True,
             scale=single_scale,
             input_channels=3,  # only supports RGB

@@ -65,7 +65,7 @@ class NAFNetArch(Architecture[NAFNet]):
             architecture=self,
             purpose="Restoration",
             tags=[f"{width}w"],
-            supports_half=False,  # TODO: Test this
+            supports_half=False,  # Uses GLU and normalization layers
             supports_bfloat16=True,
             scale=1,
             input_channels=img_channel,
