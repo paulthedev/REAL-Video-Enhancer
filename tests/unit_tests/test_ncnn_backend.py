@@ -21,10 +21,11 @@ class TestNCNNBackendLoader(unittest.TestCase):
         loader = NCNNBackendLoader()
         
         self.assertEqual(loader.name, "ncnn")
-        self.assertEqual(len(loader.supported_tasks), 3)
+        self.assertEqual(len(loader.supported_tasks), 4)
         self.assertIn(ModelTask.INTERPOLATE, loader.supported_tasks)
         self.assertIn(ModelTask.UPSCALE, loader.supported_tasks)
         self.assertIn(ModelTask.RESTORATION, loader.supported_tasks)
+        self.assertIn(ModelTask.DENOISE, loader.supported_tasks)
     
     def test_initialize_without_ncnn(self):
         """Test initialization without ncnn package."""
