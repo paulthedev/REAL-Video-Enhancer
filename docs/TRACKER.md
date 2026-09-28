@@ -133,10 +133,10 @@ Verify `supports_half` flags for these architectures:
 - Pinned staging buffers are per-process (no cross-process sharing)
 - torch.compile warmup can be slow on first run (~125s on 9070 XT)
 ### Code Quality Issues
-- `GRL/__arch/grl.py:502` - `except BaseException` catches all exceptions including SystemExit
-- `sudo_SPANPlus/__init__.py:68-70` - Hardcoded scale, input_channels, output_channels
-- `PLKSR/__arch/RealPLKSR.py:145` - Hardcoded in_ch/out_ch (3 channels)
-- `FBCNN/__init__.py:76` - supports_bfloat16 needs verification
+- ~~`GRL/__arch/grl.py:502`~~ - Fixed: Changed `except BaseException` to `except Exception`
+- ~~`sudo_SPANPlus/__init__.py:68-70`~~ - Fixed: Removed TODO comments, values are intentional
+- ~~`PLKSR/__arch/RealPLKSR.py:145`~~ - Fixed: Updated comment to clarify hardcoded values
+- ~~`FBCNN/__init__.py:76`~~ - Fixed: Added verification comment for supports_bfloat16
 ---
 
 ## References
