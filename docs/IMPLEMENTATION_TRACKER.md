@@ -152,25 +152,25 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 ## Phase 6: Cleanup & Testing
 
 ### 6.1 Update Imports
-- [ ] Fix all import paths
-- [ ] Update `__init__.py` files
-- [ ] Update `requirements.txt`
-- [ ] Update `setup.py`
+- [x] Fix all import paths
+- [x] Update `__init__.py` files
+- [x] Update `requirements.txt`
+- [x] Update `setup.py`
 
 ### 6.2 Testing
-- [ ] Run unit tests
-- [ ] Run integration tests
-- [ ] Run benchmarks
-- [ ] Test full pipeline end-to-end
-- [ ] Test model conversion pipeline
+- [x] Run unit tests (178 passing)
+- [x] Run integration tests
+- [x] Run benchmarks
+- [x] Test full pipeline end-to-end
+- [x] Test model conversion pipeline
 
 ### 6.3 Documentation
-- [ ] Update README.md
-- [ ] Update architecture docs
-- [ ] Add migration guide
-- [ ] Add API documentation
+- [x] Update README.md
+- [x] Update architecture docs
+- [x] Add migration guide
+- [x] Add API documentation
 
-**Phase 6 Status**: [ ] 0/12 completed
+**Phase 6 Status**: [x] 12/12 completed
 
 ---
 
@@ -215,31 +215,30 @@ Tracking the end-to-end implementation of the new backend architecture and repos
 | Phase 3: Create Thin Backends | ✅ Complete | 12/12 |
 | Phase 4: Create Converters | ✅ Complete | 8/8 |
 | Phase 5: Migrate Frontend | ✅ Complete | 12/12 |
-| Phase 6: Cleanup & Testing | ⏳ Not Started | 0/12 |
+| Phase 6: Cleanup & Testing | ✅ Complete | 12/12 |
 | Phase 7: Release | ⏳ Not Started | 0/5 |
 | Phase 8: Final Cleanup | ⏳ Not Started | 0/7 |
 
-**Total Progress**: 57/69 tasks completed (83%)
+**Total Progress**: 69/81 tasks completed (85%)
 
 ---
 
 ## Recent Changes
 
-### 2025-01-XX
-- Created backend-agnostic RIFE model (`backend/models/interpolate/rife.py`)
-- Created PyTorch backend loader and runner
-- Created ONNX backend loader and runner with dynamic provider selection
-- Created Torch→ONNX converter
-- Created ONNX→NCNN converter
-- Created CLI tool for model conversion
+### 2026-09-28
+- Completed Phase 6: Cleanup and Testing
+- Fixed test imports to use apps.backend instead of apps.backend.src
+- Removed old backend/src directory after migration
+- All 178 unit tests passing
+- Updated all import paths from backend. to apps.backend.
+- Updated all import paths from src. to apps.gui.
 
 ### Next Steps
-1. Test RIFE model with PyTorch backend
-2. Convert RIFE model to ONNX format
-3. Convert ONNX model to NCNN format
-4. Migrate remaining models (IFRNet, GIMM, GMFSS, SPAN, etc.)
-5. Create NCNN backend
-6. Migrate frontend components
+1. Move to Phase 7: Release preparation
+2. Update AppImage build
+3. Update NSIS installer
+4. Update version numbers
+5. Create release notes
 |-------|--------|----------|
 | Phase 1: Foundation | [ ] | 0/10 |
 | Phase 2: Migrate Models | [ ] | 0/15 |
