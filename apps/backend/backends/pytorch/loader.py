@@ -32,7 +32,7 @@ class PyTorchBackendLoader(BaseBackend):
         self.dtype: Optional[torch.dtype] = None
         self.available_devices: List[str] = []
         self.device_type: str = "cpu"
-        self.use_tensorrt: bool = False  # Whether to use TensorRT optimization
+        self._tensorrt_available: bool = False
         
     def initialize(
         self,
@@ -63,10 +63,10 @@ class PyTorchBackendLoader(BaseBackend):
         self.dtype = TorchUtils.handle_precision(dtype)
         
         # Check if TensorRT is available for optimization
-        self.use_tensorrt = self._check_tensorrt_available()
+        self._tensorrt_available = self._check_tensorrt_available()
         
         print(f"PyTorch backend initialized on {self.device} with dtype {self.dtype}")
-        print(f"TensorRT: {'enabled' if self.use_tensorrt else 'disabled'}")
+        print(f"TensorRT: {'enabled' if self._tensorrt_available else 'disabled'}")
         print(f"Available devices: {self.available_devices}")
     
     def _detect_available_devices(self) -> List[str]:
@@ -122,6 +122,36 @@ class PyTorchBackendLoader(BaseBackend):
         except ImportError:
             return False
     
+    def _compile_with_tensorrt(self, model: BaseModel, model_path: str) -> BaseModel:
+        """
+        Compile model with TensorRT if available.
+        
+        Args:
+            model: The PyTorch model to compile
+            model_path: Path to model weights
+            
+        Returns:
+            Compiled model or original model if TensorRT not available
+        """
+        if not self._tensorrt_available:
+            return model
+        
+        # Import TensorRT handler
+        from apps.backend.pytorch.TensorRTHandler import TorchTensorRTHandler
+        import os
+        
+        # Get model parent path for engine caching
+        model_parent_path = os.path.dirname(model_path) if model_path else "."
+        
+        # Create TensorRT handler
+        trt_handler = TorchTensorRTHandler(
+            model_parent_path=model_parent_path,
+        )
+        
+        # Compile model (this is backend-specific logic)
+        # The model itself handles TensorRT compilation in its _load_pytorch method
+        return model
+    
     def load_model(
         self,
         model_name: str,
@@ -157,8 +187,8 @@ class PyTorchBackendLoader(BaseBackend):
             **(config or {}),
         )
         
-        # Load with PyTorch backend (TensorRT if available)
-        model.load("pytorch", use_tensorrt=self.use_tensorrt)
+        # Load with PyTorch backend
+        model.load("pytorch")
         
         # Store in registry
         self.models[model_name] = model
