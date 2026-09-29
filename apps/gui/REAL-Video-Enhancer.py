@@ -516,6 +516,14 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             return 1
 
         backend = self.backendComboBox.currentText()
+        # Use unified backend selector if available
+        if hasattr(self, 'backend_type_combo') and self.backend_type_combo.isEnabled():
+            backend_type = self.backend_type_combo.currentText()
+            if backend_type == "PyTorch" and hasattr(self, 'backend_variant_combo') and self.backend_variant_combo.isEnabled():
+                variant = self.backend_variant_combo.currentText()
+                backend = f"{backend_type.lower()} ({variant.lower()})"
+            else:
+                backend = backend_type.lower()
         upscaleModelArch = "custom"
         interpolateModels, upscaleModels, deblurModels, denoiseModels, decompressModels, sceneChangeModels = getModels(backend)
 
@@ -626,7 +634,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             tilingEnabled=self.tilingCheckBox.isChecked(),
             tilesize=self.tileSizeComboBox.currentText(),
             videoFrameCount=self.videoFrameCount,
-            backend=self.backendComboBox.currentText(),
+            backend=self.backendComboBox.currentText() if not (hasattr(self, 'backend_type_combo') and self.backend_type_combo.isEnabled()) else (
+                f"{self.backend_type_combo.currentText().lower()} ({self.backend_variant_combo.currentText().lower()})"
+                if self.backend_type_combo.currentText() == "PyTorch" and self.backend_variant_combo.isEnabled()
+                else self.backend_type_combo.currentText().lower()
+            ),
             interpolateTimes=self.getInterpolationMultiplier(
                 self.interpolateModelComboBox.currentText()
             ),

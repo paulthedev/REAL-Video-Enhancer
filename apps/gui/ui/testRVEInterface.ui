@@ -5928,25 +5928,119 @@ color: red;
                          </item>
                         </layout>
                        </item>
-                      </layout>
-                     </item>
-                     <item>
-                      <widget class="QWidget" name="pytorchBackendInstallerContainer_4" native="true">
-                       <layout class="QHBoxLayout" name="horizontalLayout_9">
-                        <property name="leftMargin">
-                         <number>0</number>
-                        </property>
-                        <property name="topMargin">
-                         <number>0</number>
-                        </property>
-                        <property name="rightMargin">
-                         <number>0</number>
-                        </property>
-                        <property name="bottomMargin">
-                         <number>0</number>
-                        </property>
-                        <item>
-                         <widget class="QPushButton" name="downloadNCNNBtn">
+                       <item>
+                        <widget class="QWidget" name="unifiedBackendSelectorContainer" native="true">
+                         <layout class="QVBoxLayout" name="unifiedBackendSelectorLayout">
+                          <property name="leftMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="topMargin">
+                           <number>5</number>
+                          </property>
+                          <property name="rightMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="bottomMargin">
+                           <number>5</number>
+                          </property>
+                          <item>
+                           <widget class="QLabel" name="label_backend_selector">
+                            <property name="text">
+                             <string>Backend Selection</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <layout class="QHBoxLayout" name="backendSelectorLayout">
+                            <item>
+                             <widget class="QLabel" name="label_backend_type">
+                              <property name="text">
+                               <string>Backend Type:</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QComboBox" name="backend_type_combo">
+                              <item>
+                               <property name="text">
+                                <string>ONNX</string>
+                               </property>
+                              </item>
+                              <item>
+                               <property name="text">
+                                <string>PyTorch</string>
+                               </property>
+                              </item>
+                              <item>
+                               <property name="text">
+                                <string>NCNN</string>
+                               </property>
+                              </item>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QLabel" name="label_backend_variant">
+                              <property name="text">
+                               <string>Variant:</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QComboBox" name="backend_variant_combo">
+                              <property name="enabled">
+                               <bool>false</bool>
+                              </property>
+                              <item>
+                               <property name="text">
+                                <string>CUDA</string>
+                               </property>
+                              </item>
+                              <item>
+                               <property name="text">
+                                <string>ROCm</string>
+                               </property>
+                              </item>
+                              <item>
+                               <property name="text">
+                                <string>XPU</string>
+                               </property>
+                              </item>
+                              <item>
+                               <property name="text">
+                                <string>MPS (Apple Silicon)</string>
+                               </property>
+                              </item>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QPushButton" name="loadBackendBtn">
+                              <property name="text">
+                               <string>Load Backend</string>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </item>
+                         </layout>
+                        </widget>
+                       </item>
+                       <item>
+                        <widget class="QWidget" name="pytorchBackendInstallerContainer_4" native="true">
+                         <layout class="QHBoxLayout" name="horizontalLayout_9">
+                          <property name="leftMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="topMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="rightMargin">
+                           <number>0</number>
+                          </property>
+                          <property name="bottomMargin">
+                           <number>0</number>
+                          </property>
+                          <item>
+                           <widget class="QPushButton" name="downloadNCNNBtn">
                           <property name="sizePolicy">
                            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                             <horstretch>0</horstretch>

@@ -14,6 +14,7 @@
 | Documentation | ✅ Complete | Architecture clarified |
 | Backend-Agnostic Hardware Detection | ✅ Complete | GpuHardware.py extended |
 | GUI Organization | ✅ Complete | REAL-Video-Enhancer.py moved to apps/gui/ |
+| Unified Backend Selection UI | ✅ Complete | Single dropdown with sub-selection |
 
 ---
 
@@ -57,6 +58,17 @@
 - [x] Added reinstall_backend() method
 - [x] Added get_backend_recommendation() method
 - [x] All 293 tests passing (5 skipped)
+
+### Unified Backend Selection UI (2026-09-29)
+- [x] Replaced separate download buttons with unified backend selector
+- [x] Added backend_type_combo dropdown (ONNX, PyTorch, NCNN)
+- [x] Added backend_variant_combo dropdown (CUDA, ROCm, XPU, MPS for PyTorch)
+- [x] Added "Load Backend" button to trigger backend loading
+- [x] Dynamic variant filtering based on selected backend type
+- [x] Platform-aware variant options (Linux: CUDA/ROCm/XPU, Windows: CUDA, macOS: MPS)
+- [x] Integrated with ProcessTab for unified backend selection during processing
+- [x] Updated REAL-Video-Enhancer.py to use unified backend selector
+- [x] All 298 tests passing (5 skipped)
 
 ### Repository Cleanup (100%)
 - [x] Consolidate build artifacts to `dist/`

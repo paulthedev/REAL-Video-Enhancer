@@ -74,7 +74,17 @@ class ProcessTab:
 
         # get default backend
         self.QConnect()
-        self.populateModels(self.parent.backendComboBox.currentText())
+        self.populateModels(self.get_current_backend())
+
+    def get_current_backend(self) -> str:
+        """Get the current backend from the unified selector or fallback to backendComboBox."""
+        if hasattr(self.parent, 'backend_type_combo') and self.parent.backend_type_combo.isEnabled():
+            backend_type = self.parent.backend_type_combo.currentText()
+            if backend_type == "PyTorch" and self.parent.backend_variant_combo.isEnabled():
+                variant = self.parent.backend_variant_combo.currentText()
+                return f"{backend_type.lower()} ({variant.lower()})"
+            return backend_type.lower()
+        return self.parent.backendComboBox.currentText()
 
     def populateModels(self, backend) -> dict:
         """
@@ -165,8 +175,16 @@ class ProcessTab:
         self.parent.decompressCheckBox.clicked.connect(self.parent.updateVideoGUIDetails)   
         self.parent.sloMoModeCheckBox.clicked.connect(self.parent.updateVideoGUIDetails)  
         self.parent.backendComboBox.currentIndexChanged.connect(
-            lambda: self.populateModels(self.parent.backendComboBox.currentText())
+            lambda: self.populateModels(self.get_current_backend())
         )
+        # Also connect to unified backend selector if available
+        if hasattr(self.parent, 'backend_type_combo'):
+            self.parent.backend_type_combo.currentIndexChanged.connect(
+                lambda: self.populateModels(self.get_current_backend())
+            )
+            self.parent.backend_variant_combo.currentIndexChanged.connect(
+                lambda: self.populateModels(self.get_current_backend())
+            )
         self.parent.EncoderCommand.textChanged.connect(lambda: self.parent.EncoderCommand.setFixedWidth(max(50, QFontMetrics(self.parent.EncoderCommand.font()).horizontalAdvance(self.parent.EncoderCommand.text()) + 10)))
         # connect up pausing
         hide_layout_widgets(self.parent.onRenderButtonsContiainer)
