@@ -15,6 +15,8 @@
 | Backend-Agnostic Hardware Detection | ✅ Complete | GpuHardware.py extended |
 | GUI Organization | ✅ Complete | REAL-Video-Enhancer.py moved to apps/gui/ |
 | Unified Backend Selection UI | ✅ Complete | Single dropdown with sub-selection |
+| Benchmark Tests | ✅ Complete | PyTorch, ONNX, NCNN benchmarks |
+| VSR Model Support | ✅ Complete | AnimeSR, TSPAN with 3 backends |
 
 ---
 
@@ -69,6 +71,34 @@
 - [x] Integrated with ProcessTab for unified backend selection during processing
 - [x] Updated REAL-Video-Enhancer.py to use unified backend selector
 - [x] All 298 tests passing (5 skipped)
+
+### Benchmark Tests (2026-09-29)
+- [x] PyTorch interpolation benchmark (bench_torch_interpolate.py)
+- [x] PyTorch upscale benchmark (bench_torch_upscale.py)
+- [x] ONNX interpolation benchmark (bench_onnx_interpolate.py)
+- [x] ONNX upscale benchmark (bench_onnx_upscale.py)
+- [x] NCNN interpolation benchmark (bench_ncnn_interpolate.py)
+- [x] NCNN upscale benchmark (bench_ncnn_upscale.py)
+- [x] Provider comparison support (TensorRT, CUDA, CPU for ONNX)
+- [x] Backend comparison support (Vulkan, OpenGL, CPU for NCNN)
+
+### Benchmark Tests (2026-09-29)
+- [x] PyTorch interpolation benchmark (bench_torch_interpolate.py)
+- [x] PyTorch upscale benchmark (bench_torch_upscale.py)
+- [x] ONNX interpolation benchmark (bench_onnx_interpolate.py)
+- [x] ONNX upscale benchmark (bench_onnx_upscale.py)
+- [x] NCNN interpolation benchmark (bench_ncnn_interpolate.py)
+- [x] NCNN upscale benchmark (bench_ncnn_upscale.py)
+- [x] Provider comparison support (TensorRT, CUDA, CPU for ONNX)
+- [x] Backend comparison support (Vulkan, OpenGL, CPU for NCNN)
+
+### VSR Model Support (2026-09-29)
+- [x] AnimeSR model with PyTorch, ONNX, NCNN backends
+- [x] TSPAN (TemporalSPAN) model with PyTorch, ONNX, NCNN backends
+- [x] Added TSPAN to GUI model selection (all 3 backends)
+- [x] Added AnimeSR to GUI model selection (all 3 backends)
+- [x] VSR models registered in model registry
+- [x] Temporal frame caching for video consistency
 
 ### Repository Cleanup (100%)
 - [x] Consolidate build artifacts to `dist/`

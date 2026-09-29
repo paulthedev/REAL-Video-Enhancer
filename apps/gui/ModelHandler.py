@@ -227,6 +227,12 @@ ncnnUpscaleModels = {
         4,
         "esrgan",
     ),
+    "TSPAN (Temporal) (2X) (Slow)": (
+        "tspan.ncnn",
+        "tspan.ncnn.tar.gz",
+        2,
+        "TSPAN",
+    ),
 }
 
 pytorchUpscaleModels = {
@@ -321,6 +327,12 @@ pytorchUpscaleModels = {
         "AnimeSR_v2.pth",
         4,
         "AnimeSR",
+    ),
+    "TSPAN (Temporal) (2X) (Slow)": (
+        "tspan.pth",
+        "tspan.pth",
+        2,
+        "TSPAN",
     ),
 }
 
@@ -441,6 +453,12 @@ onnxUpscaleModels = {
         "2x_ModernSpanimationV2_clamp_op20.onnx",
         2,
         "SPAN",
+    ),
+    "TSPAN (Temporal) (2X) (Slow)": (
+        "tspan.onnx",
+        "tspan.onnx",
+        2,
+        "TSPAN",
     ),
 }
 pytorchSceneChangeModels = {
