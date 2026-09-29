@@ -157,6 +157,7 @@ Verify `supports_half` flags for these architectures:
 #### 7. Future Enhancements
 - [x] Create integration tests
 - [x] Add more unit tests
+- [x] Add tests for GMFSS and MaxViT models
 - [ ] Add benchmarks for ONNX backend
 - [ ] UI integration (DownloadTab, backend selector)
 - [ ] End-to-end testing with real models

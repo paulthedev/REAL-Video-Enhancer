@@ -9,10 +9,11 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 # Import all model modules to trigger registration
-from apps.backend.models.interpolate import rife, ifrnet, gimm
+from apps.backend.models.interpolate import rife, ifrnet, gimm, gmfss
 from apps.backend.models.upscale import span, animesr, tspan
 from apps.backend.models.restoration import fbcnn, nafnet
 from apps.backend.models.denoise import dncnn
+from apps.backend.models.scene_detect import maxvit
 
 from apps.backend.models.registry import get_model, list_models, register_model
 from apps.backend.models.base import ModelFormat, ModelTask
@@ -32,9 +33,11 @@ class TestModelRegistry(unittest.TestCase):
         self.assertIn("dncnn", models)
         self.assertIn("ifrnet", models)
         self.assertIn("gimm", models)
+        self.assertIn("gmfss", models)
         self.assertIn("nafnet", models)
         self.assertIn("animesr", models)
         self.assertIn("tspan", models)
+        self.assertIn("scene_detect", models)
     
     def test_get_model(self):
         """Test getting a model by name."""
@@ -225,6 +228,24 @@ class TestModelBackends(unittest.TestCase):
         from apps.backend.models.registry import get_model
         
         model = get_model("tspan")
+        
+        self.assertTrue(hasattr(model, 'load'))
+        self.assertTrue(hasattr(model, 'unload'))
+    
+    def test_gmfss_backends(self):
+        """Test GMFSS model backends."""
+        from apps.backend.models.registry import get_model
+        
+        model = get_model("gmfss")
+        
+        self.assertTrue(hasattr(model, 'load'))
+        self.assertTrue(hasattr(model, 'unload'))
+    
+    def test_scene_detect_backends(self):
+        """Test scene detect model backends."""
+        from apps.backend.models.registry import get_model
+        
+        model = get_model("scene_detect")
         
         self.assertTrue(hasattr(model, 'load'))
         self.assertTrue(hasattr(model, 'unload'))

@@ -17,12 +17,14 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from apps.backend.models.interpolate.rife import RifeModel, RifeConfig, RifeVersion
 from apps.backend.models.interpolate.ifrnet import IFRNetModel, IFRNetConfig
 from apps.backend.models.interpolate.gimm import GimmModel, GimmConfig
+from apps.backend.models.interpolate.gmfss import GmfssModel, GmfssConfig
 from apps.backend.models.upscale.span import SPANModel, SPANConfig
 from apps.backend.models.upscale.animesr import AnimeSRModel, AnimeSRConfig
 from apps.backend.models.upscale.tspan import TSPANModel, TSPANConfig
 from apps.backend.models.restoration.fbcnn import FBCNNModel, FBCNNConfig
 from apps.backend.models.restoration.nafnet import NAFNetModel, NAFNetConfig
 from apps.backend.models.denoise.dncnn import DnCNNModel, DnCNNConfig
+from apps.backend.models.scene_detect.maxvit import MaxViTSceneDetectModel, MaxViTConfig
 from apps.backend.models.base import ModelTask, ModelFormat
 
 
@@ -146,6 +148,32 @@ class TestModelBackendSelection(unittest.TestCase):
         
         model.backend = "ncnn"
         self.assertEqual(model.backend, "ncnn")
+    
+    def test_gmfss_backend_selection(self):
+        """Test GMFSS model backend selection."""
+        model = GmfssModel(config=GmfssConfig())
+        
+        model.backend = "pytorch"
+        self.assertEqual(model.backend, "pytorch")
+        
+        model.backend = "onnx"
+        self.assertEqual(model.backend, "onnx")
+        
+        model.backend = "ncnn"
+        self.assertEqual(model.backend, "ncnn")
+    
+    def test_scene_detect_backend_selection(self):
+        """Test scene detect model backend selection."""
+        model = MaxViTSceneDetectModel(config=MaxViTConfig())
+        
+        model.backend = "pytorch"
+        self.assertEqual(model.backend, "pytorch")
+        
+        model.backend = "onnx"
+        self.assertEqual(model.backend, "onnx")
+        
+        model.backend = "ncnn"
+        self.assertEqual(model.backend, "ncnn")
 
 
 class TestModelInferenceMethods(unittest.TestCase):
@@ -249,6 +277,28 @@ class TestModelInferenceMethods(unittest.TestCase):
         self.assertTrue(hasattr(model, '_denoise_pytorch'))
         self.assertTrue(hasattr(model, '_denoise_onnx'))
         self.assertTrue(hasattr(model, '_denoise_ncnn'))
+    
+    def test_gmfss_inference_methods_exist(self):
+        """Test GMFSS has all inference methods."""
+        model = GmfssModel(config=GmfssConfig())
+        
+        self.assertTrue(hasattr(model, '_load_pytorch'))
+        self.assertTrue(hasattr(model, '_load_onnx'))
+        self.assertTrue(hasattr(model, '_load_ncnn'))
+        self.assertTrue(hasattr(model, '_interpolate_pytorch'))
+        self.assertTrue(hasattr(model, '_interpolate_onnx'))
+        self.assertTrue(hasattr(model, '_interpolate_ncnn'))
+    
+    def test_scene_detect_inference_methods_exist(self):
+        """Test scene detect has all inference methods."""
+        model = MaxViTSceneDetectModel(config=MaxViTConfig())
+        
+        self.assertTrue(hasattr(model, '_load_pytorch'))
+        self.assertTrue(hasattr(model, '_load_onnx'))
+        self.assertTrue(hasattr(model, '_load_ncnn'))
+        self.assertTrue(hasattr(model, '_detect_pytorch'))
+        self.assertTrue(hasattr(model, '_detect_onnx'))
+        self.assertTrue(hasattr(model, '_detect_ncnn'))
 
 
 class TestModelUnload(unittest.TestCase):
@@ -407,6 +457,28 @@ class TestModelConfig(unittest.TestCase):
         
         self.assertEqual(cfg["task"], ModelTask.DENOISE)
         self.assertEqual(cfg["format"], ModelFormat.PT)
+    
+    def test_gmfss_config(self):
+        """Test GMFSS model config."""
+        model = GmfssModel(config=GmfssConfig())
+        info = model.get_info()
+        
+        self.assertEqual(info["name"], "GMFSS")
+        self.assertEqual(info["task"], "interpolate")
+        self.assertIn("pytorch", info["supported_backends"])
+        self.assertIn("onnx", info["supported_backends"])
+        self.assertIn("ncnn", info["supported_backends"])
+    
+    def test_scene_detect_config(self):
+        """Test scene detect model config."""
+        model = MaxViTSceneDetectModel(config=MaxViTConfig())
+        info = model.get_info()
+        
+        self.assertEqual(info["name"], "scene_detect")
+        self.assertEqual(info["task"], "scene_detect")
+        self.assertIn("pytorch", info["supported_backends"])
+        self.assertIn("onnx", info["supported_backends"])
+        self.assertIn("ncnn", info["supported_backends"])
 
 
 if __name__ == "__main__":

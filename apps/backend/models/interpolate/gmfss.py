@@ -253,6 +253,62 @@ class GmfssModel(BaseInterpolateModel):
         """Get expected output shape."""
         return [1, 3, self.config.height, self.config.width]
     
+    def load(self, backend_name: str) -> None:
+        """
+        Load model with specified backend.
+        
+        Args:
+            backend_name: Backend to use ("pytorch", "onnx", "ncnn")
+        """
+        self.backend = backend_name
+        
+        if backend_name == "pytorch":
+            self._load_pytorch()
+        elif backend_name == "onnx":
+            self._load_onnx()
+        elif backend_name == "ncnn":
+            self._load_ncnn()
+        else:
+            raise ValueError(f"Unsupported backend: {backend_name}")
+    
+    def _load_pytorch(self) -> None:
+        """Load GMFSS model using PyTorch backend."""
+        import torch
+        
+        # Create model
+        self.model = GMFSS(
+            model_path=self.model_path,
+            scale=self.config.scale,
+            width=self.config.width,
+            height=self.config.height,
+        )
+        
+        # Load weights if provided
+        if self.model_path and self.model_path.endswith('.pkl'):
+            self.model.load_state_dict(torch.load(self.model_path, map_location='cpu'))
+        
+        self.model.eval()
+        print(f"Loaded GMFSS PyTorch model: {self.model_path}")
+    
+    def _interpolate_pytorch(
+        self,
+        frame1: torch.Tensor,
+        frame2: torch.Tensor,
+        timestep: float = 0.5
+    ) -> torch.Tensor:
+        """Perform PyTorch interpolation inference."""
+        # Apply padding
+        frame1 = F.pad(frame1, self.padding)
+        frame2 = F.pad(frame2, self.padding)
+        
+        # Forward pass
+        output = self.model(frame1, frame2, timestep)
+        
+        # Remove padding
+        output = output[:, :, :self.config.height, :self.config.width]
+        
+        return output
+    
     def _load_onnx(self) -> None:
         """Load GMFSS model using ONNX backend."""
         from apps.backend.utils.OnnxLoader import OnnxModelLoader

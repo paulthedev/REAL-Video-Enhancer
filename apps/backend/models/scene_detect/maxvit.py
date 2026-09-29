@@ -111,6 +111,60 @@ class MaxViTSceneDetectModel(BaseSceneDetectModel):
         """Get expected output shape."""
         return [1, self.config.num_classes]
     
+    def load(self, backend_name: str) -> None:
+        """
+        Load model with specified backend.
+        
+        Args:
+            backend_name: Backend to use ("pytorch", "onnx", "ncnn")
+        """
+        self.backend = backend_name
+        
+        if backend_name == "pytorch":
+            self._load_pytorch()
+        elif backend_name == "onnx":
+            self._load_onnx()
+        elif backend_name == "ncnn":
+            self._load_ncnn()
+        else:
+            raise ValueError(f"Unsupported backend: {backend_name}")
+    
+    def _load_pytorch(self) -> None:
+        """Load MaxViT model using PyTorch backend."""
+        import torch
+        
+        # Create model
+        self.model = MaxViTSceneDetect(
+            num_classes=self.config.num_classes,
+            in_chans=self.config.in_chans,
+        )
+        
+        # Load weights if provided
+        if self.model_path and self.model_path.endswith('.pkl'):
+            self.model.load_state_dict(torch.load(self.model_path, map_location='cpu'))
+        
+        self.model.eval()
+        print(f"Loaded MaxViT PyTorch model: {self.model_path}")
+    
+    def _detect_pytorch(
+        self,
+        frame: torch.Tensor,
+        prev_frame: Optional[torch.Tensor] = None
+    ) -> bool:
+        """Perform PyTorch scene detection inference."""
+        if prev_frame is None:
+            return False
+        
+        # Concatenate frames
+        input_tensor = torch.cat((prev_frame, frame), dim=0)
+        
+        # Run inference
+        with torch.inference_mode():
+            output = self.model(input_tensor.unsqueeze(0))
+        
+        # Return True if scene change detected
+        return output[0][0] > self.config.threshold
+    
     def _load_onnx(self) -> None:
         """Load MaxViT model using ONNX backend."""
         from apps.backend.utils.OnnxLoader import OnnxModelLoader
