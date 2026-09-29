@@ -32,12 +32,14 @@ class PyTorchBackendLoader(BaseBackend):
         self.dtype: Optional[torch.dtype] = None
         self.available_devices: List[str] = []
         self.device_type: str = "cpu"
+        self.backend: str = "pytorch"  # "pytorch" or "tensorrt"
         
     def initialize(
         self,
         device: str = "auto",
         dtype: str = "auto",
         gpu_id: int = 0,
+        backend: str = "auto",
     ) -> None:
         """
         Initialize PyTorch backend.
@@ -46,6 +48,7 @@ class PyTorchBackendLoader(BaseBackend):
             device: Device to run on ("auto", "cuda", "cpu")
             dtype: Data type ("auto", "fp16", "fp32")
             gpu_id: GPU ID
+            backend: Backend to use ("auto", "pytorch", "tensorrt")
         """
         from apps.backend.pytorch.TorchUtils import TorchUtils
         
@@ -61,7 +64,14 @@ class PyTorchBackendLoader(BaseBackend):
         self.device = TorchUtils.handle_device(self.device_type, gpu_id=gpu_id)
         self.dtype = TorchUtils.handle_precision(dtype)
         
+        # Select backend
+        if backend == "auto":
+            self.backend = self._select_best_backend()
+        else:
+            self.backend = backend
+        
         print(f"PyTorch backend initialized on {self.device} with dtype {self.dtype}")
+        print(f"Backend: {self.backend}")
         print(f"Available devices: {self.available_devices}")
     
     def _detect_available_devices(self) -> List[str]:
@@ -102,6 +112,24 @@ class PyTorchBackendLoader(BaseBackend):
             return "xpu"
         else:
             return "cpu"
+    
+    def _select_best_backend(self) -> str:
+        """
+        Select the best available backend.
+        
+        Priority order based on performance:
+        - TensorRT: NVIDIA GPU with TensorRT compilation (fastest)
+        - PyTorch: Standard PyTorch execution
+        
+        Returns:
+            Best backend name
+        """
+        try:
+            import tensorrt
+            import torch_tensorrt
+            return "tensorrt"
+        except ImportError:
+            return "pytorch"
     
     def load_model(
         self,
