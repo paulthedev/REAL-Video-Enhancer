@@ -32,14 +32,13 @@ class PyTorchBackendLoader(BaseBackend):
         self.dtype: Optional[torch.dtype] = None
         self.available_devices: List[str] = []
         self.device_type: str = "cpu"
-        self.backend: str = "pytorch"  # "pytorch" or "tensorrt"
+        self.use_tensorrt: bool = False  # Whether to use TensorRT optimization
         
     def initialize(
         self,
         device: str = "auto",
         dtype: str = "auto",
         gpu_id: int = 0,
-        backend: str = "auto",
     ) -> None:
         """
         Initialize PyTorch backend.
@@ -48,7 +47,6 @@ class PyTorchBackendLoader(BaseBackend):
             device: Device to run on ("auto", "cuda", "cpu")
             dtype: Data type ("auto", "fp16", "fp32")
             gpu_id: GPU ID
-            backend: Backend to use ("auto", "pytorch", "tensorrt")
         """
         from apps.backend.pytorch.TorchUtils import TorchUtils
         
@@ -64,14 +62,11 @@ class PyTorchBackendLoader(BaseBackend):
         self.device = TorchUtils.handle_device(self.device_type, gpu_id=gpu_id)
         self.dtype = TorchUtils.handle_precision(dtype)
         
-        # Select backend
-        if backend == "auto":
-            self.backend = self._select_best_backend()
-        else:
-            self.backend = backend
+        # Check if TensorRT is available for optimization
+        self.use_tensorrt = self._check_tensorrt_available()
         
         print(f"PyTorch backend initialized on {self.device} with dtype {self.dtype}")
-        print(f"Backend: {self.backend}")
+        print(f"TensorRT: {'enabled' if self.use_tensorrt else 'disabled'}")
         print(f"Available devices: {self.available_devices}")
     
     def _detect_available_devices(self) -> List[str]:
@@ -113,23 +108,19 @@ class PyTorchBackendLoader(BaseBackend):
         else:
             return "cpu"
     
-    def _select_best_backend(self) -> str:
+    def _check_tensorrt_available(self) -> bool:
         """
-        Select the best available backend.
-        
-        Priority order based on performance:
-        - TensorRT: NVIDIA GPU with TensorRT compilation (fastest)
-        - PyTorch: Standard PyTorch execution
+        Check if TensorRT is available for optimization.
         
         Returns:
-            Best backend name
+            True if TensorRT is available, False otherwise
         """
         try:
             import tensorrt
             import torch_tensorrt
-            return "tensorrt"
+            return True
         except ImportError:
-            return "pytorch"
+            return False
     
     def load_model(
         self,
@@ -166,8 +157,8 @@ class PyTorchBackendLoader(BaseBackend):
             **(config or {}),
         )
         
-        # Load with PyTorch backend
-        model.load("pytorch")
+        # Load with PyTorch backend (TensorRT if available)
+        model.load("pytorch", use_tensorrt=self.use_tensorrt)
         
         # Store in registry
         self.models[model_name] = model

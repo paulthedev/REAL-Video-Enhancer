@@ -111,14 +111,16 @@ class MaxViTSceneDetectModel(BaseSceneDetectModel):
         """Get expected output shape."""
         return [1, self.config.num_classes]
     
-    def load(self, backend_name: str) -> None:
+    def load(self, backend_name: str, use_tensorrt: bool = False) -> None:
         """
         Load model with specified backend.
         
         Args:
             backend_name: Backend to use ("pytorch", "onnx", "ncnn")
+            use_tensorrt: Whether to use TensorRT optimization (PyTorch backend only)
         """
         self.backend = backend_name
+        self.use_tensorrt = use_tensorrt
         
         if backend_name == "pytorch":
             self._load_pytorch()

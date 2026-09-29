@@ -67,7 +67,7 @@ class TestPyTorchBackendLoader(unittest.TestCase):
         )
         
         mock_model_class.assert_called_once()
-        mock_model_instance.load.assert_called_once_with("pytorch")
+        mock_model_instance.load.assert_called_once_with("pytorch", use_tensorrt=False)
         self.assertEqual(loader.models["RIFE"], mock_model_instance)
     
     def test_unload_model(self):
