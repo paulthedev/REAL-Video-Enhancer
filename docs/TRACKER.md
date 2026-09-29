@@ -161,6 +161,10 @@ Verify `supports_half` flags for these architectures:
 - [ ] UI integration (DownloadTab, backend selector)
 - [ ] End-to-end testing with real models
 
+#### 8. Model Backend Expansion
+- [x] Add ONNX and NCNN support to GMFSS (interpolation)
+- [x] Add ONNX and NCNN support to MaxViT Scene Detect
+
 ---
 
 ## Known Issues

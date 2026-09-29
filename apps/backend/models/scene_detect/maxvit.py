@@ -110,6 +110,128 @@ class MaxViTSceneDetectModel(BaseSceneDetectModel):
     def get_output_shape(self) -> List[int]:
         """Get expected output shape."""
         return [1, self.config.num_classes]
+    
+    def _load_onnx(self) -> None:
+        """Load MaxViT model using ONNX backend."""
+        from apps.backend.utils.OnnxLoader import OnnxModelLoader
+        
+        self.onnx_loader = OnnxModelLoader(provider="auto")
+        self.onnx_loader.load(self.model_path)
+        
+        self.onnx_inputs = self.onnx_loader.inputs
+        self.onnx_outputs = self.onnx_loader.outputs
+        self.onnx_provider = self.onnx_loader.provider
+        
+        print(f"Loaded MaxViT ONNX model: {self.model_path}")
+        print(f"  Provider: {self.onnx_provider}")
+    
+    def _load_ncnn(self) -> None:
+        """Load MaxViT model using NCNN backend."""
+        import os
+        
+        param_path = self.model_path.replace('.bin', '.param') if self.model_path.endswith('.bin') else self.model_path
+        bin_path = self.model_path.replace('.param', '.bin') if self.model_path.endswith('.param') else self.model_path
+        
+        if not os.path.exists(param_path) or not os.path.exists(bin_path):
+            raise FileNotFoundError(f"NCNN model files not found: {param_path} or {bin_path}")
+        
+        import ncnn
+        self.ncnn_net = ncnn.Net()
+        self.ncnn_net.load_param(param_path)
+        self.ncnn_net.load_model(bin_path)
+        
+        self.ncnn_param_path = param_path
+        self.ncnn_bin_path = bin_path
+        
+        print(f"Loaded MaxViT NCNN model: {param_path}")
+    
+    def _detect_onnx(
+        self,
+        frame: torch.Tensor,
+        prev_frame: Optional[torch.Tensor] = None
+    ) -> bool:
+        """Perform ONNX scene detection inference."""
+        import numpy as np
+        
+        if prev_frame is None:
+            return False
+        
+        # Concatenate frames
+        input_tensor = torch.cat((prev_frame, frame), dim=0)
+        
+        # Convert to numpy
+        input_np = input_tensor.unsqueeze(0).cpu().numpy().astype(np.float32)
+        
+        # Run inference
+        input_name = self.onnx_inputs[0].name
+        output_name = self.onnx_outputs[0].name
+        
+        outputs = self.onnx_loader.run({input_name: input_np}, [output_name])
+        
+        # Return True if scene change detected
+        return outputs[0][0][0] > self.config.threshold
+    
+    def _detect_ncnn(
+        self,
+        frame: torch.Tensor,
+        prev_frame: Optional[torch.Tensor] = None
+    ) -> bool:
+        """Perform NCNN scene detection inference."""
+        import numpy as np
+        
+        if prev_frame is None:
+            return False
+        
+        # Concatenate frames
+        input_tensor = torch.cat((prev_frame, frame), dim=0)
+        
+        # Convert to numpy
+        input_np = input_tensor.unsqueeze(0).cpu().numpy()
+        input_np = (input_np * 255.0).astype(np.uint8)
+        
+        # Create NCNN Mat
+        c, h, w = input_np.shape[0], input_np.shape[2], input_np.shape[3]
+        mat = ncnn.Mat(h, w, c, input_np[0].transpose(1, 2, 0).flatten())
+        
+        # Create extractor
+        extractor = self.ncnn_net.create_extractor()
+        extractor.set_num_thread(4)
+        extractor.input("input.1", mat)
+        
+        # Run inference
+        _, out_mat = extractor.extract("output.1")
+        
+        # Convert output to tensor
+        output_data = out_mat.to_float32()
+        
+        # Return True if scene change detected
+        return output_data[0] > self.config.threshold
+    
+    def unload(self) -> None:
+        """Unload model and free memory."""
+        import gc
+        
+        if self.backend == "onnx" and hasattr(self, 'onnx_loader'):
+            self.onnx_loader.unload()
+        elif self.backend == "ncnn" and hasattr(self, 'ncnn_net'):
+            self.ncnn_net = None
+        elif self.backend == "pytorch":
+            self.model = None
+        
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    
+    def get_info(self) -> dict:
+        """Return model metadata."""
+        return {
+            "name": self.name,
+            "architecture": self.architecture,
+            "task": "scene_detect",
+            "num_classes": self.config.num_classes,
+            "supported_formats": ["pt", "onnx", "ncnn"],
+            "supported_backends": ["pytorch", "onnx", "ncnn"],
+        }
 
 
 # Register the model (create instance for registration)
@@ -117,6 +239,10 @@ _scene_detect_instance = MaxViTSceneDetectModel(config=MaxViTConfig())
 register_model(
     name="scene_detect",
     model=_scene_detect_instance,
-    formats={ModelFormat.PT: "models/scene_detect/sudo_maxxvit_scenedetect.pt"},
-    backends=["pytorch"],
+    formats={
+        ModelFormat.PT: "models/scene_detect/sudo_maxxvit_scenedetect.pt",
+        ModelFormat.ONNX: "models/scene_detect/sudo_maxxvit_scenedetect.onnx",
+        ModelFormat.NCNN: "models/scene_detect/sudo_maxxvit_scenedetect.ncnn",
+    },
+    backends=["pytorch", "onnx", "ncnn"],
 )
