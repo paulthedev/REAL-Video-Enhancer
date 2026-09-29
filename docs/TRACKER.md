@@ -198,17 +198,20 @@ Verify `supports_half` flags for these architectures:
 ### Spandrel Architecture Issues
 - Multiple architectures have unverified `supports_half` flags
 - Some architectures may crash in fp16 mode on certain GPUs
+- **Mitigation**: `UpscaleModelWrapper.__test_model_precision()` automatically falls back to float32 if fp16 inference fails
+- **Mitigation**: Models with `supports_half=False` will raise `UnsupportedDtypeError` when forced to fp16, preventing crashes
 
 ### ONNX Backend Issues
-- InterpolateONNX.py has hardcoded dimensions (legacy code, new backend handles this)
+- ~~InterpolateONNX.py has hardcoded dimensions~~ - **Fixed**: Legacy file removed during backend migration
+- New ONNX backend handles dynamic dimensions correctly
 
 ### Code Reuse
 - Created `apps/backend/utils/OnnxLoader.py` for reusable ONNX model loading
 - Refactored RIFE and scene detection models to use shared loader
 
 ### PyTorch Limitations
-- Pinned staging buffers are per-process (no cross-process sharing)
-- torch.compile warmup can be slow on first run (~125s on 9070 XT)
+- Pinned staging buffers are per-process (no cross-process sharing) - **Expected behavior**
+- torch.compile warmup can be slow on first run (~125s on 9070 XT) - **Expected behavior**
 ### Code Quality Issues
 - ~~`GRL/__arch/grl.py:502`~~ - Fixed: Changed `except BaseException` to `except Exception`
 - ~~`sudo_SPANPlus/__init__.py:68-70`~~ - Fixed: Removed TODO comments, values are intentional
