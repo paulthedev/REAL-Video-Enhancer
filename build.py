@@ -167,7 +167,7 @@ class PyInstaller(BuildManager):
         PythonManager.run_venv_python(
             (
               "-m PyInstaller" 
-            + " REAL-Video-Enhancer.py" 
+            + " apps/gui/REAL-Video-Enhancer.py" 
             + " --icon=icons/logo-v2.ico" 
             + " --noconfirm"
             + " --noupx" 
@@ -196,7 +196,7 @@ class CxFreeze(BuildManager):
             (
               " -m"
             + " cx_Freeze"
-            + " --script REAL-Video-Enhancer.py"
+            + " --script apps/gui/REAL-Video-Enhancer.py"
             + " --target-dir"
             + f" {OUTPUT_FOLDER}"
             + " build_exe"
@@ -260,7 +260,7 @@ if __name__ == "__main__":
         BuildManager().python_manager.setup_python()
     BuildManager().build_gui()
     if args.run:
-        PythonManager.run_venv_python("REAL-Video-Enhancer.py")
+        PythonManager.run_venv_python("apps/gui/REAL-Video-Enhancer.py")
     elif args.run_backend:
         PythonManager.run_venv_python("apps/backend/rve-backend.py")
     else:
