@@ -21,6 +21,13 @@ from apps.gui.GpuHardware import (
     detect_gpu_hardware,
     FAMILY_HARDWARE,
     HARDWARE_FAMILIES,
+    get_compatible_backends,
+    get_preferred_backend,
+    get_torch_backend_family,
+    get_onnx_providers,
+    get_ncnn_backend,
+    check_backend_health,
+    get_backend_reinstall_info,
 )
 from apps.gui.Util import (
     FileHandler,
@@ -559,6 +566,100 @@ class DownloadDependencies:
         log(f"Installing ROCm device packages for: {missing}")
         extras = ",".join(f"device-{target}" for target in missing)
         return self.pip([f"rocm[{extras}]=={rocm_version}.*"], True, is_nightly=is_nightly)
+
+    def check_backend_health(self, backend: str) -> dict:
+        """Check if a backend is healthy and working.
+        
+        Args:
+            backend: Backend name (pytorch, onnx, ncnn).
+            
+        Returns:
+            Dictionary with health status.
+        """
+        return check_backend_health(backend)
+
+    def check_backend_hardware_change(self, settings, backend: str = "pytorch") -> bool:
+        """Detect a change of GPU hardware since the backend was installed
+        and offer to reinstall for the new hardware.
+        
+        Args:
+            settings: Settings object.
+            backend: Backend name (pytorch, onnx, ncnn).
+            
+        Returns:
+            True if a reinstall was performed.
+        """
+        hardware = detect_gpu_hardware()
+        if not hardware:
+            return False
+        
+        # Get reinstall info for the backend
+        reinstall_info = get_backend_reinstall_info(backend, hardware)
+        
+        # Check if backend is installed and healthy
+        health = self.check_backend_health(backend)
+        if not health["healthy"]:
+            log(f"Backend {backend} is not healthy: {health.get('error')}")
+            # Offer to reinstall
+            reply = QMessageBox.question(
+                None,
+                "Backend Health Check",
+                f"The {backend.capitalize()} backend is not working properly.\n"
+                f"Error: {health.get('error', 'Unknown error')}\n\n"
+                "Reinstall the backend?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                self.reinstall_backend(settings, backend)
+                return True
+            return False
+        
+        return False
+
+    def reinstall_backend(self, settings, backend: str) -> None:
+        """Reinstall a backend for the current hardware.
+        
+        Args:
+            settings: Settings object.
+            backend: Backend name (pytorch, onnx, ncnn).
+        """
+        hardware = detect_gpu_hardware()
+        reinstall_info = get_backend_reinstall_info(backend, hardware)
+        
+        log(f"Reinstalling {backend} backend for hardware: {hardware}")
+        
+        if backend == "pytorch":
+            # Use existing torch reinstall logic
+            family = reinstall_info["recommended_family"]
+            settings.writeSetting("pytorch_backend", self.backend_setting_from_family(family))
+            self._reinstall_torch(settings, backend_family=family)
+        elif backend == "onnx":
+            # Install onnxruntime with GPU providers
+            providers = reinstall_info["recommended_provider"]
+            log(f"Installing ONNX Runtime with providers: {providers}")
+            self.downloadPythonDeps("onnx", install=True)
+        elif backend == "ncnn":
+            # Install NCNN packages
+            backend_name = reinstall_info["recommended_backend"]
+            log(f"Installing NCNN backend: {backend_name}")
+            self.downloadPythonDeps("ncnn", install=True)
+
+    def get_backend_recommendation(self) -> dict:
+        """Get backend recommendation based on detected hardware.
+        
+        Returns:
+            Dictionary with backend recommendations.
+        """
+        hardware = detect_gpu_hardware()
+        return {
+            "hardware": hardware,
+            "compatible_backends": get_compatible_backends(hardware),
+            "preferred_backend": get_preferred_backend(hardware),
+            "torch_family": get_torch_backend_family(hardware),
+            "onnx_providers": get_onnx_providers(hardware),
+            "ncnn_backend": get_ncnn_backend(hardware),
+        }
 
     def pip(
         self,
