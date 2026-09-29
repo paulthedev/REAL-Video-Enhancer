@@ -153,12 +153,6 @@ class SettingsTab:
                 "precision", self.parent.precision.currentText()
             )
         )
-        self.parent.tensorrt_optimization_level.currentIndexChanged.connect(
-            lambda: self.settings.writeSetting(
-                "tensorrt_optimization_level",
-                self.parent.tensorrt_optimization_level.currentText(),
-            )
-        )
         self.parent.preview_enabled.stateChanged.connect(
             lambda: self.settings.writeSetting(
                 "preview_enabled",
@@ -253,12 +247,6 @@ class SettingsTab:
             )
         )
         
-        self.parent.dynamic_tensorrt_engine.stateChanged.connect(
-            lambda: self.settings.writeSetting(
-                "dynamic_tensorrt_engine",
-                "True" if self.parent.dynamic_tensorrt_engine.isChecked() else "False"
-            )
-        )
         self.parent.auto_hdr_mode.stateChanged.connect(
             lambda: self.settings.writeSetting(
                 "auto_hdr_mode",
@@ -329,9 +317,6 @@ class SettingsTab:
             self.parent.encoder.removeItem(index)
 
         self.parent.precision.setCurrentText(self.settings.settings["precision"])
-        self.parent.tensorrt_optimization_level.setCurrentText(
-            self.settings.settings["tensorrt_optimization_level"]
-        )
         self.parent.encoder.setCurrentText(self.settings.settings["encoder"])
         self.parent.audio_encoder.setCurrentText(
             self.settings.settings["audio_encoder"]
@@ -388,9 +373,6 @@ class SettingsTab:
         self.parent.pytorch_backend.setCurrentText(
             self.settings.settings["pytorch_backend"]
         )
-        self.parent.dynamic_tensorrt_engine.setChecked(
-            self.settings.settings["dynamic_tensorrt_engine"] == "True"
-        )
         self.parent.auto_hdr_mode.setChecked(
             self.settings.settings["auto_hdr_mode"] == "True"
         )
@@ -430,8 +412,6 @@ class Settings:
         output_folder_default = FileHandler.getDefaultOutputFolder()
         self.defaultSettings = {
             "precision": "auto",
-            "tensorrt_optimization_level": "3",
-            "dynamic_tensorrt_engine": "False",
             "encoder": "libx264",
             "video_encoder_speed": "medium",
             "audio_encoder": "copy_audio",
@@ -458,8 +438,6 @@ class Settings:
         }
         self.allowedSettings = {
             "precision": ("auto", "float32", "float16"),
-            "tensorrt_optimization_level": ("0", "1", "2", "3", "4", "5"),
-            "dynamic_tensorrt_engine": ("True", "False"),
             "encoder": (
                 "libx264",
                 "libx265",

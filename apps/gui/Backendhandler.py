@@ -37,8 +37,6 @@ class BackendHandler:
         for word in output:
             if "objc" in word:
                 continue
-            if "[Torch-TensorRT]" in word:
-                continue
             new_out += word + " "
 
         # Find the part of the output containing the backends list

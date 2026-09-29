@@ -737,7 +737,7 @@ class DownloadDependencies:
                 ]
                 return_code = self.pip(deps, install)
                 return_codes.append(return_code)
-            case "torch" | "tensorrt":
+            case "torch":
                 # Nightly wheels carry a date stamp (e.g. 2.15.0.dev20260925) that
                 # can't be expressed with a plain == pin, so resolve the latest
                 # dev build from the nightly index at install time.
@@ -791,26 +791,6 @@ class DownloadDependencies:
                     return_code = self.pip(deps, install, is_nightly=is_nightly)
 
                 return_codes.append(return_code)
-
-                if backend == "tensorrt":
-                    # torch-tensorrt 2.14.0 (the latest release) pins
-                    # tensorrt>=11.1.0,<11.2.0, so 11.1.0.106 is the newest
-                    # compatible version.
-                    trt_ver = "11.1.0.106"
-                    deps = [
-                        f"tensorrt=={trt_ver}",
-                        f"tensorrt_cu12=={trt_ver}",
-                        f"tensorrt-cu12_libs=={trt_ver}",
-                        f"tensorrt_cu12_bindings=={trt_ver}",
-                        
-                    ]
-                    if install:
-                        
-                        torch_version = torch_version[:-1] + "0" # remove the last character (2.7.1 -> 2.7.0), torch tensorrt doesnt release a new version for every new pytorch minor release
-                        deps += ["--no-deps","dllist",f"torch-tensorrt=={torch_version}{torch_backend}"]
-
-                    return_code = self.pip(deps, install)
-                    return_codes.append(return_code)
         
         for return_code in return_codes:
             if return_code != 0:

@@ -9,7 +9,7 @@ class DownloadModel:
     """
     Takes in the name of a model and the name of the backend in the GUI, and downloads it from a URL
     model: any valid model used by RVE
-    backend: the backend used (pytorch, tensorrt, ncnn)
+    backend: the backend used (pytorch, ncnn)
     """
 
     def __init__(

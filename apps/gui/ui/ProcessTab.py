@@ -79,7 +79,7 @@ class ProcessTab:
     def populateModels(self, backend) -> dict:
         """
         returns
-        the current models available given a method (interpolate, upscale) and a backend (ncnn, tensorrt, pytorch)
+        the current models available given a method (interpolate, upscale) and a backend (ncnn, pytorch)
         """
         interpolateModels, upscaleModels, deblurModels, denoiseModels, decompressModels, _ = getModels(backend)
         self.parent.interpolateModelComboBox.clear()
@@ -531,8 +531,6 @@ class ProcessTab:
             f"{self.settings.settings['precision']}",
             "--custom_encoder",
             f" {renderOptions.encoderCommand} ",
-            "--tensorrt_opt_profile",
-            f"{self.settings.settings['tensorrt_optimization_level']}",
             "--pause_shared_memory_id",
             f"{PAUSED_STATE_SHARED_MEMORY_ID}",
             "--ncnn_gpu_id",
@@ -616,11 +614,6 @@ class ProcessTab:
         if self.settings.settings["auto_border_cropping"] == "True":
             command += [
                 "--border_detect",
-            ]
-
-        if self.settings.settings["dynamic_tensorrt_engine"] == "True":
-            command += [
-                "--tensorrt_dynamic_shapes",
             ]
 
         if self.settings.settings["preview_enabled"] == "True":

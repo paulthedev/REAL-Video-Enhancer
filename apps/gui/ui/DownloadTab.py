@@ -31,7 +31,6 @@ class DownloadTab:
         self.parent.low_storage_label.setVisible(False)
         if FileHandler.getFreeSpace() < minimum_space_required:
             self.parent.downloadTorchBtn.setEnabled(False)
-            self.parent.downloadTensorRTBtn.setEnabled(False)
             self.parent.low_storage_label.setVisible(True)
             self.has_enough_space = False
         # disable as it is not complete
@@ -66,7 +65,6 @@ class DownloadTab:
                 self.parent.pytorch_backend.setEnabled(False)
                 
                 self.parent.downloadTorchBtn.setEnabled(True)
-            self.parent.downloadTensorRTBtn.setEnabled(False)
         if IS_FLATPAK or USE_LOCAL_BACKEND:
             self.parent.uninstallAppBtn.setDisabled(True)
         else:
@@ -81,9 +79,6 @@ class DownloadTab:
         self.parent.downloadTorchBtn.clicked.connect(
             lambda: self.download("torch", True)
         )
-        self.parent.downloadTensorRTBtn.clicked.connect(
-            lambda: self.download("tensorrt", True)
-        )
         self.parent.downloadDirectMLBtn.clicked.connect(
             lambda: self.download("directml", True)
         )
@@ -96,9 +91,6 @@ class DownloadTab:
         )
         self.parent.uninstallTorchBtn.clicked.connect(
             lambda: self.download("torch", False)
-        )
-        self.parent.uninstallTensorRTBtn.clicked.connect(
-            lambda: self.download("tensorrt", False)
         )
         self.parent.uninstallDirectMLBtn.clicked.connect(
             lambda: self.download("directml", False)
@@ -131,7 +123,6 @@ class DownloadTab:
     def hideUninstallButtons(self):
         self.parent.uninstallTorchBtn.setVisible(False)
         self.parent.uninstallNCNNBtn.setVisible(False)
-        self.parent.uninstallTensorRTBtn.setVisible(False)
         self.parent.uninstallDirectMLBtn.setVisible(False)
 
     def showUninstallButton(self, backends):
@@ -150,9 +141,6 @@ class DownloadTab:
         if "ncnn" in backends:
             self.parent.downloadNCNNBtn.setVisible(False)
             self.parent.uninstallNCNNBtn.setVisible(True)
-        if "tensorrt" in backends:
-            self.parent.downloadTensorRTBtn.setVisible(False)
-            self.parent.uninstallTensorRTBtn.setVisible(True)
 
         # disable as it is not complete
         try:
@@ -192,7 +180,7 @@ class DownloadTab:
                 "Please select a valid PyTorch version from the dropdown."
             )
             return
-        if current_pytorch_backend == "cuda" or dep.lower() == "tensorrt":
+        if current_pytorch_backend == "cuda":
             pytorch_backend = pytorch_ver.cuda_version
         elif current_pytorch_backend == "rocm":
             pytorch_backend = pytorch_ver.rocm_version
