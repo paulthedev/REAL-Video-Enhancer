@@ -12,6 +12,8 @@
 | Spandrel Half-Precision | ✅ Complete | 18/18 architectures |
 | Code Quality | ✅ Complete | All TODO/FIXME addressed |
 | Documentation | ✅ Complete | Architecture clarified |
+| Backend-Agnostic Hardware Detection | ✅ Complete | GpuHardware.py extended |
+| GUI Organization | ✅ Complete | REAL-Video-Enhancer.py moved to apps/gui/ |
 
 ---
 
@@ -36,6 +38,25 @@
 - [x] Provider priority: TensorRT > CUDA > MIGraphX > OpenVINO > QNN > DirectML > CoreML > WebGPU > CPU
 - [x] Added Intel OpenVINO support (CPU/iGPU/NPU)
 - [x] Added Qualcomm QNN support (Snapdragon HTP/NPU)
+
+### Backend-Agnostic Hardware Detection (2026-09-29)
+- [x] Extended GpuHardware.py with backend-agnostic detection
+- [x] Added BACKEND_HARDWARE_COMPATIBILITY mapping (pytorch, onnx, ncnn)
+- [x] Added ONNX_PROVIDER_HARDWARE mapping
+- [x] Added NCNN_BACKEND_HARDWARE mapping
+- [x] Added get_compatible_backends() function
+- [x] Added get_preferred_backend() function
+- [x] Added get_torch_backend_family() function
+- [x] Added get_onnx_providers() function
+- [x] Added get_ncnn_backend() function
+- [x] Added check_backend_health() function
+- [x] Added get_backend_reinstall_info() function
+- [x] Integrated with DownloadDeps.py
+- [x] Added check_backend_health() method
+- [x] Added check_backend_hardware_change() method
+- [x] Added reinstall_backend() method
+- [x] Added get_backend_recommendation() method
+- [x] All 293 tests passing (5 skipped)
 
 ### Repository Cleanup (100%)
 - [x] Consolidate build artifacts to `dist/`
@@ -162,6 +183,10 @@ Verify `supports_half` flags for these architectures:
 - [ ] UI integration (DownloadTab, backend selector)
 - [ ] End-to-end testing with real models
 
+### GUI Organization (2026-09-29)
+- [x] Move REAL-Video-Enhancer.py to apps/gui/ folder
+- [x] Update build.py references to new location
+
 #### 8. Model Backend Expansion
 - [x] Add ONNX and NCNN support to GMFSS (interpolation)
 - [x] Add ONNX and NCNN support to MaxViT Scene Detect
@@ -202,6 +227,20 @@ Verify `supports_half` flags for these architectures:
 - [onnx-backend-plan.md](onnx-backend-plan.md) - ONNX implementation plan
 
 ---
+
+## Recent Changes (2026-09-29)
+
+### Backend-Agnostic Hardware Detection
+- Extended `apps/gui/GpuHardware.py` to work with all backends (PyTorch, ONNX, NCNN)
+- Added health checking and repair logic to `apps/gui/DownloadDeps.py`
+- System now detects hardware and recommends appropriate backend automatically
+
+### GUI Organization
+- Moved `REAL-Video-Enhancer.py` to `apps/gui/REAL-Video-Enhancer.py`
+- Updated build.py references
+
+### Test Results
+- 293 tests passing, 5 skipped
 
 ## Last Updated
 2026-09-29
