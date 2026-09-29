@@ -30,6 +30,8 @@ class PyTorchBackendLoader(BaseBackend):
         self.models: Dict[str, BaseModel] = {}
         self.device: Optional[torch.device] = None
         self.dtype: Optional[torch.dtype] = None
+        self.available_devices: List[str] = []
+        self.device_type: str = "cpu"
         
     def initialize(
         self,
@@ -47,10 +49,59 @@ class PyTorchBackendLoader(BaseBackend):
         """
         from apps.backend.pytorch.TorchUtils import TorchUtils
         
-        self.device = TorchUtils.handle_device(device, gpu_id=gpu_id)
+        # Detect available devices
+        self.available_devices = self._detect_available_devices()
+        
+        # Select best device
+        if device == "auto":
+            self.device_type = self._select_best_device()
+        else:
+            self.device_type = device
+        
+        self.device = TorchUtils.handle_device(self.device_type, gpu_id=gpu_id)
         self.dtype = TorchUtils.handle_precision(dtype)
         
         print(f"PyTorch backend initialized on {self.device} with dtype {self.dtype}")
+        print(f"Available devices: {self.available_devices}")
+    
+    def _detect_available_devices(self) -> List[str]:
+        """
+        Detect available PyTorch devices.
+        
+        Returns:
+            List of available device types
+        """
+        devices = []
+        if torch.cuda.is_available():
+            devices.append("cuda")
+        if torch.backends.mps.is_available():
+            devices.append("mps")
+        if torch.xpu.is_available():
+            devices.append("xpu")
+        devices.append("cpu")
+        return devices
+    
+    def _select_best_device(self) -> str:
+        """
+        Select the best available device.
+        
+        Priority order based on hardware capabilities:
+        - CUDA: NVIDIA GPU (best performance)
+        - MPS: Apple Silicon (Metal Performance Shaders)
+        - XPU: Intel GPU
+        - CPU: Fallback
+        
+        Returns:
+            Best device type
+        """
+        if "cuda" in self.available_devices:
+            return "cuda"
+        elif "mps" in self.available_devices:
+            return "mps"
+        elif "xpu" in self.available_devices:
+            return "xpu"
+        else:
+            return "cpu"
     
     def load_model(
         self,
