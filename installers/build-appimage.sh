@@ -21,6 +21,7 @@ ARCH="${3:-x86_64}"
 APP_NAME="REAL-Video-Enhancer"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+APPIMAGE_DIR="$SCRIPT_DIR/appimage"
 WORK_DIR="$(mktemp -d)"
 ROOT_DIR="$WORK_DIR/root"
 APPIMAGE_OUT="$WORK_DIR/${APP_NAME}-${VERSION}-linux-${ARCH}.AppImage"
@@ -40,12 +41,12 @@ fi
 # --- assemble squashfs root --------------------------------------------
 mkdir -p "$ROOT_DIR"
 cp -a "$BUILD_DIR/." "$ROOT_DIR/"
-cp "$SCRIPT_DIR/AppRun" "$ROOT_DIR/AppRun"
-cp "$SCRIPT_DIR/$APP_NAME.desktop" "$ROOT_DIR/$APP_NAME.desktop"
+cp "$APPIMAGE_DIR/AppRun" "$ROOT_DIR/AppRun"
+cp "$APPIMAGE_DIR/$APP_NAME.desktop" "$ROOT_DIR/$APP_NAME.desktop"
 
 # Icons: pre-rendered hicolor theme (same artwork as the Flatpak icon).
 mkdir -p "$ROOT_DIR/usr/share"
-cp -a "$SCRIPT_DIR/icons" "$ROOT_DIR/usr/share/icons"
+cp -a "$APPIMAGE_DIR/icons" "$ROOT_DIR/usr/share/icons"
 # Desktop entry references the icon by name; also drop a 512px root icon.
 cp "$ROOT_DIR/usr/share/icons/hicolor/512x512/apps/$APP_NAME.png" "$ROOT_DIR/$APP_NAME.png"
 chmod +x "$ROOT_DIR/AppRun"

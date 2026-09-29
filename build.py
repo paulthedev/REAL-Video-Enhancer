@@ -75,15 +75,20 @@ class PythonManager:
 
     def __install_requirements_in_venv(self):
         print("Installing requirements in virtual environment")
+        # Read dependencies from pyproject.toml to avoid duplication
+        import tomllib
+        with open("pyproject.toml", "rb") as f:
+            pyproject = tomllib.load(f)
+        deps = pyproject.get("project", {}).get("dependencies", [])
+        # Also add build tools
+        deps.extend(["cx-freeze==8.7.1"])
         command = [
             "uv",
             "pip",
             "install",
             "--python",
             self.PYTHON_VENV_PATH,
-            "-e",
-            ".",
-        ]
+        ] + deps
         subprocess.run(command)
         
 
@@ -144,13 +149,13 @@ class BuildManager:
         if "pyinstaller" in self.__str__().lower():
             backend_dir = os.path.join(f"{OUTPUT_FOLDER}/REAL-Video-Enhancer/backend")
             try:
-                shutil.copytree("backend",backend_dir)
+                shutil.copytree("apps/backend", backend_dir)
             except Exception:
                 raise FileNotFoundError("Backend failed to copy!")
             if not os.path.exists(backend_dir):
                 raise FileNotFoundError("Backend failed to copy!")
         else:
-            shutil.copytree("backend", f"{OUTPUT_FOLDER}/backend")
+            shutil.copytree("apps/backend", f"{OUTPUT_FOLDER}/backend")
 
     @abstractmethod
     def patch_for_xcbcursor(self):
