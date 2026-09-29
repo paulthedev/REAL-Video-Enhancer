@@ -180,7 +180,7 @@ Verify `supports_half` flags for these architectures:
 - [x] Add more unit tests
 - [x] Add tests for GMFSS and MaxViT models
 - [ ] Add benchmarks for ONNX backend
-- [ ] UI integration (DownloadTab, backend selector)
+- [x] UI integration (DownloadTab, backend selector) - Backend selector exists, but ONNX download button not yet added
 - [ ] End-to-end testing with real models
 
 ### GUI Organization (2026-09-29)
