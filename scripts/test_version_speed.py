@@ -1,17 +1,19 @@
 # get git tags
 import subprocess
 import os
-import requests
+import urllib.request
+
 def download_file(url, destination):
     if os.path.exists(destination):
         print(f"{destination} already exists, skipping download.")
         return
-    response = requests.get(url, stream=True)
-    total_size = int(response.headers.get("content-length", 0))
-    block_size = 1024  
-    with open(destination, "wb") as file:
-        for data in response.iter_content(block_size):
-            file.write(data)
+    with urllib.request.urlopen(url) as response:
+        with open(destination, "wb") as file:
+            while True:
+                data = response.read(1024 * 1024)
+                if not data:
+                    break
+                file.write(data)
     print(f"Downloaded {destination} from {url}")
 
 def get_git_tags():

@@ -1,266 +1,43 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Optional
-from PySide6.QtWidgets import QMessageBox
+"""Orchestrates the platform-specific install flow across all backends.
 
-from apps.gui.constants import (
-    PLATFORM,
-    PYTHON_DIRECTORY,
-    PYTHON_EXECUTABLE_PATH,
-    PYTHON_VERSION,
-    FFMPEG_PATH,
-    BACKEND_PATH,
-    TEMP_DOWNLOAD_PATH,
-    CWD,
-    CPU_ARCH,
-    USE_LOCAL_BACKEND,
-    IS_STEAM
-)
-from apps.gui.version import version, backend_dev_version
-from apps.gui.GpuHardware import (
-    detect_gpu_hardware,
-    FAMILY_HARDWARE,
-    HARDWARE_FAMILIES,
-    get_compatible_backends,
-    get_preferred_backend,
-    get_torch_backend_family,
-    get_onnx_providers,
-    get_ncnn_backend,
-    check_backend_health,
-    get_backend_reinstall_info,
-)
-from apps.gui.Util import (
-    FileHandler,
-    log,
-    extractTarGZ,
-    removeFolder,
-    subprocess_popen_without_terminal
-)
-from apps.gui.ui.QTcustom import (
-    DownloadProgressPopup,
-    DisplayCommandOutputPopup,
-    RegularQTPopup,
-    needs_network_else_exit,
-)
+Coordinates backend, python, ffmpeg and VC-redist installation, plus the
+torch/torchvision pairing, hardware-change detection and ROCm-target
+resolution logic.
+"""
+
 import os
 import re
 import subprocess
+from typing import Optional
 
+from PySide6.QtWidgets import QMessageBox
 
-def run_executable(exe_path):
-    try:
-        # Run the executable and wait for it to complete
-        result = subprocess.run(exe_path, check=True, capture_output=True, text=True)
+from apps.gui.constants import (
+    IS_STEAM,
+    PLATFORM,
+    PYTHON_EXECUTABLE_PATH,
+    TEMP_DOWNLOAD_PATH,
+)
+from apps.gui.ui.QTcustom import DisplayCommandOutputPopup
+from apps.gui.util import log
 
-        # Print the output of the executable
-        print("STDOUT:", result.stdout)
-
-        # Print any error messages
-        print("STDERR:", result.stderr)
-
-        # Print the exit code
-        print("Exit Code:", result.returncode)
-
-    except subprocess.CalledProcessError as e:
-        print("An error occurred while running the executable.")
-        print("Exit Code:", e.returncode)
-        print("Output:", e.output)
-        print("Error:", e.stderr)
-        return False
-    except FileNotFoundError:
-        print("The specified executable was not found.")
-        return False
-    except Exception as e:
-        print("An unexpected error occurred:", str(e))
-        return False
-    return True
-
-@dataclass
-class Dependency(ABC):
-    updatable: bool
-    download_path:str
-    installed_path:str
-
-    def __init__(self):
-        FileHandler.createDirectory(os.path.dirname(self.download_path))
-
-    @abstractmethod
-    def get_download_link(self) -> str: ...
-        
-    @abstractmethod
-    def download(self) -> None: ...
-
-    def get_if_update_available(self) -> bool: ...
-    def update_if_updates_available(self) -> None: ...
-
-class Backend(Dependency):
-    updatable: bool = True
-    is_update_available: bool = False
-    download_path = os.path.join(CWD, "backend.tar.gz")
-    installed_path = BACKEND_PATH
-
-
-    def get_download_link(self) -> str:
-        backend_url = f"https://github.com/TNTwise/REAL-Video-Enhancer/releases/download/RVE-{version}/backend-v{version}.tar.gz"
-        return backend_url
-    
-    def download(self):
-        if USE_LOCAL_BACKEND:
-            return
-        needs_network_else_exit()
-        download_link = self.get_download_link()
-        DownloadProgressPopup(link=download_link, downloadLocation=self.download_path, title="Downloading Backend")
-        extractTarGZ(self.download_path)
-    
-    def get_if_update_available(self) -> bool:
-        try:
-            process = subprocess_popen_without_terminal(
-                [PYTHON_EXECUTABLE_PATH, os.path.join(BACKEND_PATH, "rve-backend.py"), "--version"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-                )
-            stdout, stderr = process.communicate()
-            if process.returncode != 0:
-                raise subprocess.CalledProcessError(process.returncode, process.args, stdout, stderr)
-            output = stdout.strip() # this extracts the version number from the output
-            log(f"\nBackend Version: {output}\n")
-            update_available = not output == backend_dev_version
-            self.is_update_available = update_available
-            return update_available
-        except subprocess.CalledProcessError as e: # if the backend is not found
-            log("Backend not found, downloading..." + str(e))
-            self.download()
-            self.is_update_available = False
-            return False
-    
-    def update_if_updates_available(self) -> None:
-        if self.is_update_available:
-            needs_network_else_exit()
-            FileHandler.removeFolder(BACKEND_PATH) # remove the old backend directory
-            self.download()
-
-
-class Python(Dependency):
-    download_path = os.path.join(CWD, "python", "python.tar.gz")
-    installed_path = PYTHON_DIRECTORY
-    is_update_available: bool
-
-    def get_download_link(self) -> str:
-        link = f"https://github.com/TNTwise/REAL-Video-Enhancer-models/releases/download/models/cpython-{PYTHON_VERSION}+20250317-"
-       
-        match PLATFORM:
-            case "linux":
-                link += "x86_64-unknown-linux-gnu-install_only.tar.gz" if CPU_ARCH == "x86_64" else "aarch64-unknown-linux-gnu-install_only.tar.gz"
-            case "win32":
-                link += "x86_64-pc-windows-msvc-install_only.tar.gz"
-            case "darwin":
-                link += "x86_64-apple-darwin-install_only.tar.gz" if CPU_ARCH == "x86_64" else "aarch64-apple-darwin-install_only.tar.gz"
-
-        return link
-
-    def download(self):
-        needs_network_else_exit()
-        download_link = self.get_download_link()
-        FileHandler.createDirectory(os.path.dirname(self.download_path))
-        DownloadProgressPopup(link = download_link, downloadLocation=self.download_path, title = f"Downloading Python {PYTHON_VERSION}")
-        extractTarGZ(self.download_path)
-    
-    def get_version(self):
-        return subprocess.run([PYTHON_EXECUTABLE_PATH, "--version"], check=True, capture_output=True, text=True).stdout.strip().split(" ")[1] # this extracts the version number from the output
-    
-    def get_if_update_available(self) -> bool:
-        try:
-            output = self.get_version()
-        except subprocess.CalledProcessError: # if python is not found
-            self.download()
-            return False
-        
-        is_update = not output == PYTHON_VERSION
-
-        if is_update:
-            reply = QMessageBox.question(
-                None,
-                "Update Python?",
-                "The installed version of Python is older than the current version of RVE. Update?",
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.No,  # type: ignore
-            )
-            if reply == QMessageBox.Yes:  # type: ignore
-                self.is_update_available = True
-                print("Updating Python")
-            else:
-                is_update = False
-        self.is_update_available = is_update
-        return self.is_update_available
-
-    def update_if_updates_available(self) -> None:
-
-        if self.is_update_available:
-            removeFolder(PYTHON_DIRECTORY)
-            self.download()
-
-class FFMpeg(Dependency):
-    download_path = os.path.join(CWD, "ffmpeg")
-    installed_path = FFMPEG_PATH
-
-    def get_download_link(self) -> str:
-        link = "https://github.com/TNTwise/real-video-enhancer-models/releases/download/models/"
-        match PLATFORM:
-            case "linux":
-                link += "ffmpeg" if CPU_ARCH == "x86_64" else "ffmpeg-linux-arm64"
-            case "win32":
-                link += "ffmpeg.exe" if CPU_ARCH == "x86_64" else "ffmpeg-windows-arm64.exe"
-            case "darwin":
-                link += "ffmpeg-macos-bin" if CPU_ARCH == "x86_64" else "ffmpeg-macos-arm"
-        return link
-
-    def download(self):
-        
-        needs_network_else_exit()
-
-        download_link = self.get_download_link()
-        DownloadProgressPopup(link=download_link, downloadLocation=self.download_path, title="Downloading FFMpeg")
-        FileHandler.createDirectory(os.path.dirname(self.installed_path))
-        FileHandler.moveFile(self.download_path, self.installed_path)
-        FileHandler.makeExecutable(self.installed_path)
-
-class VCRedList(Dependency):
-    updatable = False
-    download_path = os.path.join(CWD, "bin", "VC_redist.x64.exe")
-    installed_path = download_path
-
-    def get_download_link(self) -> str:
-        return "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-    
-    def download(self):
-        if PLATFORM == 'win32':
-            needs_network_else_exit()
-
-            download_link = self.get_download_link()
-            DownloadProgressPopup(link=download_link, downloadLocation=self.download_path, title="Downloading VCRedist")
-            
-            # Use ShellExecute to properly handle admin elevation
-            import ctypes
-            try:
-                result = ctypes.windll.shell32.ShellExecuteW(
-                    None,                          # hwnd
-                    "runas",                       # operation (runas = run as admin)
-                    self.download_path,            # file
-                    "/install /norestart /quiet",         # parameters
-                    None,                          # directory
-                    1                              # show command (1 = normal window)
-                )
-                if result <= 32:  # Error codes are <= 32
-                    RegularQTPopup(
-                        "Failed to launch VCRedist installer. Please run it manually."
-                    )
-            except Exception as e:
-                RegularQTPopup(
-                    f"Error launching VCRedist installer: {str(e)}\nThe installer will now close."
-                )
-
-
+from .BackendDetect import (
+    check_backend_health,
+    detect_gpu_hardware,
+    get_backend_reinstall_info,
+    get_compatible_backends,
+    get_ncnn_backend,
+    get_onnx_providers,
+    get_preferred_backend,
+    get_torch_backend_family,
+)
+from .BackendsTables import FAMILY_HARDWARE, HARDWARE_FAMILIES
+from .Backend import Backend
+from .Dependency import Dependency
+from .FFmpeg import FFMpeg
+from .Python import Python
+from .VcRedlist import VCRedList
+from .TorchVersions import TorchVersion
 
 
 class DownloadDependencies:
@@ -299,7 +76,6 @@ class DownloadDependencies:
         release (e.g. an old torch with a newly installed torchvision) and
         offer to reinstall a matching pair. Returns True if a reinstall was
         performed."""
-        from .BuiltInTorchVersions import TorchVersion
 
         installed = self.get_torch_versions()
         torch_ver = installed["torch"]
@@ -345,7 +121,6 @@ class DownloadDependencies:
     def _resolve_torch_version(self, settings):
         """The version class selected in the settings, falling back to the
         latest stable built-in version."""
-        from .BuiltInTorchVersions import TorchVersion
 
         requested_version = settings.settings.get("pytorch_version", "")
         for v in TorchVersion.__subclasses__():
@@ -769,11 +544,11 @@ class DownloadDependencies:
         "2.15.0.dev20260925" — the caller appends the suffix itself.
         Falls back to `base_version` if the index can't be reached.
         """
-        import requests
+        import urllib.request
         url = f"https://download.pytorch.org/whl/nightly/{package}/"
         try:
-            resp = requests.get(url, timeout=15)
-            resp.raise_for_status()
+            with urllib.request.urlopen(url, timeout=15) as resp:
+                index_html = resp.read().decode("utf-8", errors="replace")
             # Wheel filenames look like: torch-2.15.0.dev20260925%2Bcu134-cp312-...whl
             # The '+' is URL-encoded as '%2B'. Match the base version, capture the
             # date, and require our local suffix.
@@ -784,7 +559,7 @@ class DownloadDependencies:
                 rf"{re.escape(package)}-{re.escape(base_version)}(\d+)%2B{re.escape(suffix)}-cp"
             )
             best_date = None
-            for m in pattern.finditer(resp.text):
+            for m in pattern.finditer(index_html):
                 date = m.group(1)
                 if best_date is None or date > best_date:
                     best_date = date
@@ -802,7 +577,6 @@ class DownloadDependencies:
     def getPlatformIndependentDeps(self):
         platformIndependentdeps = [
             "testresources==2.0.1",
-            "requests==2.32.3",
             "opencv-python-headless==4.11.0.86",
             "pypresence==4.3.0",
             "scenedetect==0.6.5.2",

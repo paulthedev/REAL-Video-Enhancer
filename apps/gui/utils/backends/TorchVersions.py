@@ -1,7 +1,12 @@
-import requests
-from apps.gui.constants import HAS_NETWORK_ON_STARTUP
+"""Bundled-in PyTorch version matrix and torch/torchvision pairs.
+
+Replaces `BuiltInTorchVersions.py` which shipped as a thin dataclass-based
+table of nightly/stable version strings used to pin which torch/torchvision
+pairs get installed for each backend family (cuda/rocm/xpu/mps).
+"""
+
 from dataclasses import dataclass
-from apps.gui.ui.SettingsTab import Settings
+
 
 @dataclass
 class TorchVersion:
@@ -13,6 +18,7 @@ class TorchVersion:
     mps_version: str
     is_nightly: bool = False
 
+
 class Torch2_15(TorchVersion):
     torch_version = "2.15.0.dev"
     torchvision_version = "0.30.0.dev"
@@ -22,6 +28,7 @@ class Torch2_15(TorchVersion):
     mps_version = ""
     is_nightly = True
 
+
 class Torch2_14(TorchVersion):
     torch_version = "2.14.0"
     torchvision_version = "0.29.0"
@@ -29,5 +36,5 @@ class Torch2_14(TorchVersion):
     rocm_version = "+rocm7.14"
     xpu_version = "+xpu"
     mps_version = ""
-
+    is_nightly = False
 

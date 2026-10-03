@@ -11,7 +11,7 @@ import platform
 
 PLATFORM = sys.platform
 CPU_ARCH = "x86_64" if platform.machine() == "AMD64" else platform.machine()
-OUTPUT_FOLDER = "dist"
+OUTPUT_FOLDER = os.path.join("apps", "gui", "dist")
 print(f"Platform: {PLATFORM}")
 print(f"CPU Arch: {CPU_ARCH}")
 print(f"OUTPUT_FOLDER: {OUTPUT_FOLDER}")
@@ -119,18 +119,75 @@ class BuildManager:
     def build(self):
         ...
     
+    # (source .ui file, generated module name inside dist/pages/)
+    PAGE_UIS = [
+        ("apps/gui/ui/mainwindow.ui", "_mainwindow"),
+        ("apps/gui/pages/home/home.ui", "home"),
+        ("apps/gui/ui/more_page.ui", "more"),
+        ("apps/gui/pages/process/process.ui", "process"),
+        ("apps/gui/pages/settings/settings.ui", "settings"),
+        ("apps/gui/pages/download/download.ui", "download"),
+    ]
+
+    def _uic(self, ui_source: str) -> str:
+        if PLATFORM == "win32":
+            uic = r".\venv\Lib\site-packages\PySide6\uic.exe"
+        else:
+            uic = f"{self.python_manager.get_venv_site_packages()}/PySide6/Qt/libexec/uic"
+        return f"{uic} -g python {ui_source}"
+
     def build_gui(self):
         print("Building GUI")
-        os.makedirs(OUTPUT_FOLDER, exist_ok=True)
-        if PLATFORM == "darwin" or PLATFORM == "linux":
-            os.system(
-                f"{self.python_manager.get_venv_site_packages()}/PySide6/Qt/libexec/uic -g python apps/gui/ui/testRVEInterface.ui > {OUTPUT_FOLDER}/mainwindow.py"
+        pages_dir = os.path.join(OUTPUT_FOLDER, "pages")
+        os.makedirs(pages_dir, exist_ok=True)
+        with open(os.path.join(pages_dir, "__init__.py"), "w"):
+            pass
+        for ui_source, name in self.PAGE_UIS:
+            out = (
+                f"{OUTPUT_FOLDER}/mainwindow.py"
+                if name == "_mainwindow"
+                else os.path.join(pages_dir, f"{name}.py")
             )
-        if PLATFORM == "win32":
-            os.system(
-                r".\venv\Lib\site-packages\PySide6\uic.exe -g python apps\gui\ui\testRVEInterface.ui > {OUTPUT_FOLDER}/mainwindow.py"
-            )
-    
+            command = self._uic(ui_source)
+            print(f"  uic {ui_source} -> {out}")
+            result = os.system(f"{command} > {out}")
+            if result != 0:
+                raise RuntimeError(f"uic failed for {ui_source}: {result}")
+            self._inject_widget_imports(out)
+
+    #: Custom (promoted) widgets referenced by the ``.ui`` files. PySide6's
+    #: ``uic`` does not auto-import promoted widgets into the generated module,
+    #: so after each compile we add the import if the widget is actually used.
+    WIDGET_IMPORTS = {
+        "HelpIconLabel": "from apps.gui.widgets import HelpIconLabel",
+        "QTabNavigation": "from apps.gui.widgets import QTabNavigation",
+    }
+
+    @staticmethod
+    def _inject_widget_imports(path: str) -> None:
+        with open(path, "r", encoding="utf-8") as fh:
+            text = fh.read()
+        lines = text.splitlines(keepends=True)
+        needed = [
+            name for name in BuildManager.WIDGET_IMPORTS if f" {name}(" in text
+        ]
+        if not needed:
+            return
+        # imports always precede the generated ``class Ui_...`` definition, so
+        # inserting right before it places us after the whole import block.
+        insert_at = len(lines)
+        for i, line in enumerate(lines):
+            if line.startswith("class "):
+                insert_at = i
+                break
+        imports_needed = [BuildManager.WIDGET_IMPORTS[n] for n in needed]
+        for stmt in reversed(imports_needed):
+            if stmt in text:
+                continue
+            lines.insert(insert_at, stmt + "\n")
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("".join(lines))
+
     def build_resources(self):
         print("Building resources.rc")
         os.makedirs(OUTPUT_FOLDER, exist_ok=True)
@@ -261,15 +318,21 @@ if __name__ == "__main__":
     args.add_argument("--appimage_arch", help="Architecture for the AppImage build.", default="x86_64")
     args.add_argument("--copy_backend", help="Copy the backend to the build directory", action="store_true")    
     args = args.parse_args()
+
+    # NOTE: a single BuildManager instance is reused below — each constructor run
+    # wipes OUTPUT_FOLDER (dist/), so separate instances would delete previously
+    # generated artifacts (e.g. mainwindow.py) before writing resources_rc.py.
+    build_manager = BuildManager()
+
     if not os.path.exists("venv") or not args.build == "gui":
-        BuildManager().python_manager.setup_python()
-    BuildManager().build_gui()
+        build_manager.python_manager.setup_python()
+    build_manager.build_gui()
     if args.run:
         PythonManager.run_venv_python("apps/gui/REAL-Video-Enhancer.py")
     elif args.run_backend:
         PythonManager.run_venv_python("apps/backend/rve-backend.py")
     else:
-        BuildManager().build_resources()
+        build_manager.build_resources()
         
         
         match args.build:

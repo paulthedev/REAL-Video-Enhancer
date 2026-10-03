@@ -14,15 +14,16 @@ def download_ffmpeg(cwd: str = os.getcwd()) -> str | None:
             link += "ffmpeg-macos-bin" if CPU_ARCH == "x86_64" else "ffmpeg-macos-arm"
     
     try:
-        import requests
+        import urllib.request
+
         print("Downloading FFMpeg from " + link)
-        
-        response = requests.get(link, stream=True)
-        total_size = int(response.headers.get("content-length", 0))
-        block_size = 1024  
-        with open(download_path, "wb") as file:
-            for data in response.iter_content(block_size):
-                file.write(data)
+        with urllib.request.urlopen(link, timeout=30) as response:
+            with open(download_path, "wb") as file:
+                while True:
+                    data = response.read(1024 * 1024)
+                    if not data:
+                        break
+                    file.write(data)
         print("Download completed.")
 
         return download_path

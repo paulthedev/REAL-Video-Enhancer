@@ -10,10 +10,10 @@ from PySide6.QtGui import QPixmap, QPainter, QPainterPath, QColor, QFontMetrics
 from PySide6.QtCore import Qt, QSize, QUrl
 from PySide6.QtWidgets import QMessageBox
 
-from .RenderQueue import RenderQueue
+from apps.gui.lib.RenderQueue import RenderQueue
 
-from .AnimationHandler import AnimationHandler
-from .QTcustom import (
+from apps.gui.lib.AnimationHandler import AnimationHandler
+from apps.gui.ui.QTcustom import (
     RegularQTPopup,
     UpdateGUIThread,
     show_layout_widgets,
@@ -31,14 +31,14 @@ from apps.gui.constants import (
     CWD,
     PLATFORM,
 )
-from apps.gui.Util import (
+from apps.gui.util import (
     log,
 )
-from apps.gui.DownloadModels import DownloadModel
-from apps.gui.ui.SettingsTab import Settings
+from apps.gui.utils.backends import DownloadModel
+from apps.gui.pages.settings.settings import Settings
 from apps.gui.DiscordRPC import DiscordRPC
 from apps.gui.ModelHandler import getModels
-from apps.gui.ui.RenderQueue import RenderOptions
+from apps.gui.lib.RenderQueue import RenderOptions
 
 
 class ProcessTab:

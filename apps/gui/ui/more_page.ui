@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ui version="4.0"><class>MorePage</class><widget class="QWidget" name="morePage"><property name="styleSheet">
+              <string notr="true">QWidget{
+background-color:#16191d
+
+}</string>
+             </property><layout class="QGridLayout" name="gridLayout_6" /></widget></ui>

@@ -1,0 +1,315 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1163</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1050</width>
+    <height>700</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>16777215</height>
+   </size>
+  </property>
+  <property name="sizeIncrement">
+   <size>
+    <width>1</width>
+    <height>1</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="toolTipDuration">
+   <number>0</number>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">
+
+QMainWindow {
+   color:black;
+   background-color:black;
+border:1px;
+}
+QLabel{
+	color: #fff;
+}
+QLineEdit{
+color: #fff;
+}
+#centralwidget{
+	background-color:#1f232a;
+}
+#leftMenuSubContainer{
+	background-color:#16191d;
+   border-radius: 30px;
+}
+#bottomMenuSubContainer{
+	background-color:#2c313c;
+   border-radius: 30px;
+}
+
+QProgressBar{
+    background-color:#2c313c;
+	border-radius: 10px;
+
+}
+ QProgressBar::chunk {
+     background-color:white;
+	text-align:left;
+	border-radius: 10px;
+	
+ }
+QStackedWidget{
+	background-color:#16191d;
+	text-align:left;
+	padding:5px 10px;
+	border-radius: 25px;
+}
+QPlainTextEdit{
+    background-color:#2c313c;
+	border-radius: 30px;
+
+}
+QPushButton{
+    background-color:#2c313c;
+	text-align:left;
+	padding:5px 10px;
+	border-radius: 10px;
+    color: #fff;
+}
+QPushButton:checked{
+	background-color:#676e7b;
+}
+QPushButton:hover{
+	background-color:#343b47;
+}
+
+QCheckBox::indicator:unchecked{
+    border : 1px solid white;
+    border-radius: 2px;
+    width: 14px;
+    height: 14px;
+    left: 2px;
+}
+QCheckBox::indicator:checked {
+    image: url(:/icons/icons/check-square.svg);
+    color: white;
+    border-radius: 2px;
+    width: 20px;
+    height: 20px;
+}
+
+QScrollBar:vertical{
+	max-width: 8px;
+	}
+QScrollBar:horizontal{
+	max-height: 8px;
+	}
+QScrollBar::handle{
+		border-radius:4px;
+        background: #fff;
+}
+
+
+        QScrollBar::handle:vertical:hover {
+            background: gray;
+        }
+
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+            border: none;
+            background: transparent;
+            width: 0px;
+            height: 0px;
+        }
+
+        QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
+            border: none;
+            background: none;
+        }
+
+        /* Horizontal scrollbar */
+        
+
+        QScrollBar::handle:horizontal:hover {
+            background: #0c66c2;
+        }
+
+        QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
+            border: none;
+            background: #f0f0f0;
+            height: 0px;
+            width: 0px;
+        }
+
+        QScrollBar::left-arrow:horizontal, QScrollBar::right-arrow:horizontal {
+            border: none;
+            background: none;
+        }
+
+QScrollBar:vertical{
+		background:transparent; /*change background here*/
+		color:#2c313c;
+}
+QScrollBar:horizontal{
+		background:#2c313c; /*change background here*/
+		color:transparent;
+}
+QTabWidget::pane { /* The tab widget frame */
+                border-top: 0px solid #C2C7CB;
+                top: -0.5em;
+                background: transparent;
+            }
+
+            QTabWidget::tab-bar {
+                alignment: left;
+            }
+
+            QTabBar::tab {
+                background: #1f232a;
+                border: 0px solid #C4C4C3;
+                border-bottom-color: #C2C7CB; /* same as the pane color */
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+				  border-bottom-left-radius: 4px;
+                border-bottom-right-radius: 4px;
+                min-width: 8ex;
+                padding: 6px;
+				 color: #fff;
+            }
+
+            QTabBar::tab:selected{
+                background:#676e7b;
+            }
+            QTabBar::tab:hover {
+				background: #343b47;
+				}
+
+            QTabBar::tab:selected {
+                border-color: transparent;
+                border-bottom-color: transparent; /* same as pane color */
+            }
+
+            QTabBar::tab:!selected {
+                margin-top: 2px; /* make non-selected tabs look smaller */
+            }
+
+            QTabBar::tab:selected {
+                /* expand/overlap to the left and right by 4px */
+                margin-left: 2px;
+                margin-right: 2px;
+            }
+
+            QTabBar::tab:first:selected {
+                margin-left: 0; /* the first selected tab should not overlap */
+            }
+
+            QTabBar::tab:last:selected {
+                margin-right: 0; /* the last selected tab should not overlap */
+            }
+
+            QTabBar::tab:only-one {
+                margin: 0; /* if there is only one tab, it should not overlap */
+            }
+</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="1">
+     <widget class="QWidget" name="centralWidget" native="true">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QWidget" name="mainWindowContainer" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_3">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QStackedWidget" name="stackedWidget">
+            <property name="styleSheet">
+             <string notr="true" />
+            </property>
+            <property name="currentIndex">
+             <number>2</number>
+            </property>
+            <widget class="QWidget" name="homePage" /><widget class="QWidget" name="morePage" /><widget class="QWidget" name="procPage" /><widget class="QWidget" name="settingsPage" /><widget class="QWidget" name="downloadPage" /></widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QTabNavigation" name="leftMenuContainer"/>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources>
+  <include location="resources.qrc" />
+ </resources>
+ <connections />
+</ui>

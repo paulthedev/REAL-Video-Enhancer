@@ -10,7 +10,7 @@ class RVEBackendWrapper:
 
     def _get_ffmpeg_info(self):
         from .constants import BACKEND_PATH, PYTHON_EXECUTABLE_PATH
-        from .Util import log, subprocess_popen_without_terminal
+        from apps.gui.util import log, subprocess_popen_without_terminal
 
         command = [
             PYTHON_EXECUTABLE_PATH,

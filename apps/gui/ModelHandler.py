@@ -1,7 +1,7 @@
 import os
 import re
 
-from apps.gui.Util import createDirectory, log, errorAndLog
+from apps.gui.util import createDirectory, log, errorAndLog
 from apps.gui.constants import CUSTOM_MODELS_PATH
 from apps.gui.ui.QTcustom import RegularQTPopup
 

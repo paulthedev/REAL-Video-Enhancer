@@ -3,8 +3,8 @@ import re
 
 from PySide6.QtWidgets import QMainWindow, QFileDialog
 from apps.gui.constants import PLATFORM, HOME_PATH
-from apps.gui.Util import currentDirectory, checkForWritePermissions, open_folder, log, FileHandler
-from .QTcustom import RegularQTPopup
+from apps.gui.util import currentDirectory, checkForWritePermissions, open_folder, log, FileHandler
+from apps.gui.ui.QTcustom import RegularQTPopup
 from apps.gui.GenerateFFMpegCommand import FFMpegCommand
 from apps.gui.VideoInfo import VideoLoader
 

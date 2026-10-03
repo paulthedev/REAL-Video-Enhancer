@@ -1,7 +1,7 @@
 import os
 
 from apps.gui.constants import BACKEND_PATH, PYTHON_EXECUTABLE_PATH, PYTHON_DIRECTORY, PLATFORM, IS_INSTALLED, IS_FLATPAK, HAS_NETWORK_ON_STARTUP, CWD
-from apps.gui.Util import (
+from apps.gui.util import (
     FileHandler
 )
 from PySide6.QtWidgets import QMessageBox

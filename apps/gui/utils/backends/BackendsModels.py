@@ -1,8 +1,14 @@
+"""Model download service.
+
+Downloads a model from the RVE model releases and installs it for
+pytorch/onnx/ncnn into its backend directory.
+"""
+
 import os
 
-from apps.gui.constants import MODELS_PATH
-from apps.gui.Util import createDirectory, extractTarGZ, networkCheck
+from apps.gui.constants import MODELS_PATH, MODELS_RELEASE_BASE_URL
 from apps.gui.ui.QTcustom import DownloadProgressPopup
+from apps.gui.util import createDirectory, extractTarGZ, networkCheck
 
 
 class DownloadModel:
@@ -38,10 +44,7 @@ class DownloadModel:
             return True
         if not networkCheck():
             return False
-        url = (
-            "https://github.com/TNTwise/real-video-enhancer-models/releases/download/models/"
-            + self.downloadModelFile
-        )
+        url = MODELS_RELEASE_BASE_URL + self.downloadModelFile
         title = "Downloading: " + self.downloadModelFile
         DownloadProgressPopup(
             link=url, title=title, downloadLocation=self.downloadModelPath
@@ -53,4 +56,4 @@ class DownloadModel:
         return True
 
 
-# just some testing code lol
+__all__ = ["DownloadModel"]

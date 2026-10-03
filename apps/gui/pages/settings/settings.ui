@@ -1,0 +1,1143 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ui version="4.0"><class>SettingsPage</class><widget class="QWidget" name="settingsPage"><property name="styleSheet">
+              <string notr="true">QWidget{
+background-color:#16191d
+
+}
+QScrollArea{
+	background:transparent;
+}
+QLineEdit{
+background-color:#2c313c;
+border-radius: 10px;
+}
+QTextEdit{
+background-color:#2c313c;
+border-radius: 10px;
+padding:5px 10px;
+}
+
+QPushButton{
+    background-color:#2c313c;
+	text-align:left;
+	padding:5px 10px;
+	border-radius: 10px;
+}
+QPushButton:checked{
+	background-color:#676e7b;
+}
+QPushButton:hover{
+	background-color:#343b47;
+}
+
+QComboBox{
+background-color:#2c313c;
+	text-align:left;
+	padding:5px 10px;
+	border-radius: 10px;
+color:white;
+}
+
+QProgressBar{
+    background-color:#2c313c;
+	border-radius: 10px;
+
+}
+ QProgressBar::chunk {
+     background-color:white;
+	text-align:left;
+	border-radius: 10px;
+	
+ }
+
+
+Line{
+color:white;
+background-color:white;
+}
+QDoubleSpinBox{
+	background-color:#2c313c;
+	padding:5px 10px;
+	border-radius: 10px;
+	color:white;
+}
+QDoubleSpinBox::up-arrow {
+       
+		image: url(:/icons/icons/arrow-up.svg); 
+    }
+QDoubleSpinBox::down-arrow {
+
+        image: url(:/icons/icons/arrow-down.svg); 
+		
+    }
+QDoubleSpinBox::up-button {
+        width: 20px;
+        height: 15px;
+    }
+QDoubleSpinBox::down-button {
+        width: 20px;
+        height: 15px;
+    }
+QTabWidget::pane { /* The tab widget frame */
+                border-top: 0px solid #C2C7CB;
+                top: -0.5em;
+                background: transparent;
+            }
+
+            QTabWidget::tab-bar {
+                alignment: left;
+            }
+
+            QTabBar::tab {
+                background: #1f232a;
+                border: 0px solid #C4C4C3;
+                border-bottom-color: #C2C7CB; /* same as the pane color */
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+				  border-bottom-left-radius: 4px;
+                border-bottom-right-radius: 4px;
+                min-width: 8ex;
+                padding: 6px;
+				  color: #fff;
+            }
+
+            QTabBar::tab:selected{
+                background:#676e7b;
+            }
+            QTabBar::tab:hover {
+				background: #343b47;
+				}
+
+            QTabBar::tab:selected {
+                border-color: transparent;
+                border-bottom-color: transparent; /* same as pane color */
+            }
+
+            QTabBar::tab:!selected {
+                margin-top: 2px; /* make non-selected tabs look smaller */
+            }
+
+            QTabBar::tab:selected {
+                /* expand/overlap to the left and right by 4px */
+                margin-left: 2px;
+                margin-right: 2px;
+            }
+
+            QTabBar::tab:first:selected {
+                margin-left: 0; /* the first selected tab should not overlap */
+            }
+
+            QTabBar::tab:last:selected {
+                margin-right: 0; /* the last selected tab should not overlap */
+            }
+
+            QTabBar::tab:only-one {
+                margin: 0; /* if there is only one tab, it should not overlap */
+            }</string>
+             </property><layout class="QVBoxLayout" name="verticalLayout_14">
+              <item>
+               <widget class="QScrollArea" name="scrollArea">
+                <property name="maximumSize">
+                 <size>
+                  <width>16777215</width>
+                  <height>112312</height>
+                 </size>
+                </property>
+                <property name="widgetResizable">
+                 <bool>true</bool>
+                </property>
+                <widget class="QWidget" name="scrollAreaWidgetContents">
+                 <property name="geometry">
+                  <rect>
+                   <x>0</x>
+                   <y>0</y>
+                   <width>1026</width>
+                   <height>652</height>
+                  </rect>
+                 </property>
+                 <layout class="QVBoxLayout" name="verticalLayout_18">
+                  <item>
+                   <widget class="QTabWidget" name="tabWidget">
+                    <property name="currentIndex">
+                     <number>0</number>
+                    </property>
+                    <widget class="QWidget" name="tab_2">
+                     <attribute name="title">
+                      <string>Output Settings</string>
+                     </attribute>
+                     <layout class="QVBoxLayout" name="verticalLayout_17">
+                      <item>
+                       <widget class="QWidget" name="VideoSettingsContainer" native="true">
+                        <layout class="QVBoxLayout" name="verticalLayout_19">
+                         <property name="spacing">
+                          <number>0</number>
+                         </property>
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="bottomMargin">
+                          <number>0</number>
+                         </property>
+                         <item>
+                          <widget class="QScrollArea" name="scrollArea_3">
+                           <property name="widgetResizable">
+                            <bool>true</bool>
+                           </property>
+                           <widget class="QWidget" name="scrollAreaWidgetContents_3">
+                            <property name="geometry">
+                             <rect>
+                              <x>0</x>
+                              <y>0</y>
+                              <width>968</width>
+                              <height>528</height>
+                             </rect>
+                            </property>
+                            <layout class="QVBoxLayout" name="verticalLayout_25">
+                             <item>
+                              <widget class="QWidget" name="outputFileLocationContianer" native="true">
+                               <layout class="QHBoxLayout" name="horizontalLayout_19">
+                                <property name="spacing">
+                                 <number>10</number>
+                                </property>
+                                <property name="leftMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="topMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="rightMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="bottomMargin">
+                                 <number>0</number>
+                                </property>
+                                <item>
+                                 <widget class="QLabel" name="encoderLabel_3">
+                                  <property name="font">
+                                   <font>
+                                    <pointsize>12</pointsize>
+                                   </font>
+                                  </property>
+                                  <property name="text">
+                                   <string>Output folder directory</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <spacer name="horizontalSpacer_11">
+                                  <property name="orientation">
+                                   <enum>Qt::Orientation::Horizontal</enum>
+                                  </property>
+                                  <property name="sizeType">
+                                   <enum>QSizePolicy::Policy::Minimum</enum>
+                                  </property>
+                                  <property name="sizeHint" stdset="0">
+                                   <size>
+                                    <width>20</width>
+                                    <height>20</height>
+                                   </size>
+                                  </property>
+                                 </spacer>
+                                </item>
+                                <item>
+                                 <widget class="QLineEdit" name="output_folder_location">
+                                  <property name="minimumSize">
+                                   <size>
+                                    <width>0</width>
+                                    <height>25</height>
+                                   </size>
+                                  </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <widget class="QPushButton" name="select_output_folder_location_btn">
+                                  <property name="text">
+                                   <string>Select Output Folder</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                               </layout>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QWidget" name="use_same_output_folder_as_input_fileContainer" native="true">
+                               <layout class="QHBoxLayout" name="horizontalLayout_61">
+                                <property name="spacing">
+                                 <number>10</number>
+                                </property>
+                                <property name="leftMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="topMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="rightMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="bottomMargin">
+                                 <number>0</number>
+                                </property>
+                                <item>
+                                 <widget class="QLabel" name="label_26">
+                                  <property name="font">
+                                   <font>
+                                    <pointsize>12</pointsize>
+                                   </font>
+                                  </property>
+                                  <property name="text">
+                                   <string>Use the same output folder as the input file</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <spacer name="horizontalSpacer_36">
+                                  <property name="orientation">
+                                   <enum>Qt::Orientation::Horizontal</enum>
+                                  </property>
+                                  <property name="sizeHint" stdset="0">
+                                   <size>
+                                    <width>40</width>
+                                    <height>20</height>
+                                   </size>
+                                  </property>
+                                 </spacer>
+                                </item>
+                                <item>
+                                 <widget class="HelpIconLabel" name="label_27">
+                                                                   <property name="toolTip">
+                                                                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=" font-weight:700;"&gt;Use the same output folder as the input file:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;- Enabled: The output folder will be the same as the directory where the original input file is located. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                                   </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <widget class="QCheckBox" name="use_same_output_folder_as_input_file_enabled">
+                                  <property name="text">
+                                   <string />
+                                  </property>
+                                 </widget>
+                                </item>
+                               </layout>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QWidget" name="sceneChangeDetectionSettingContainer" native="true">
+                               <layout class="QHBoxLayout" name="horizontalLayout_17">
+                                <property name="spacing">
+                                 <number>10</number>
+                                </property>
+                                <property name="leftMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="topMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="rightMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="bottomMargin">
+                                 <number>0</number>
+                                </property>
+                                <item>
+                                 <widget class="QLabel" name="label_20">
+                                  <property name="font">
+                                   <font>
+                                    <pointsize>12</pointsize>
+                                   </font>
+                                  </property>
+                                  <property name="text">
+                                   <string>Scene Change Detection Enabled</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <spacer name="horizontalSpacer_3">
+                                  <property name="orientation">
+                                   <enum>Qt::Orientation::Horizontal</enum>
+                                  </property>
+                                  <property name="sizeHint" stdset="0">
+                                   <size>
+                                    <width>40</width>
+                                    <height>20</height>
+                                   </size>
+                                  </property>
+                                 </spacer>
+                                </item>
+                                <item>
+                                 <widget class="HelpIconLabel" name="label_24">
+                                                                   <property name="toolTip">
+                                                                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=" font-weight:700;"&gt;Scene Change Detection Enabled:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;- Enabled: Attempts to detect when scenes change in a video. &lt;/p&gt;&lt;p&gt;   When running an interpolation, it will avoide interpolating over these scene changes.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                                   </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <widget class="QCheckBox" name="scene_change_detection_enabled">
+                                  <property name="text">
+                                   <string />
+                                  </property>
+                                 </widget>
+                                </item>
+                               </layout>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QWidget" name="widget_12" native="true">
+                               <layout class="QHBoxLayout" name="horizontalLayout_27">
+                                <property name="spacing">
+                                 <number>10</number>
+                                </property>
+                                <property name="leftMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="topMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="rightMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="bottomMargin">
+                                 <number>0</number>
+                                </property>
+                                <item>
+                                 <widget class="QLabel" name="label_37">
+                                  <property name="font">
+                                   <font>
+                                    <pointsize>12</pointsize>
+                                   </font>
+                                  </property>
+                                  <property name="text">
+                                   <string>Scene Change Detection Method</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <spacer name="horizontalSpacer_13">
+                                  <property name="orientation">
+                                   <enum>Qt::Orientation::Horizontal</enum>
+                                  </property>
+                                  <property name="sizeHint" stdset="0">
+                                   <size>
+                                    <width>305</width>
+                                    <height>20</height>
+                                   </size>
+                                  </property>
+                                 </spacer>
+                                </item>
+                                <item>
+                                 <widget class="HelpIconLabel" name="label_38">
+                                                                   <property name="toolTip">
+                                                                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=" font-weight:700;"&gt;Scene Change Detection Method&lt;/span&gt;&lt;/p&gt;&lt;p&gt;- mean: fastest, least accurate&lt;/p&gt;&lt;p&gt;- mean (segmented): fast, prone to overdetection&lt;/p&gt;&lt;p&gt;- pyscenedetect: slow, accuate &lt;span style=" font-weight:700;"&gt;(Recommended)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                                   </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <widget class="QComboBox" name="scene_change_detection_method">
+                                  <item>
+                                   <property name="text">
+                                    <string>mean</string>
+                                   </property>
+                                  </item>
+                                  <item>
+                                   <property name="text">
+                                    <string>mean_segmented</string>
+                                   </property>
+                                  </item>
+                                  <item>
+                                   <property name="text">
+                                    <string>sudo_scene_detect</string>
+                                   </property>
+                                  </item>
+                                  <item>
+                                   <property name="text">
+                                    <string>pyscenedetect</string>
+                                   </property>
+                                  </item>
+                                 </widget>
+                                </item>
+                               </layout>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QWidget" name="widget_7" native="true">
+                               <layout class="QHBoxLayout" name="horizontalLayout_14">
+                                <property name="spacing">
+                                 <number>10</number>
+                                </property>
+                                <property name="leftMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="topMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="rightMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="bottomMargin">
+                                 <number>0</number>
+                                </property>
+                                <item>
+                                 <widget class="QLabel" name="label_30">
+                                  <property name="font">
+                                   <font>
+                                    <pointsize>12</pointsize>
+                                   </font>
+                                  </property>
+                                  <property name="text">
+                                   <string>Scene Change Detection Threshold</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <spacer name="horizontalSpacer_6">
+                                  <property name="orientation">
+                                   <enum>Qt::Orientation::Horizontal</enum>
+                                  </property>
+                                  <property name="sizeHint" stdset="0">
+                                   <size>
+                                    <width>305</width>
+                                    <height>20</height>
+                                   </size>
+                                  </property>
+                                 </spacer>
+                                </item>
+                                <item>
+                                 <widget class="HelpIconLabel" name="label_31">
+                                                                   <property name="toolTip">
+                                                                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=" font-weight:700;"&gt;Scene Change Detection Threshold&lt;/span&gt;&lt;/p&gt;&lt;p&gt; - Lower number: &lt;span style=" font-weight:700;"&gt;higher&lt;/span&gt; chance of detecting scene changes, with risk of &lt;span style=" font-weight:700;"&gt;overdetection&lt;/span&gt;.&lt;/p&gt;&lt;p&gt; - Higher number: &lt;span style=" font-weight:700;"&gt;lower &lt;/span&gt;chance of detecting scene changes, with risk of &lt;span style=" font-weight:700;"&gt;underdetection.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;   - &lt;span style=" font-weight:700;"&gt;Recommended: &lt;/span&gt;2-3 for real life, 4 for animation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                                   </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <widget class="QDoubleSpinBox" name="scene_change_detection_threshold">
+                                  <property name="minimumSize">
+                                   <size>
+                                    <width>75</width>
+                                    <height>30</height>
+                                   </size>
+                                  </property>
+                                  <property name="decimals">
+                                   <number>1</number>
+                                  </property>
+                                  <property name="minimum">
+                                   <double>1.000000000000000</double>
+                                  </property>
+                                  <property name="maximum">
+                                   <double>10.000000000000000</double>
+                                  </property>
+                                 </widget>
+                                </item>
+                               </layout>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QWidget" name="widget_9" native="true">
+                               <layout class="QHBoxLayout" name="horizontalLayout_25">
+                                <property name="spacing">
+                                 <number>6</number>
+                                </property>
+                                <property name="leftMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="topMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="rightMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="bottomMargin">
+                                 <number>0</number>
+                                </property>
+                                <item>
+                                 <widget class="QLabel" name="label_48">
+                                  <property name="font">
+                                   <font>
+                                    <pointsize>12</pointsize>
+                                   </font>
+                                  </property>
+                                  <property name="text">
+                                   <string>Auto Border Cropping</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <spacer name="horizontalSpacer_10">
+                                  <property name="orientation">
+                                   <enum>Qt::Orientation::Horizontal</enum>
+                                  </property>
+                                  <property name="sizeHint" stdset="0">
+                                   <size>
+                                    <width>468</width>
+                                    <height>20</height>
+                                   </size>
+                                  </property>
+                                 </spacer>
+                                </item>
+                                <item>
+                                 <widget class="HelpIconLabel" name="label_47">
+                                                                   <property name="toolTip">
+                                                                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=" font-weight:700;"&gt;Audo Border Cropping:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;- Will automatically remove black bars if they are present throughout a video, can increase performance.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                                   </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <widget class="QCheckBox" name="auto_border_cropping">
+                                  <property name="text">
+                                   <string />
+                                  </property>
+                                 </widget>
+                                </item>
+                               </layout>
+                              </widget>
+                             </item>
+                            </layout>
+                           </widget>
+                          </widget>
+                         </item>
+                        </layout>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                    <widget class="QWidget" name="tab_3">
+                     <attribute name="title">
+                      <string>Render Settings</string>
+                     </attribute>
+                     <layout class="QVBoxLayout" name="verticalLayout_22">
+                      <item>
+                       <widget class="QWidget" name="renderSettingsContainer" native="true">
+                        <layout class="QVBoxLayout" name="verticalLayout_12">
+                         <item>
+                          <layout class="QHBoxLayout" name="precisionSettingsContainer">
+                           <property name="spacing">
+                            <number>10</number>
+                           </property>
+                           <item>
+                            <widget class="QLabel" name="label_3">
+                             <property name="font">
+                              <font>
+                               <pointsize>12</pointsize>
+                              </font>
+                             </property>
+                             <property name="text">
+                              <string>Precision</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="HelpIconLabel" name="label_17">
+                                                              <property name="toolTip">
+                                                               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Precision:&lt;/p&gt;&lt;p&gt; - Auto: Defaults to float16 if the GPU is supported (RTX 20 series and up)&lt;/p&gt;&lt;p&gt; - Float16: Faster inference and less VRAM usage.&lt;/p&gt;&lt;p&gt; - Float32: Slower inference and more VRAM usage, supported on more GPUS.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                              </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QComboBox" name="precision">
+                             <item>
+                              <property name="text">
+                               <string>auto</string>
+                              </property>
+                             </item>
+                             <item>
+                              <property name="text">
+                               <string>float16</string>
+                              </property>
+                             </item>
+                             <item>
+                              <property name="text">
+                               <string>float32</string>
+                              </property>
+                             </item>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                         <item>
+                          <layout class="QHBoxLayout" name="tensorRTOptLevelSettingsContainer">
+                           <property name="spacing">
+                            <number>10</number>
+                           </property>
+                           <item>
+                            <widget class="QLabel" name="label_15">
+                             <property name="font">
+                              <font>
+                               <pointsize>12</pointsize>
+                              </font>
+                             </property>
+                             <property name="text">
+                              <string>TensorRT Optimization Level</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="HelpIconLabel" name="label_21">
+                                                              <property name="toolTip">
+                                                               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TensorRT Optimization Level:&lt;/p&gt;&lt;p&gt;- Lower means less optimization, but faster engine generation time.&lt;/p&gt;&lt;p&gt;- Higher means more optimization, but slower engine generation time.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                              </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QComboBox" name="tensorrt_optimization_level">
+                             <property name="currentIndex">
+                              <number>2</number>
+                             </property>
+                             <item>
+                              <property name="text">
+                               <string>1</string>
+                              </property>
+                             </item>
+                             <item>
+                              <property name="text">
+                               <string>2</string>
+                              </property>
+                             </item>
+                             <item>
+                              <property name="text">
+                               <string>3</string>
+                              </property>
+                             </item>
+                             <item>
+                              <property name="text">
+                               <string>4</string>
+                              </property>
+                             </item>
+                             <item>
+                              <property name="text">
+                               <string>5</string>
+                              </property>
+                             </item>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                         <item>
+                          <layout class="QHBoxLayout" name="horizontalLayout_67">
+                           <property name="spacing">
+                            <number>10</number>
+                           </property>
+                           <item>
+                            <widget class="QLabel" name="label_88">
+                             <property name="font">
+                              <font>
+                               <pointsize>12</pointsize>
+                              </font>
+                             </property>
+                             <property name="text">
+                              <string>Auto HDR Mode</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <spacer name="horizontalSpacer_34">
+                             <property name="orientation">
+                              <enum>Qt::Orientation::Horizontal</enum>
+                             </property>
+                             <property name="sizeHint" stdset="0">
+                              <size>
+                               <width>488</width>
+                               <height>20</height>
+                              </size>
+                             </property>
+                            </spacer>
+                           </item>
+                           <item>
+                            <widget class="HelpIconLabel" name="label_89">
+                                                              <property name="toolTip">
+                                                               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Auto HDR Mode&lt;/p&gt;&lt;p&gt;- Auto enables HDR mode if RVE detects that the video that is being rendered is HDR. &lt;span style=" font-weight:700;"&gt;This will cause slower rendering if the video is HDR.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=" font-weight:700;"&gt; - &lt;/span&gt;&lt;span style=" font-weight:700;"&gt;HDR is only color tested on x264 and x265 encoders.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=" ont-weight:700"&gt; - The preview colors may be distorted as the preview itself is not HDR.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                              </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QCheckBox" name="auto_hdr_mode">
+                             <property name="sizePolicy">
+                              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                               <horstretch>0</horstretch>
+                               <verstretch>0</verstretch>
+                              </sizepolicy>
+                             </property>
+                             <property name="text">
+                              <string />
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                         <item>
+                          <layout class="QHBoxLayout" name="tensorRTOptLevelSettingsContainer_3">
+                           <property name="spacing">
+                            <number>10</number>
+                           </property>
+                           <item>
+                            <widget class="QLabel" name="label_84">
+                             <property name="font">
+                              <font>
+                               <pointsize>12</pointsize>
+                              </font>
+                             </property>
+                             <property name="text">
+                              <string>TensorRT Dynamic Engine</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <spacer name="horizontalSpacer_31">
+                             <property name="orientation">
+                              <enum>Qt::Orientation::Horizontal</enum>
+                             </property>
+                             <property name="sizeHint" stdset="0">
+                              <size>
+                               <width>40</width>
+                               <height>20</height>
+                              </size>
+                             </property>
+                            </spacer>
+                           </item>
+                           <item>
+                            <widget class="HelpIconLabel" name="label_85">
+                                                              <property name="toolTip">
+                                                               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;TensorRT Dynamic Engine:&lt;/p&gt;&lt;p&gt;- Enables TensorRT to build for many different resolutions in one engine.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                              </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QCheckBox" name="dynamic_tensorrt_engine">
+                             <property name="sizePolicy">
+                              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                               <horstretch>0</horstretch>
+                               <verstretch>0</verstretch>
+                              </sizepolicy>
+                             </property>
+                             <property name="text">
+                              <string />
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                         <item>
+                          <layout class="QHBoxLayout" name="precisionSettingsContainer_2">
+                           <property name="spacing">
+                            <number>10</number>
+                           </property>
+                           <item>
+                            <widget class="QLabel" name="label_22">
+                             <property name="font">
+                              <font>
+                               <pointsize>12</pointsize>
+                              </font>
+                             </property>
+                             <property name="text">
+                              <string>Interpolation UHD Mode</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <spacer name="horizontalSpacer_15">
+                             <property name="orientation">
+                              <enum>Qt::Orientation::Horizontal</enum>
+                             </property>
+                             <property name="sizeHint" stdset="0">
+                              <size>
+                               <width>40</width>
+                               <height>20</height>
+                              </size>
+                             </property>
+                            </spacer>
+                           </item>
+                           <item>
+                            <widget class="HelpIconLabel" name="label_35">
+                                                              <property name="toolTip">
+                                                               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Saves VRAM and speeds up inference at resolutions above 1080p by calculating flow at a lower resolution. (GMFSS/GIMM)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                              </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QCheckBox" name="uhd_mode">
+                             <property name="text">
+                              <string />
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                         <item>
+                          <layout class="QHBoxLayout" name="precisionSettingsContainer_4">
+                           <property name="spacing">
+                            <number>10</number>
+                           </property>
+                           <item>
+                            <widget class="QLabel" name="label_80">
+                             <property name="font">
+                              <font>
+                               <pointsize>12</pointsize>
+                              </font>
+                             </property>
+                             <property name="text">
+                              <string>Torch.Compile</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <spacer name="horizontalSpacer_16">
+                             <property name="orientation">
+                              <enum>Qt::Orientation::Horizontal</enum>
+                             </property>
+                             <property name="sizeHint" stdset="0">
+                              <size>
+                               <width>40</width>
+                               <height>20</height>
+                              </size>
+                             </property>
+                            </spacer>
+                           </item>
+                           <item>
+                            <widget class="HelpIconLabel" name="label_90">
+                                                              <property name="toolTip">
+                                                               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Check to enable torch.compile, which speeds up the PyTorch upscale model. Uncheck to disable it and run in eager mode.&lt;/p&gt;&lt;p&gt;Compiling is enabled by default and usually faster, but can be disabled if it causes errors, crashes, or instability on your GPU (e.g. some RDNA2 cards).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                              </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QCheckBox" name="torch_compile_enabled">
+                             <property name="text">
+                              <string />
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                         <item>
+                          <layout class="QHBoxLayout" name="precisionSettingsContainer_3">
+                           <property name="spacing">
+                            <number>10</number>
+                           </property>
+                           <item>
+                            <widget class="QLabel" name="label_43">
+                             <property name="font">
+                              <font>
+                               <pointsize>12</pointsize>
+                              </font>
+                             </property>
+                             <property name="text">
+                              <string>GPU</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="HelpIconLabel" name="label_44">
+                                                              <property name="toolTip">
+                                                               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GPU -&lt;/p&gt;&lt;p&gt;Sets which GPU is used for processing&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                              </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QComboBox" name="gpu_id">
+                             <property name="minimumSize">
+                              <size>
+                               <width>0</width>
+                               <height>0</height>
+                              </size>
+                             </property>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                        </layout>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                    <widget class="QWidget" name="tab_4">
+                     <attribute name="title">
+                      <string>RVE Settings</string>
+                     </attribute>
+                     <layout class="QVBoxLayout" name="verticalLayout_23">
+                      <item>
+                       <widget class="QWidget" name="GUIOptionsContainer" native="true">
+                        <layout class="QVBoxLayout" name="verticalLayout_20">
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <item>
+                          <widget class="QWidget" name="previewEnabledContainer" native="true">
+                           <layout class="QHBoxLayout" name="horizontalLayout_21">
+                            <property name="spacing">
+                             <number>0</number>
+                            </property>
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <item>
+                             <widget class="QLabel" name="label_19">
+                              <property name="font">
+                               <font>
+                                <pointsize>12</pointsize>
+                               </font>
+                              </property>
+                              <property name="text">
+                               <string>Preview Enabled</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <spacer name="horizontalSpacer_2">
+                              <property name="orientation">
+                               <enum>Qt::Orientation::Horizontal</enum>
+                              </property>
+                              <property name="sizeHint" stdset="0">
+                               <size>
+                                <width>40</width>
+                                <height>20</height>
+                               </size>
+                              </property>
+                             </spacer>
+                            </item>
+                            <item>
+                             <widget class="QCheckBox" name="preview_enabled">
+                              <property name="text">
+                               <string />
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QWidget" name="discordRPCSettingsContainer" native="true">
+                           <layout class="QHBoxLayout" name="horizontalLayout_12">
+                            <property name="spacing">
+                             <number>10</number>
+                            </property>
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <item>
+                             <widget class="QLabel" name="label_23">
+                              <property name="font">
+                               <font>
+                                <pointsize>12</pointsize>
+                               </font>
+                              </property>
+                              <property name="text">
+                               <string>Discord Rich Presence</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <spacer name="horizontalSpacer_5">
+                              <property name="orientation">
+                               <enum>Qt::Orientation::Horizontal</enum>
+                              </property>
+                              <property name="sizeHint" stdset="0">
+                               <size>
+                                <width>40</width>
+                                <height>20</height>
+                               </size>
+                              </property>
+                             </spacer>
+                            </item>
+                            <item>
+                             <widget class="HelpIconLabel" name="label_29">
+                                                               <property name="toolTip">
+                                                                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Show REAL Video Enhancer in discord.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                               </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QCheckBox" name="discord_rich_presence">
+                              <property name="text">
+                               <string />
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QWidget" name="widget_29" native="true">
+                           <layout class="QVBoxLayout" name="verticalLayout_35">
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <item>
+                             <widget class="QPushButton" name="openRVEFolderBtn">
+                              <property name="contextMenuPolicy">
+                               <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+                              </property>
+                              <property name="text">
+                               <string>Open RVE Folder</string>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                        </layout>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QWidget" name="widget_4" native="true">
+                    <layout class="QHBoxLayout" name="horizontalLayout_20">
+                     <item>
+                      <spacer name="horizontalSpacer_4">
+                       <property name="orientation">
+                        <enum>Qt::Orientation::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                     <item>
+                      <widget class="QPushButton" name="resetSettingsBtn">
+                       <property name="text">
+                        <string>Reset Settings</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+             </layout></widget></ui>

@@ -1576,7 +1576,6 @@ dependencies = [
     { name = "py-cpuinfo" },
     { name = "pypresence" },
     { name = "pyside6-essentials" },
-    { name = "requests" },
     { name = "validators" },
     { name = "yt-dlp" },
 ]
@@ -1637,7 +1636,6 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.10.0" },
-    { name = "requests", specifier = ">=2.34.2" },
     { name = "torch", marker = "extra == 'all'", specifier = ">=2.0.0" },
     { name = "torch", marker = "extra == 'pytorch'", specifier = ">=2.0.0" },
     { name = "torchvision", marker = "extra == 'all'", specifier = ">=0.15.0" },

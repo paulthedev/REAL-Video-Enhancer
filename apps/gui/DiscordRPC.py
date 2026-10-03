@@ -1,6 +1,6 @@
 from pypresence import Presence
 import os
-from .Util import log, networkCheck
+from apps.gui.util import log, networkCheck
 from .constants import IS_FLATPAK
 
 

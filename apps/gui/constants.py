@@ -1,6 +1,6 @@
 import os
 import sys
-import requests
+import urllib.request
 import platform
 from PySide6.QtCore import QDir
 def networkCheck(hostname="https://raw.githubusercontent.com") -> bool:
@@ -8,12 +8,37 @@ def networkCheck(hostname="https://raw.githubusercontent.com") -> bool:
     checks network availability against a url, default url: raw.githubusercontent.com
     """
     try:
-        _ = requests.head(hostname, timeout=1)
+        req = urllib.request.Request(
+            hostname, method="HEAD", headers={"User-Agent": "Mozilla/5.0"}
+        )
+        with urllib.request.urlopen(req, timeout=1):
+            pass
         return True
-    except Exception as e:
-        pass
-    return False
+    except Exception:
+        return False
 HAS_NETWORK_ON_STARTUP = networkCheck()
+
+# GitHub locations for RVE releases (owner/repo is case-insensitive in the API)
+GITHUB_REPO = "tntwise/real-video-enhancer"
+MODELS_REPO = "TNTwise/REAL-Video-Enhancer-models"
+MODEL_HOSTED_REPO = "TNTwise/real-video-enhancer-models"
+APP_URL = f"https://github.com/{GITHUB_REPO}"
+MODELS_RELEASE_BASE_URL = (
+    f"https://github.com/{MODEL_HOSTED_REPO}/releases/download/models/"
+)
+CPYTHON_RELEASE_BASE_URL = (
+    f"https://github.com/{MODELS_REPO}/releases/download/models/"
+)
+RELEASES_LATEST_API_URL = (
+    f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+)
+RELEASES_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
+RELEASE_DOWNLOAD_URL_TEMPLATE = (
+    "https://github.com/" + GITHUB_REPO + "/releases/download/{tag}/{file_name}"
+)
+BACKEND_RELEASE_URL_TEMPLATE = (
+    "https://github.com/" + GITHUB_REPO + "/releases/download/RVE-{version}/backend-v{version}.tar.gz"
+)
 
 LOCKFILE = QDir.tempPath() + "/REAL-Video-Enhancer.lock"
 

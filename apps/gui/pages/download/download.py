@@ -1,14 +1,18 @@
 import os
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt
-from .QTcustom import RegularQTPopup, NetworkCheckPopup, remove_combobox_item_by_text
-from ..DownloadDeps import DownloadDependencies
-from .Updater import ApplicationUpdater
+from apps.gui.ui.QTcustom import RegularQTPopup, NetworkCheckPopup, remove_combobox_item_by_text
+from apps.gui.utils.backends import (
+    DownloadDependencies,
+    TorchVersion,
+    detect_gpu_hardware,
+    get_preferred_backend,
+    get_torch_backend_family,
+)
+from apps.gui.lib.Updater import ApplicationUpdater
 from apps.gui.constants import IS_FLATPAK, PLATFORM, CWD, USE_LOCAL_BACKEND, HOME_PATH, PLATFORM, IS_FLATPAK, CWD, CPU_ARCH
-from ..BuiltInTorchVersions import TorchVersion
-from .GPUDetect import GPUDetect
-from apps.gui.Util import FileHandler, log
-from apps.gui.GpuHardware import detect_gpu_hardware, get_preferred_backend, get_torch_backend_family
+from apps.gui.lib.GPUDetect import GPUDetect
+from apps.gui.util import FileHandler, log
 
 
 class DownloadTab:

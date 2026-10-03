@@ -1,10 +1,11 @@
-import requests
+import json
 import re
 import os
 import subprocess
 import shutil
+import urllib.request
 
-from .QTcustom import DownloadProgressPopup, NetworkCheckPopup, RegularQTPopup
+from apps.gui.ui.QTcustom import DownloadProgressPopup, NetworkCheckPopup, RegularQTPopup
 from apps.gui.constants import (
     PYTHON_EXECUTABLE_PATH,
     PYTHON_DIRECTORY,
@@ -17,11 +18,12 @@ from apps.gui.constants import (
     LIBS_NAME,
     PYTHON_VERSION,
     HAS_NETWORK_ON_STARTUP,
-    
+    RELEASES_LATEST_API_URL,
+    RELEASE_DOWNLOAD_URL_TEMPLATE,
 )
-from ..DownloadDeps import DownloadDependencies
+from apps.gui.utils.backends import DownloadDependencies
 from apps.gui.version import version, backend_dev_version
-from apps.gui.Util import FileHandler, networkCheck, log
+from apps.gui.util import FileHandler, networkCheck, log
 
 # version = "2.1.0" # for debugging
 
@@ -152,18 +154,14 @@ class ApplicationUpdater:
         FileHandler.makeExecutable(EXE_PATH)
 
     def build_download_url(self):
-        url = f"https://github.com/tntwise/real-video-enhancer/releases/download/{self.tag}/{self.file_name}"
-        return url
+        return RELEASE_DOWNLOAD_URL_TEMPLATE.format(tag=self.tag, file_name=self.file_name)
 
     def get_latest_version_tag(self, clean_tag=False) -> str:
-        url = "https://api.github.com/repos/tntwise/real-video-enhancer/releases/latest"
-        response = requests.get(url)
-        if response.status_code == 200:
-            latest_release = response.json()
-            tag_name = latest_release["tag_name"]
-
-        else:
-            print(f"Failed to fetch latest version: {response.status_code}")
+        try:
+            resp = urllib.request.urlopen(RELEASES_LATEST_API_URL, timeout=15)
+            tag_name = json.load(resp)["tag_name"]
+        except Exception as e:
+            print(f"Failed to fetch latest version: {e}")
             tag_name = version  # return current version if it failed to get the latest versions
 
         if clean_tag:

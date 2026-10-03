@@ -23,14 +23,17 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon
 
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'dist'))
+_DIST = os.path.join(os.path.dirname(__file__), 'dist')
+for _p in (_DIST, os.path.join(_DIST, 'pages')):
+    if os.path.isdir(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
 from mainwindow import Ui_MainWindow
 from PySide6 import QtSvg  # Import the QtSvg module so svg icons can be used on windows
 from apps.gui.version import version
 from apps.gui.ModelHandler import getModels, getModelDisplayName
 
 # other imports
-from apps.gui.Util import (
+from apps.gui.util import (
     getOSInfo,
     getRAMAmount,
     getCPUInfo,
@@ -44,18 +47,23 @@ createDirectory(os.path.join(CWD, "python"))
 createDirectory(os.path.join(CWD, "bin"))
 
 
-from apps.gui.DownloadModels import DownloadModel
-from apps.gui.DownloadDeps import Dependency, Python, DownloadDependencies
-from apps.gui.ui.ProcessTab import ProcessTab
-from apps.gui.ui.DownloadTab import DownloadTab
-from apps.gui.ui.SettingsTab import SettingsTab, Settings
-from apps.gui.ui.HomeTab import HomeTab
+from apps.gui.utils.backends import (
+    DownloadModel,
+    Dependency,
+    Python,
+    DownloadDependencies,
+)
+from apps.gui.pages import assemble_pages
+from apps.gui.pages.process.process import ProcessTab
+from apps.gui.pages.download.download import DownloadTab
+from apps.gui.pages.home.home import HomeTab
+from apps.gui.pages.settings.settings import SettingsTab, Settings
 from apps.gui.Backendhandler import BackendHandler
 from apps.gui.ModelHandler import totalModels
-from apps.gui.ui.AnimationHandler import AnimationHandler
-from apps.gui.ui.QTstyle import Palette
+from apps.gui.lib.AnimationHandler import AnimationHandler
+from apps.gui.lib.QTstyle import Palette
 from apps.gui.ui.QTcustom import RegularQTPopup, NotificationOverlay, TextOutputPopup
-from apps.gui.ui.RenderQueue import RenderQueue, RenderOptions
+from apps.gui.lib.RenderQueue import RenderQueue, RenderOptions
 from apps.gui.VideoInfo import VideoLoader
 
 svg = (
@@ -121,6 +129,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Set up the user interface from Designer.
         start_time = time.time()
         self.setupUi(self)
+        # Re-point homeBtn / processBtn / settingsBtn / downloadBtn onto the
+        # instances owned by the promoted QTabNavigation sidebar widget so all
+        # existing references keep resolving without duplication in the .ui.
+        self.leftMenuContainer.bind_controlled_attributes(self)
+        # Fill the main window's empty page slots with the per-page compiled UI.
+        assemble_pages(self.stackedWidget)
         end_time = time.time()
         log("Setup ui time: " + str(end_time - start_time))
         #self.VideoPreview.setVisible(False)

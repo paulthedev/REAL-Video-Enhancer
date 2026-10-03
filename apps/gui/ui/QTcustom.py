@@ -1,7 +1,7 @@
 import sys
 import os
 import subprocess
-import requests
+import urllib.request
 import time
 import numpy as np
 from multiprocessing import shared_memory
@@ -58,9 +58,9 @@ from PySide6.QtWidgets import (
     QMainWindow,
 )
 from multiprocessing import Process
-from .QTstyle import styleSheet, Palette
+from apps.gui.lib.QTstyle import styleSheet, Palette
 from apps.gui.constants import HAS_NETWORK_ON_STARTUP, PLATFORM
-from apps.gui.Util import log, networkCheck, subprocess_popen_without_terminal
+from apps.gui.util import log, networkCheck, subprocess_popen_without_terminal
 
 def disable_combobox_item(combobox: QComboBox, index):
     """
@@ -348,12 +348,9 @@ class DownloadAndReportToQTThread(QThread):
         self.downloadLocation = downloadLocation
 
     def run(self):
-        response = requests.get(
-            self.link,
-            stream=True,
-        )
         log("Downloading: " + self.link)
-        if "Content-Length" in response.headers:
+        response = urllib.request.urlopen(self.link, timeout=30)
+        if response.headers.get("Content-Length") is not None:
             totalByteSize = int(response.headers["Content-Length"])
 
         else:
@@ -365,12 +362,17 @@ class DownloadAndReportToQTThread(QThread):
 
         totalSize = 0
         with open(self.downloadLocation, "wb") as f:
-            chunk_size = 1024
-            for chunk in response.iter_content(chunk_size=chunk_size):
-                f.write(chunk)
-                totalSize += chunk_size
-                size = totalSize / totalByteSize * 100
-                self.progress.emit(size)
+            try:
+                while True:
+                    chunk = response.read(1024 * 1024)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    totalSize += len(chunk)
+            finally:
+                response.close()
+            if totalByteSize:
+                self.progress.emit(min(totalSize / totalByteSize * 100, 100))
         self.finished.emit()
 
 

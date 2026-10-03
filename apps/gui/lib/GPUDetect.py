@@ -1,6 +1,6 @@
 try:
     from apps.gui.constants import PLATFORM 
-    from apps.gui.Util import log
+    from apps.gui.util import log
 except Exception:
     PLATFORM = 'win32'
     def log(msg): print(msg)
