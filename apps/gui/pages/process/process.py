@@ -37,7 +37,7 @@ from apps.gui.util import (
 from apps.gui.utils.backends import DownloadModel
 from apps.gui.pages.settings.settings import Settings
 from apps.gui.lib.DiscordRPC import DiscordRPC
-from apps.gui.ModelHandler import getModels
+from apps.gui.lib.ModelHandler import getModels
 from apps.gui.lib.RenderQueue import RenderOptions
 
 
