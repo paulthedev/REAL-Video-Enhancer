@@ -139,8 +139,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         log("Setup ui time: " + str(end_time - start_time))
         #self.VideoPreview.setVisible(False)
 
-        # remove false hope
-        self.directMLBackendInstallerContainer.setVisible(False)
 
         start_time = time.time()
         backendHandler = BackendHandler(self, self.settings)

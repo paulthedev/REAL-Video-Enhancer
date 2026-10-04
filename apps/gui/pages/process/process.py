@@ -2,12 +2,11 @@ import subprocess
 import os
 from threading import Thread
 import re
-from time import sleep
 from multiprocessing import shared_memory
 
 from PySide6 import QtGui
-from PySide6.QtGui import QPixmap, QPainter, QPainterPath, QColor, QFontMetrics
-from PySide6.QtCore import Qt, QSize, QUrl
+from PySide6.QtGui import QPixmap, QPainter, QPainterPath, QFontMetrics
+from PySide6.QtCore import Qt, QUrl
 from PySide6.QtWidgets import QMessageBox
 
 from apps.gui.lib.RenderQueue import RenderQueue
@@ -478,9 +477,6 @@ class ProcessTab:
         painter.end()
 
         return rounded_pixmap
-
-    def modelNameToFile(self):
-        pass
 
     def updateProcessTab(self, qimage: QtGui.QImage):
         """
