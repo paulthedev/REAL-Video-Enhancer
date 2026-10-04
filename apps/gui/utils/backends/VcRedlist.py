@@ -9,7 +9,7 @@ import ctypes
 import os
 
 from apps.gui.constants import CWD, PLATFORM
-from apps.gui.ui.QTcustom import (
+from apps.gui.lib.QTcustom import (
     DownloadProgressPopup,
     RegularQTPopup,
     needs_network_else_exit,

@@ -14,7 +14,7 @@ class BackendHandler:
         self.settings = settings
 
     def getAvailableBackends(self):
-        from apps.gui.ui.QTcustom import SettingUpBackendPopup, TextOutputPopup
+        from apps.gui.lib.QTcustom import SettingUpBackendPopup, TextOutputPopup
 
         output = SettingUpBackendPopup(
             [

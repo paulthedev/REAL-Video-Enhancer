@@ -18,7 +18,7 @@ from apps.gui.constants import (
     PYTHON_EXECUTABLE_PATH,
     TEMP_DOWNLOAD_PATH,
 )
-from apps.gui.ui.QTcustom import DisplayCommandOutputPopup
+from apps.gui.lib.QTcustom import DisplayCommandOutputPopup
 from apps.gui.util import log
 
 from .BackendDetect import (

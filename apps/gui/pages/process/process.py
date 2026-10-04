@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QMessageBox
 from apps.gui.lib.RenderQueue import RenderQueue
 
 from apps.gui.lib.AnimationHandler import AnimationHandler
-from apps.gui.ui.QTcustom import (
+from apps.gui.lib.QTcustom import (
     RegularQTPopup,
     UpdateGUIThread,
     show_layout_widgets,

@@ -62,7 +62,7 @@ from apps.gui.Backendhandler import BackendHandler
 from apps.gui.ModelHandler import totalModels
 from apps.gui.lib.AnimationHandler import AnimationHandler
 from apps.gui.lib.QTstyle import Palette
-from apps.gui.ui.QTcustom import RegularQTPopup, NotificationOverlay, TextOutputPopup
+from apps.gui.lib.QTcustom import RegularQTPopup, NotificationOverlay, TextOutputPopup
 from apps.gui.lib.RenderQueue import RenderQueue, RenderOptions
 from apps.gui.VideoInfo import VideoLoader
 

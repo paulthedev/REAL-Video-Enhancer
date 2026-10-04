@@ -1,7 +1,7 @@
 import os
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 from PySide6.QtCore import Qt
-from apps.gui.ui.QTcustom import RegularQTPopup, NetworkCheckPopup, remove_combobox_item_by_text
+from apps.gui.lib.QTcustom import RegularQTPopup, NetworkCheckPopup, remove_combobox_item_by_text
 from apps.gui.utils.backends import (
     DownloadDependencies,
     TorchVersion,

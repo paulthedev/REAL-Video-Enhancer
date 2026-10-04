@@ -14,7 +14,7 @@ from apps.gui.constants import (
     PYTHON_EXECUTABLE_PATH,
     USE_LOCAL_BACKEND,
 )
-from apps.gui.ui.QTcustom import DownloadProgressPopup, needs_network_else_exit
+from apps.gui.lib.QTcustom import DownloadProgressPopup, needs_network_else_exit
 from apps.gui.util import (
     FileHandler,
     extractTarGZ,

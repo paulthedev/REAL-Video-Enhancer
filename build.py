@@ -121,9 +121,9 @@ class BuildManager:
     
     # (source .ui file, generated module name inside dist/pages/)
     PAGE_UIS = [
-        ("apps/gui/ui/mainwindow.ui", "_mainwindow"),
+        ("apps/gui/mainwindow.ui", "_mainwindow"),
         ("apps/gui/pages/home/home.ui", "home"),
-        ("apps/gui/ui/more_page.ui", "more"),
+        ("apps/gui/pages/more/more.ui", "more"),
         ("apps/gui/pages/process/process.ui", "process"),
         ("apps/gui/pages/settings/settings.ui", "settings"),
         ("apps/gui/pages/download/download.ui", "download"),
@@ -193,11 +193,11 @@ class BuildManager:
         os.makedirs(OUTPUT_FOLDER, exist_ok=True)
         if PLATFORM == "darwin" or PLATFORM == "linux":
             os.system(
-                f"{self.python_manager.get_venv_site_packages()}/PySide6/Qt/libexec/rcc -g python apps/gui/ui/resources.qrc > {OUTPUT_FOLDER}/resources_rc.py"
+                f"{self.python_manager.get_venv_site_packages()}/PySide6/Qt/libexec/rcc -g python apps/gui/resources.qrc > {OUTPUT_FOLDER}/resources_rc.py"
             )
         if PLATFORM == "win32":
             os.system(
-                r".\venv\Lib\site-packages\PySide6\rcc.exe -g python apps\gui\ui\resources.qrc > {OUTPUT_FOLDER}/resources_rc.py"
+                r".\venv\Lib\site-packages\PySide6\rcc.exe -g python apps\gui\resources.qrc > {OUTPUT_FOLDER}/resources_rc.py"
             )
 
     

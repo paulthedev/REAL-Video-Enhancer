@@ -52,6 +52,7 @@ from .VcRedlist import VCRedList
 __all__ = [
     "BACKEND_HARDWARE_COMPATIBILITY",
     "Backend",
+    "Dependency",
     "DownloadDependencies",
     "DownloadModel",
     "FFMpeg",

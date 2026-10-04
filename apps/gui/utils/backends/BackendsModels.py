@@ -7,7 +7,7 @@ pytorch/onnx/ncnn into its backend directory.
 import os
 
 from apps.gui.constants import MODELS_PATH, MODELS_RELEASE_BASE_URL
-from apps.gui.ui.QTcustom import DownloadProgressPopup
+from apps.gui.lib.QTcustom import DownloadProgressPopup
 from apps.gui.util import createDirectory, extractTarGZ, networkCheck
 
 

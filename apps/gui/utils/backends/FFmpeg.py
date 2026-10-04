@@ -13,7 +13,7 @@ from apps.gui.constants import (
     MODELS_RELEASE_BASE_URL,
     PLATFORM,
 )
-from apps.gui.ui.QTcustom import DownloadProgressPopup, needs_network_else_exit
+from apps.gui.lib.QTcustom import DownloadProgressPopup, needs_network_else_exit
 from apps.gui.util import FileHandler
 
 from .Dependency import Dependency

@@ -3,7 +3,7 @@ import re
 
 from apps.gui.util import createDirectory, log, errorAndLog
 from apps.gui.constants import CUSTOM_MODELS_PATH
-from apps.gui.ui.QTcustom import RegularQTPopup
+from apps.gui.lib.QTcustom import RegularQTPopup
 
 """
 Key value pairs of the model name in the GUI

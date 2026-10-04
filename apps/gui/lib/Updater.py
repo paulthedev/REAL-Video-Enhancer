@@ -5,7 +5,7 @@ import subprocess
 import shutil
 import urllib.request
 
-from apps.gui.ui.QTcustom import DownloadProgressPopup, NetworkCheckPopup, RegularQTPopup
+from apps.gui.lib.QTcustom import DownloadProgressPopup, NetworkCheckPopup, RegularQTPopup
 from apps.gui.constants import (
     PYTHON_EXECUTABLE_PATH,
     PYTHON_DIRECTORY,
