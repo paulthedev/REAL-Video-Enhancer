@@ -1,7 +1,7 @@
 from pypresence import Presence
 import os
 from apps.gui.util import log, networkCheck
-from .constants import IS_FLATPAK
+from apps.gui.constants import IS_FLATPAK
 
 
 class DiscordRPC:

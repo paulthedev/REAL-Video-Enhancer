@@ -30,7 +30,7 @@ for _p in (_DIST, os.path.join(_DIST, 'pages')):
 from mainwindow import Ui_MainWindow
 from PySide6 import QtSvg  # Import the QtSvg module so svg icons can be used on windows
 from apps.gui.version import version
-from apps.gui.ModelHandler import getModels, getModelDisplayName
+from apps.gui.lib.ModelHandler import getModels, getModelDisplayName
 
 # other imports
 from apps.gui.util import (
@@ -58,13 +58,13 @@ from apps.gui.pages.process.process import ProcessTab
 from apps.gui.pages.download.download import DownloadTab
 from apps.gui.pages.home.home import HomeTab
 from apps.gui.pages.settings.settings import SettingsTab, Settings
-from apps.gui.Backendhandler import BackendHandler
-from apps.gui.ModelHandler import totalModels
+from apps.gui.lib.BackendHandler import BackendHandler
+from apps.gui.lib.ModelHandler import totalModels
 from apps.gui.lib.AnimationHandler import AnimationHandler
 from apps.gui.lib.QTstyle import Palette
 from apps.gui.lib.QTcustom import RegularQTPopup, NotificationOverlay, TextOutputPopup
 from apps.gui.lib.RenderQueue import RenderQueue, RenderOptions
-from apps.gui.VideoInfo import VideoLoader
+from apps.gui.utils.VideoInfo import VideoLoader
 
 svg = (
     QtSvg.QSvgRenderer()

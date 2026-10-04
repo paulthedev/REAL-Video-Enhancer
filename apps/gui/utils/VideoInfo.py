@@ -1,7 +1,7 @@
 import subprocess
 import re
 import os
-from .constants import FFMPEG_PATH
+from apps.gui.constants import FFMPEG_PATH
 
 class RVEBackendWrapper:
     def __init__(self, input_file: str):
@@ -9,7 +9,7 @@ class RVEBackendWrapper:
         self._get_ffmpeg_info()
 
     def _get_ffmpeg_info(self):
-        from .constants import BACKEND_PATH, PYTHON_EXECUTABLE_PATH
+        from apps.gui.constants import BACKEND_PATH, PYTHON_EXECUTABLE_PATH
         from apps.gui.util import log, subprocess_popen_without_terminal
 
         command = [
