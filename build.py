@@ -11,7 +11,11 @@ import platform
 
 PLATFORM = sys.platform
 CPU_ARCH = "x86_64" if platform.machine() == "AMD64" else platform.machine()
+# dev UI modules (compiled .ui/.qrc) — the entry point loads them from here
 OUTPUT_FOLDER = "dist"
+# packaged bundles and installers — kept separate so a package build never
+# wipes the dev modules and vice versa
+PACKAGE_FOLDER = "packages"
 print(f"Platform: {PLATFORM}")
 print(f"CPU Arch: {CPU_ARCH}")
 print(f"OUTPUT_FOLDER: {OUTPUT_FOLDER}")
@@ -112,7 +116,6 @@ class PythonManager:
 
 class BuildManager:
     def __init__(self):
-        shutil.rmtree(OUTPUT_FOLDER, ignore_errors=True)
         self.python_manager = PythonManager()
 
     @abstractmethod
@@ -138,6 +141,9 @@ class BuildManager:
 
     def build_gui(self):
         print("Building GUI")
+        # regenerate dev UI modules from scratch — safe now that package
+        # builds write to PACKAGE_FOLDER instead of OUTPUT_FOLDER
+        shutil.rmtree(OUTPUT_FOLDER, ignore_errors=True)
         pages_dir = os.path.join(OUTPUT_FOLDER, "pages")
         os.makedirs(pages_dir, exist_ok=True)
         with open(os.path.join(pages_dir, "__init__.py"), "w"):
@@ -204,7 +210,7 @@ class BuildManager:
     def copy_backend(self):
         print("Copying backend")
         if "pyinstaller" in self.__str__().lower():
-            backend_dir = os.path.join(f"{OUTPUT_FOLDER}/REAL-Video-Enhancer/backend")
+            backend_dir = os.path.join(f"{PACKAGE_FOLDER}/REAL-Video-Enhancer/backend")
             try:
                 shutil.copytree("apps/backend", backend_dir)
             except Exception:
@@ -212,7 +218,7 @@ class BuildManager:
             if not os.path.exists(backend_dir):
                 raise FileNotFoundError("Backend failed to copy!")
         else:
-            shutil.copytree("apps/backend", f"{OUTPUT_FOLDER}/backend")
+            shutil.copytree("apps/backend", f"{PACKAGE_FOLDER}/backend")
 
     @abstractmethod
     def patch_for_xcbcursor(self):
@@ -225,17 +231,18 @@ class PyInstaller(BuildManager):
     def build(self):
         print("Building executable")
 
+        shutil.rmtree(PACKAGE_FOLDER, ignore_errors=True)
         PythonManager.pip_install_package_in_venv(self.pyinstaller_version)
         PythonManager.run_venv_python(
             (
-              "-m PyInstaller" 
-            + " apps/gui/REAL-Video-Enhancer.py" 
-            + " --icon=icons/logo-v2.ico" 
+              "-m PyInstaller"
+            + " apps/gui/REAL-Video-Enhancer.py"
+            + " --icon=icons/logo-v2.ico"
             + " --noconfirm"
-            + " --noupx" 
+            + " --noupx"
             + " --noconsole" # i think this fixes weird macos dir shit
             + " --distpath"
-            + f" {OUTPUT_FOLDER}"
+            + f" {PACKAGE_FOLDER}"
             )
         )
 
@@ -243,7 +250,18 @@ class PyInstaller(BuildManager):
         if PLATFORM == "linux":
             input_file = get_libxcb_cursor_binary()
             print("Copying libcursor to qt lib directory")
-            shutil.copy(input_file, f"{OUTPUT_FOLDER}/REAL-Video-Enhancer/_internal/PySide6/Qt/lib/")
+            shutil.copy(input_file, f"{PACKAGE_FOLDER}/REAL-Video-Enhancer/_internal/PySide6/Qt/lib/")
+
+    def copy_gui_modules(self):
+        """Copy the compiled UI modules into the bundle so the frozen app
+        can find mainwindow/pages/resources_rc next to its executable."""
+        target = os.path.join(PACKAGE_FOLDER, "dist")
+        shutil.copytree(
+            OUTPUT_FOLDER,
+            target,
+            ignore=shutil.ignore_patterns("__pycache__"),
+            dirs_exist_ok=True,
+        )
             
 class CxFreeze(BuildManager):
 
@@ -253,6 +271,7 @@ class CxFreeze(BuildManager):
     def build(self):
         print("Building executable")
 
+        shutil.rmtree(PACKAGE_FOLDER, ignore_errors=True)
         PythonManager.pip_install_package_in_venv(self.cx_freeze_version)
         PythonManager.run_venv_python(
             (
@@ -260,7 +279,7 @@ class CxFreeze(BuildManager):
             + " cx_Freeze"
             + " --script apps/gui/REAL-Video-Enhancer.py"
             + " --target-dir"
-            + f" {OUTPUT_FOLDER}"
+            + f" {PACKAGE_FOLDER}"
             + " build_exe"
             )
         )
@@ -268,11 +287,22 @@ class CxFreeze(BuildManager):
     def patch_for_xcbcursor(self):
         if PLATFORM == "linux":
             input_file = get_libxcb_cursor_binary()
-            qt_lib_dir = f"{OUTPUT_FOLDER}/lib/PySide6/Qt/lib"
+            qt_lib_dir = f"{PACKAGE_FOLDER}/lib/PySide6/Qt/lib"
             os.makedirs(qt_lib_dir, exist_ok=True)
             print("Copying libcursor to qt lib directory")
             # The loader expects the plain name, not the vendored per-arch name.
             shutil.copy(input_file, os.path.join(qt_lib_dir, "libxcb-cursor.so.0"))
+
+    def copy_gui_modules(self):
+        """Copy the compiled UI modules into the bundle so the frozen app
+        can find mainwindow/pages/resources_rc next to its executable."""
+        target = os.path.join(PACKAGE_FOLDER, "dist")
+        shutil.copytree(
+            OUTPUT_FOLDER,
+            target,
+            ignore=shutil.ignore_patterns("__pycache__"),
+            dirs_exist_ok=True,
+        )
 
 
 def build_appimage(args):
@@ -280,9 +310,10 @@ def build_appimage(args):
     appimage_script = os.path.join("installers", "build-appimage.sh")
     command = [
         appimage_script,
-        f"{OUTPUT_FOLDER}",
+        f"{PACKAGE_FOLDER}",
         args.appimage_version,
         args.appimage_arch,
+        f"{PACKAGE_FOLDER}",
     ]
     subprocess.run(command, check=True)
 
@@ -294,7 +325,7 @@ def cleanup():
     # the tree when freezing a standalone script.
     for root, dirs, _files in os.walk("."):
         rel = root.split(os.sep)
-        if OUTPUT_FOLDER in rel or "venv" in rel:
+        if OUTPUT_FOLDER in rel or PACKAGE_FOLDER in rel or "venv" in rel:
             continue
         for d in [d for d in dirs if d.endswith(".egg-info")]:
             shutil.rmtree(os.path.join(root, d), ignore_errors=True)
@@ -319,9 +350,9 @@ if __name__ == "__main__":
     args.add_argument("--copy_backend", help="Copy the backend to the build directory", action="store_true")    
     args = args.parse_args()
 
-    # NOTE: a single BuildManager instance is reused below — each constructor run
-    # wipes OUTPUT_FOLDER (dist/), so separate instances would delete previously
-    # generated artifacts (e.g. mainwindow.py) before writing resources_rc.py.
+    # NOTE: a single BuildManager instance is reused below. Dev UI modules go
+    # to OUTPUT_FOLDER (dist/) and are wiped+regenerated by build_gui(); the
+    # package builders write to PACKAGE_FOLDER (packages/) and never touch dist/.
     build_manager = BuildManager()
 
     if not os.path.exists("venv") or not args.build == "gui":
@@ -349,6 +380,7 @@ if __name__ == "__main__":
                 raise ValueError("Invalid build option")
         builder.build()
         builder.patch_for_xcbcursor()
+        builder.copy_gui_modules()
         if args.copy_backend or args.build == "appimage":
             builder.copy_backend()
         if args.build == "appimage":

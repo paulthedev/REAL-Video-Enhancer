@@ -23,11 +23,12 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon
 
 import sys
-# generated UI modules live in the repo-root dist/ (build.py OUTPUT_FOLDER);
-# script-adjacent dist/ kept as a fallback for packaged layouts
+# generated UI modules live in the repo-root dist/ (build.py OUTPUT_FOLDER).
+# frozen bundles ship them in <executable dir>/dist (copied by build.py).
 _DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "dist"))
+_EXE_DIST = os.path.join(os.path.dirname(os.path.abspath(sys.executable)), "dist")
 _SCRIPT_DIST = os.path.join(os.path.dirname(__file__), 'dist')
-for _p in (_DIST, os.path.join(_DIST, 'pages'), _SCRIPT_DIST, os.path.join(_SCRIPT_DIST, 'pages')):
+for _p in (_DIST, os.path.join(_DIST, 'pages'), _EXE_DIST, os.path.join(_EXE_DIST, 'pages'), _SCRIPT_DIST, os.path.join(_SCRIPT_DIST, 'pages')):
     if os.path.isdir(_p) and _p not in sys.path:
         sys.path.insert(0, _p)
 from mainwindow import Ui_MainWindow

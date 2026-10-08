@@ -24,3 +24,6 @@ logs/
 .zvec-grep/
 # Preserved packaged app bundle (moved aside during 2026-10-08 GUI build)
 dist.packaged.bak/
+
+# packaged bundles and installers (cx_Freeze / PyInstaller / AppImage output)
+packages/

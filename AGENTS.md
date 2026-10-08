@@ -134,9 +134,9 @@ paths, or listing every call site of a known function.
 - Remove any `requirements.txt` files (redundant with pyproject.toml)
 
 ### Building
-- GUI files compile to `dist/` (git ignored)
-- Run `python build.py` to build
-- Generated files: `dist/mainwindow.py`, `dist/resources_rc.py`
+- Dev UI modules compile to `dist/` (git ignored); package builds go to `packages/` (git ignored)
+- Run `python build.py` for dev modules, `python build.py --build appimage` (or `cx_freeze`/`pyinstaller`) to package
+- Dev output: `dist/mainwindow.py`, `dist/pages/`, `dist/resources_rc.py`; packaged bundles + installers: `packages/`
 
 ### Testing
 - Tests in `apps/backend/tests/` directory

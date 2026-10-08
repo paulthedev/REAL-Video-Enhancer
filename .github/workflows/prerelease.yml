@@ -59,11 +59,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: REAL-Video-Enhancer-${{ env.APP_VERSION }}-Linux-dist_x86_64
-          path: dist/
+          path: packages/
 
       - name: compress archive
         run: |
-          mv dist/ bin/
+          mv packages/ bin/
           zip -r REAL-Video-Enhancer-${{ env.APP_VERSION }}-Linux-portable_x86_64.zip bin/
 
       - name: compress backend
@@ -95,16 +95,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: REAL-Video-Enhancer-${{ env.APP_VERSION }}-Linux-dist_x86_64
-          path: dist/
+          path: packages/
 
       - name: Build AppImage
-        run: ./installers/build-appimage.sh dist ${{ env.APP_VERSION }} x86_64
+        run: ./installers/build-appimage.sh packages ${{ env.APP_VERSION }} x86_64 packages
 
       - name: Save AppImage as artifact
         uses: actions/upload-artifact@v4
         with:
           name: REAL-Video-Enhancer-${{ env.APP_VERSION }}-AppImage_x86_64
-          path: dist/REAL-Video-Enhancer-${{ env.APP_VERSION }}-linux-x86_64.AppImage
+          path: packages/REAL-Video-Enhancer-${{ env.APP_VERSION }}-linux-x86_64.AppImage
 
   build-Linux_arm64:
     needs: [validate]
@@ -126,7 +126,7 @@ jobs:
       
       - name: compress archive
         run: |
-          mv dist/ bin/
+          mv packages/ bin/
           zip -r REAL-Video-Enhancer-${{ env.APP_VERSION }}-Linux-portable_arm64.zip bin/
 
       - name: compress backend
@@ -165,7 +165,7 @@ jobs:
             cd dist
             tar -a -c -f REAL-Video-Enhancer-${{ env.APP_VERSION }}-Windows.zip REAL-Video-Enhancer
             cd ..
-            cp dist/REAL-Video-Enhancer-${{ env.APP_VERSION }}-Windows.zip REAL-Video-Enhancer-${{ env.APP_VERSION }}-Windows-portable_x86_64.zip
+            cp packages/REAL-Video-Enhancer-${{ env.APP_VERSION }}-Windows.zip REAL-Video-Enhancer-${{ env.APP_VERSION }}-Windows-portable_x86_64.zip
 
       - name: create windows installer
         run: |
@@ -212,7 +212,7 @@ jobs:
     
       - name: compress archive
         run: |
-          zip -r REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_x86_64.zip dist/REAL-Video-Enhancer/
+          zip -r REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_x86_64.zip packages/REAL-Video-Enhancer/
 
       - name: Save Archive as artifact
         uses: actions/upload-artifact@v4
@@ -248,7 +248,7 @@ jobs:
         run: |
 
 
-          zip -r REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_arm64.zip dist/REAL-Video-Enhancer/
+          zip -r REAL-Video-Enhancer-${{ env.APP_VERSION }}-MacOS_arm64.zip packages/REAL-Video-Enhancer/
 
       - name: Save Archive as artifact
         uses: actions/upload-artifact@v4

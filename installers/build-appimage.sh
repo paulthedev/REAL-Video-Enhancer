@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-BUILD_DIR="${1:?Usage: build-appimage.sh <build-dir> [version] [arch]}"
+BUILD_DIR="${1:?Usage: build-appimage.sh <build-dir> [version] [arch] [output-dir]}"
 VERSION="${2:-2.4.3}"
 ARCH="${3:-x86_64}"
 APP_NAME="REAL-Video-Enhancer"
@@ -68,7 +68,9 @@ ARCH="$ARCH" "$APPIMAGETOOL" "$ROOT_DIR" "$APPIMAGE_OUT"
 
 # --- final output -------------------------------------------------------
 # Output to dist/ to keep all build artifacts in one place
-FINAL="$(dirname "$SCRIPT_DIR")/dist/${APP_NAME}-${VERSION}-linux-${ARCH}.AppImage"
+# output next to the bundle by default (packages/), or to the given dir
+OUTPUT_DIR="${4:-$(dirname "$SCRIPT_DIR")/packages}"
+FINAL="${OUTPUT_DIR}/${APP_NAME}-${VERSION}-linux-${ARCH}.AppImage"
 mkdir -p "$(dirname "$FINAL")"
 mv "$APPIMAGE_OUT" "$FINAL"
 chmod +x "$FINAL"
