@@ -6,9 +6,11 @@ Decided (user, 2026-10-08):
 1. ONNX Runtime becomes the **only** inference backend. PyTorch and NCNN go away.
 2. A **CPU baseline ships bundled** (pip dependency of the frozen build) — the
    app works offline out of the box. At runtime the app **auto-downloads the
-   recommended accelerated build** for the detected hardware (DirectML on
-   Windows, CUDA on Linux) into a writable data dir and uses it after a
-   restart. No user-initiated "download backend" flow — it's automatic.
+   accelerated build matching the detected GPU vendor** into a writable data
+   dir and uses it after a restart. The recommendation is **vendor-aware,
+   never vendor-default**: NVIDIA → CUDA build, Intel → OpenVINO build, AMD →
+   bundled CPU today (no PyPI ROCm build), nothing → bundled CPU. Windows is
+   covered by the bundled DirectML build regardless of vendor.
 3. Same for binary downloads: **ffmpeg ships via a pip package**
    (`imageio-ffmpeg` bundles a per-platform static ffmpeg build; RVE never uses
    ffprobe, so its missing ffprobe is not a problem). The BtbN download path
@@ -35,10 +37,11 @@ onnx-backend-plan.md`.
   picked up by cx_Freeze) — plus `onnxruntime-directml` on Windows (~50 MB,
   DX12 GPU on every vendor, no external CUDA). No dependency-install popup,
   no standalone CPython.
-- **Runtime provider upgrade**: hardware detection recommends a faster build
-  (Linux + NVIDIA → `onnxruntime-gpu` + nvidia pip deps) and downloads it in
-  the background into the app's writable data dir. Bundled CPU stays as the
-  guaranteed fallback if the download fails. Applies after a restart.
+- **Runtime provider upgrade**: `detect_gpu_hardware()` (already torch-free)
+  reports the vendor; the manager downloads the matching build in the
+  background into the app's writable data dir. Bundled CPU stays as the
+  guaranteed fallback if the vendor has no build or the download fails.
+  Applies after a restart.
 - **ffmpeg ships inside the frozen app** via `imageio-ffmpeg`
   (`imageio_ffmpeg.get_ffmpeg_exe()`), with `--ffmpeg_path` / `RVE_FFMPEG_PATH`
   kept as overrides. No runtime binary downloads at all.
@@ -48,8 +51,9 @@ onnx-backend-plan.md`.
   possible later step, not part of this migration.)
 - **Models still download on demand** from the models repo — ONNX files only.
 - Wheel strategy (decided): **bundled** = CPU everywhere + DirectML on
-  Windows; **runtime-upgraded** = `onnxruntime-gpu` on Linux+NVIDIA.
-  macOS stays on CPU/CoreML (no download).
+  Windows; **runtime-upgraded, vendor-aware on Linux** = NVIDIA →
+  `onnxruntime-gpu`, Intel → `onnxruntime-openvino`, AMD → bundled CPU
+  (no PyPI ROCm build). macOS stays on CPU/CoreML (no download).
 
 ---
 
@@ -103,8 +107,11 @@ until:
   generic `pip()` are deleted.
 - [ ] **Provider upgrade manager** (new module, e.g. `utils/backends/
   ProviderUpgrade.py`):
-  - detect GPU → recommend `onnxruntime-gpu` (Linux+NVIDIA only; Windows/
-    macOS are covered by bundled builds);
+  - vendor-aware recommendation built on the existing torch-free
+    `detect_gpu_hardware()` — NVIDIA → `onnxruntime-gpu`, Intel →
+    `onnxruntime-openvino` (Intel's official PyPI build, OpenVINO EP),
+    AMD → skip (stay on bundled CPU — no PyPI ROCm build), nothing → skip;
+    Windows/macOS skip entirely (bundled builds cover them);
   - install into a **writable data dir** (`$XDG_DATA_HOME/REAL-Video-
     Enhancer/providers/`, `%APPDATA%` equivalent on Windows) — never into
     the AppImage mount (read-only squashfs);
@@ -153,9 +160,11 @@ until:
 ## Risks / open questions
 
 1. **onnxruntime on Python 3.14** — wheel availability unverified (Phase 0 gate).
-2. **GPU coverage loss** — NCNN was the only Vulkan path. Linux AMD without
-   ROCm falls back to CPU (onnxruntime-rocm isn't on PyPI; the provider
-   upgrade manager could target a custom index later — decision point).
+2. **GPU coverage loss** — NCNN was the only Vulkan path. Linux AMD falls
+   back to CPU today (onnxruntime-rocm isn't on PyPI; the provider manager
+   could target a custom index later — decision point). Intel iGPUs are
+   skipped by `detect_gpu_hardware()` (it reports discrete GPUs only), so
+   OpenVINO upgrade for iGPU owners needs a detection extension first.
 3. **Provider upgrade download size** — Linux GPU is ~1 GB+ of nvidia wheels;
    background, cancellable, and CPU keeps working without it. Bundled app
    stays small (CPU + DirectML).
