@@ -11,7 +11,7 @@ import platform
 
 PLATFORM = sys.platform
 CPU_ARCH = "x86_64" if platform.machine() == "AMD64" else platform.machine()
-OUTPUT_FOLDER = os.path.join("apps", "gui", "dist")
+OUTPUT_FOLDER = "dist"
 print(f"Platform: {PLATFORM}")
 print(f"CPU Arch: {CPU_ARCH}")
 print(f"OUTPUT_FOLDER: {OUTPUT_FOLDER}")
