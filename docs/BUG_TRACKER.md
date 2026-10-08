@@ -17,6 +17,7 @@ Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
 | P1 — GUI crashes / wrong output | 25 | 1 |
 | Wiring — GUI refactor breakage (found + fixed 2026-10-08) | 4 | 4 |
 | Download — backend download/install wiring (found 2026-10-08) | 4 | 0 |
+| Sources — runtime download provenance (found 2026-10-08) | 5 | 0 |
 | P2 — robustness | 15 | 1 |
 | P3 — cleanup | 14 | 0 |
 
@@ -240,6 +241,50 @@ same env every launch path uses). ONNX is broken at both ends.
   backend integration.
 
 
+## Sources — runtime download provenance (found 2026-10-08)
+
+Audit of every runtime download URL. Already standard: pytorch wheels
+(`download.pytorch.org`), pip packages (`pypi.org`), VC++ redist (`aka.ms`),
+appimagetool (AppImage org, build-time). Intentionally self-hosted: backend
+bundle, app self-update, changelog (`tntwise/real-video-enhancer` releases),
+and the curated AI models (models repo). The items below should move to
+standard upstream sources.
+
+- [ ] **S1. FFmpeg is downloaded from three different tntwise URLs.**
+  `FFMpeg.py:27` (models repo release), `GetFFMpeg.py:7` (hardcoded models-repo
+  URL, backend fallback), `QTcustom.py:818` (an ffmpeg binary parked in the
+  **`TNTwise/Rife-Vulkan-Models`** repo — the RIFE models repo). All should use
+  official builds instead:
+  - Windows/Linux: `https://github.com/BtbN/FFmpeg-Builds/releases` (static
+    GPL builds, win+linux, x86_64+arm64 — de-facto standard automated source)
+  - macOS: `https://evermeet.cx/ffmpeg/` (x86_64) / osxexperts (arm64)
+  Keep the per-platform `match` structure; swap the base URLs; add checksum
+  verification while touching it.
+- [ ] **S2. CPython standalone interpreter is re-hosted in the models repo.**
+  `Python.py:33` builds `CPYTHON_RELEASE_BASE_URL` (`TNTwise/REAL-Video-Enhancer-models`
+  releases) + `cpython-3.12.9+20250317-<target>-install_only.tar.gz` — that naming is
+  **python-build-standalone**'s; the artifact is a re-upload. Point at the official
+  release: `https://github.com/astral-sh/python-build-standalone/releases`
+  (tag `20250317`, asset name identical). Note `CPYTHON_RELEASE_BASE_URL` lives in
+  `MODELS_REPO` while models themselves use `MODEL_HOSTED_REPO` — same repo, two
+  spellings (see S3).
+- [ ] **S3. Model/backend repo constants are inconsistent and partly hardcoded.**
+  Three spellings in play: `MODEL_HOSTED_REPO` (`TNTwise/real-video-enhancer-models`,
+  used for models), `MODELS_REPO` (`TNTwise/REAL-Video-Enhancer-models`, used for
+  CPython), plus fully hardcoded URLs in `GetFFMpeg.py:7` and `QTcustom.py:818`.
+  Consolidate every remote URL into `apps/gui/constants.py` so provenance is auditable
+  from one file.
+- [ ] **S4. `networkCheck()` conflates "network up" with "GitHub up".**
+  `constants.py:6` HEAD-pings `https://raw.githubusercontent.com`; offline-but-not-
+  GitHub-down is indistinguishable from captive portals etc. Ping a stable
+  infrastructure endpoint (e.g. `1.1.1.1` / `pypi.org`) or handle per-host failures
+  where the actual download happens.
+- [ ] **S5. Models release uses a single rolling `models` tag — no version pinning.**
+  `MODELS_RELEASE_BASE_URL` + filename means a re-upload silently changes what users
+  download. Consider per-model-version tags (or a versioned index file) so installs
+  are reproducible and rollback-able. Low priority.
+
+
 ## P2 — Robustness / resource handling
 
 - [ ] **R1. `FFMpegInfoWrapper` leaks subprocess, unguarded regexes.** `utils/VideoInfo.py:121`:
@@ -320,7 +365,9 @@ same env every launch path uses). ONNX is broken at both ends.
 6. **B11, G6, G12, G13, G14** and remaining P1s.
 7. **D1 + D2 together** (ONNX install + backend listing — one is useless without the other);
    **D3** resolves via B2 + G24/G25; **D4** when wiring in the health checks.
-8. P2/P3 in a cleanup pass.
+8. **S1 + S2 + S3 together** (one provenance pass: swap ffmpeg/CPython to official
+   sources and centralize the URLs in constants).
+9. P2/P3 in a cleanup pass (S4/S5 can ride along).
 
 ## Verification notes
 
