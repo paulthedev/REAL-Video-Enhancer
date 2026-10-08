@@ -4,8 +4,11 @@ Status: **planned — not started**
 Decided (user, 2026-10-08):
 
 1. ONNX Runtime becomes the **only** inference backend. PyTorch and NCNN go away.
-2. The runtime is **bundled from the get-go** — no "download backend later" flow.
-   onnxruntime is a pip library, so the frozen build ships it.
+2. A **CPU baseline ships bundled** (pip dependency of the frozen build) — the
+   app works offline out of the box. At runtime the app **auto-downloads the
+   recommended accelerated build** for the detected hardware (DirectML on
+   Windows, CUDA on Linux) into a writable data dir and uses it after a
+   restart. No user-initiated "download backend" flow — it's automatic.
 3. Same for binary downloads: **ffmpeg ships via a pip package**
    (`imageio-ffmpeg` bundles a per-platform static ffmpeg build; RVE never uses
    ffprobe, so its missing ffprobe is not a problem). The BtbN download path
@@ -28,9 +31,14 @@ onnx-backend-plan.md`.
 
 ## Target architecture
 
-- **onnxruntime ships inside the frozen app** (pip dependency picked up by
-  cx_Freeze). No backend download, no dependency-install popup, no standalone
-  CPython.
+- **A CPU onnxruntime baseline ships inside the frozen app** (pip dependency
+  picked up by cx_Freeze) — plus `onnxruntime-directml` on Windows (~50 MB,
+  DX12 GPU on every vendor, no external CUDA). No dependency-install popup,
+  no standalone CPython.
+- **Runtime provider upgrade**: hardware detection recommends a faster build
+  (Linux + NVIDIA → `onnxruntime-gpu` + nvidia pip deps) and downloads it in
+  the background into the app's writable data dir. Bundled CPU stays as the
+  guaranteed fallback if the download fails. Applies after a restart.
 - **ffmpeg ships inside the frozen app** via `imageio-ffmpeg`
   (`imageio_ffmpeg.get_ffmpeg_exe()`), with `--ffmpeg_path` / `RVE_FFMPEG_PATH`
   kept as overrides. No runtime binary downloads at all.
@@ -39,10 +47,9 @@ onnx-backend-plan.md`.
   without a second Python install. (Merging backend into the GUI process is a
   possible later step, not part of this migration.)
 - **Models still download on demand** from the models repo — ONNX files only.
-- Wheel variants: Windows → `onnxruntime-directml` (GPU via DX12, every
-  vendor, no external CUDA); Linux → `onnxruntime-gpu` (CUDA via pip nvidia
-  deps) with CPU fallback; macOS → `onnxruntime` (CPU/CoreML).
-  **Decision point:** one combined bundle vs a small CPU + large GPU variant.
+- Wheel strategy (decided): **bundled** = CPU everywhere + DirectML on
+  Windows; **runtime-upgraded** = `onnxruntime-gpu` on Linux+NVIDIA.
+  macOS stays on CPU/CoreML (no download).
 
 ---
 
@@ -78,26 +85,41 @@ until:
 - [ ] `constants.py`: drop `BACKEND_RELEASE_URL_TEMPLATE`,
   `CPYTHON`/`PYTHON_EXECUTABLE_PATH` machinery (Phase 2), keep models URL.
 
-## Phase 2 — Bundled runtime (kill "download backend later")
+## Phase 2 — Bundled runtime + provider auto-upgrade
 
-- [ ] `pyproject.toml`: add `imageio-ffmpeg`, and onnxruntime with PEP 508
-  markers (`onnxruntime-directml; sys_platform == 'win32'`, `onnxruntime-gpu;
-  sys_platform == 'linux'`, `onnxruntime; sys_platform == 'darwin'`).
+- [ ] `pyproject.toml`: add `imageio-ffmpeg`, `onnxruntime`, and
+  `onnxruntime-directml; sys_platform == 'win32'` (bundled baseline;
+  Linux/macOS bundle plain CPU — the GPU build is runtime-downloaded).
 - [ ] ffmpeg resolution: `FFMPEG_PATH` ← `imageio_ffmpeg.get_ffmpeg_exe()`;
   delete `utils/backends/FFmpeg.py`, `apps/backend/utils/GetFFMpeg.py`
-  download logic, BtbN/evermeet URLs (keep the constants only if used as
-  override docs — otherwise delete, superseding S1).
+  download logic and BtbN/evermeet URLs (supersedes S1).
 - [ ] Delete `utils/backends/Python.py` (standalone CPython download) and
   `utils/backends/Backend.py` (backend.tar.gz download); supersede S2.
 - [ ] Backend launch: `BackendHandler`/`process.py`/`Updater.py` switch from
   `PYTHON_EXECUTABLE_PATH` to `sys.executable` (frozen) / dev venv python.
   `BACKEND_PATH` resolves to the bundled `backend/` folder.
-- [ ] `DownloadDependencies` shrinks to **model downloads only**
-  (`BackendsModels.py`); `downloadPythonDeps` and `pip()` are deleted.
-- [ ] cx_Freeze build: include onnxruntime/cv2/numpy; verify the freeze picks
-  the pip nvidia deps on Linux GPU builds; update `packages/` layout notes.
-- [ ] Decide bundle variants (single GPU vs CPU+GPU) and update
-  `build-appimage.sh`/CI accordingly.
+- [ ] `DownloadDependencies` shrinks to **model downloads** +
+  **provider upgrade** (`BackendsModels.py`); `downloadPythonDeps` and the
+  generic `pip()` are deleted.
+- [ ] **Provider upgrade manager** (new module, e.g. `utils/backends/
+  ProviderUpgrade.py`):
+  - detect GPU → recommend `onnxruntime-gpu` (Linux+NVIDIA only; Windows/
+    macOS are covered by bundled builds);
+  - install into a **writable data dir** (`$XDG_DATA_HOME/REAL-Video-
+    Enhancer/providers/`, `%APPDATA%` equivalent on Windows) — never into
+    the AppImage mount (read-only squashfs);
+  - mechanism: bootstrap pip via stdlib `ensurepip` and
+    `pip install --target <providers dir> onnxruntime-gpu` (resolves the
+    nvidia dep closure automatically) — alternative is a minimal wheel
+    resolver over the PyPI JSON API (no pip, ~100 lines, but manual closure);
+  - non-blocking background download with progress/cancel (no modal-kill —
+    the G24/G25 lessons); bundled CPU remains the fallback on any failure;
+  - activation by sys.path precedence (`providers/` before frozen libs) +
+    one restart; a marker file records the active provider and version;
+  - updater flow mirrors the app updater: check → recommend → apply on
+    restart.
+- [ ] cx_Freeze build: include onnxruntime/cv2/imageio_ffmpeg; verify the
+  freeze on all three OSes; update `packages/` layout notes.
 
 ## Phase 3 — Backend code removal
 
@@ -132,10 +154,11 @@ until:
 
 1. **onnxruntime on Python 3.14** — wheel availability unverified (Phase 0 gate).
 2. **GPU coverage loss** — NCNN was the only Vulkan path. Linux AMD without
-   ROCm builds falls back to CPU (onnxruntime-rocm isn't on PyPI; would need a
-   custom index — decision point).
-3. **Bundle size** — Linux GPU bundle grows by the nvidia pip wheels
-   (~1 GB+). Split variants mitigate.
+   ROCm falls back to CPU (onnxruntime-rocm isn't on PyPI; the provider
+   upgrade manager could target a custom index later — decision point).
+3. **Provider upgrade download size** — Linux GPU is ~1 GB+ of nvidia wheels;
+   background, cancellable, and CPU keeps working without it. Bundled app
+   stays small (CPU + DirectML).
 4. **Custom .pth/.safetensors models** — dropped by default with the torch
    loader (decision point; a minimal torch-based custom loader could return
    later without restoring the full pytorch backend).
