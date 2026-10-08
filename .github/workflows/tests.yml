@@ -1,0 +1,21 @@
+name: tests
+
+on:
+  push:
+    branches: [main, v2-main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - name: Run unit tests
+        run: uv run pytest apps/backend/tests -q
+      # GUI smoke + render integration tests (added by the automated-testing
+      # work) run offscreen:
+      #   env QT_QPA_PLATFORM: offscreen
+      #   run: uv run pytest apps/gui/tests apps/backend/tests/integration -q
