@@ -172,27 +172,28 @@ class PyTorchBackendLoader(BaseBackend):
             Loaded model instance
         """
         from apps.backend.models.registry import get_model
-        
-        # Get model class from registry
-        model_class = get_model(model_name)
-        if model_class is None:
+
+        # the registry holds pre-built model instances — configure in place
+        model = get_model(model_name)
+        if model is None:
             raise ValueError(f"Model '{model_name}' not found in registry")
-        
-        # Create model instance
-        model = model_class(
-            model_path=model_path,
-            device=self.device.type if self.device else "auto",
-            dtype=self.dtype if self.dtype else "auto",
-            gpu_id=kwargs.get("gpu_id", 0),
-            **(config or {}),
-        )
-        
+
+        model.model_path = model_path
+        model.device_type = self.device.type if self.device else "auto"
+        model.dtype_str = self.dtype if self.dtype else "auto"
+        model.gpu_id = kwargs.get("gpu_id", 0)
+        # some models read self.device / self.dtype in load()
+        model.device = model.device_type
+        model.dtype = model.dtype_str
+        for key, value in (config or {}).items():
+            setattr(model, key, value)
+
         # Load with PyTorch backend
         model.load("pytorch")
-        
+
         # Store in registry
         self.models[model_name] = model
-        
+
         return model
     
     def unload_model(self, model_name: str) -> None:

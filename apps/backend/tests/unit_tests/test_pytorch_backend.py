@@ -51,23 +51,22 @@ class TestPyTorchBackendLoader(unittest.TestCase):
         loader.device = torch.device("cpu")
         loader.dtype = torch.float32
         
-        # Mock model class
-        mock_model_class = Mock()
+        # the registry holds pre-built instances; the loader configures in place
         mock_model_instance = Mock()
-        mock_model_class.return_value = mock_model_instance
-        mock_get_model.return_value = mock_model_class
-        
+        mock_get_model.return_value = mock_model_instance
+
         # Mock model.load
         mock_model_instance.load = Mock()
-        
+
         model = loader.load_model(
             model_name="RIFE",
             model_path="/tmp/test_model.pt",
             config={"version": "rife422_lite"},
         )
-        
-        mock_model_class.assert_called_once()
+
+        mock_get_model.assert_called_once_with("RIFE")
         mock_model_instance.load.assert_called_once_with("pytorch")
+        self.assertEqual(mock_model_instance.model_path, "/tmp/test_model.pt")
         self.assertEqual(loader.models["RIFE"], mock_model_instance)
     
     def test_unload_model(self):

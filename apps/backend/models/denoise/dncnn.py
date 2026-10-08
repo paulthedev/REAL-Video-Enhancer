@@ -11,6 +11,7 @@ from typing import Optional, Dict, Any, List
 import torch
 import torch.nn as nn
 from abc import abstractmethod
+import os
 
 from apps.backend.models.denoise.base import BaseDenoiseModel
 from apps.backend.models.base import ModelTask, ModelFormat
@@ -119,6 +120,7 @@ class DnCNNModel(BaseDenoiseModel):
         import torch
         
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._device = device
         self.model = DnCNN(
             in_nc=self.config.in_nc,
             out_nc=self.config.out_nc,
@@ -188,7 +190,7 @@ class DnCNNModel(BaseDenoiseModel):
     def _denoise_pytorch(self, frame: torch.Tensor) -> torch.Tensor:
         """Perform PyTorch denoise inference."""
         with torch.no_grad():
-            return self.model(frame)
+            return self.model(frame.to(self._device) if hasattr(self, "_device") else frame)
     
     def _denoise_onnx(self, frame: torch.Tensor) -> torch.Tensor:
         """Perform ONNX denoise inference."""
@@ -214,6 +216,7 @@ class DnCNNModel(BaseDenoiseModel):
     
     def _denoise_ncnn(self, frame: torch.Tensor) -> torch.Tensor:
         """Perform NCNN denoise inference."""
+        import ncnn  # optional dependency; imported here so the module imports without it
         import numpy as np
         
         # Convert tensor to numpy (NCHW to NHWC)

@@ -10,6 +10,7 @@ from typing import Optional, Dict, Any, List
 import torch
 import torch.nn as nn
 from abc import abstractmethod
+import os
 
 from apps.backend.models.scene_detect.base import BaseSceneDetectModel
 from apps.backend.models.base import ModelTask, ModelFormat
@@ -140,7 +141,7 @@ class MaxViTSceneDetectModel(BaseSceneDetectModel):
         )
         
         # Load weights if provided
-        if self.model_path and self.model_path.endswith('.pkl'):
+        if self.model_path and os.path.exists(self.model_path):
             self.model.load_state_dict(torch.load(self.model_path, map_location='cpu'))
         
         self.model.eval()
@@ -231,6 +232,7 @@ class MaxViTSceneDetectModel(BaseSceneDetectModel):
         prev_frame: Optional[torch.Tensor] = None
     ) -> bool:
         """Perform NCNN scene detection inference."""
+        import ncnn  # optional dependency; imported here so the module imports without it
         import numpy as np
         
         if prev_frame is None:

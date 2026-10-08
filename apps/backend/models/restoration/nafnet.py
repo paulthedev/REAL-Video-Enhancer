@@ -12,6 +12,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from abc import abstractmethod
+import os
 
 from apps.backend.models.base import BaseRestorationModel, ModelTask, ModelFormat
 from apps.backend.models.registry import register_model
@@ -197,6 +198,7 @@ class NAFNetModel(BaseRestorationModel):
         import torch
         
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self._device = device
         self.model = NAFNet(
             width=self.config.width,
             enc_blk_nums=self.config.enc_blk_nums,
@@ -264,7 +266,7 @@ class NAFNetModel(BaseRestorationModel):
     def _restore_pytorch(self, frame: torch.Tensor) -> torch.Tensor:
         """Perform PyTorch restoration inference."""
         with torch.no_grad():
-            return self.model(frame)
+            return self.model(frame.to(self._device) if hasattr(self, "_device") else frame)
     
     def _restore_onnx(self, frame: torch.Tensor) -> torch.Tensor:
         """Perform ONNX restoration inference."""
@@ -290,6 +292,7 @@ class NAFNetModel(BaseRestorationModel):
     
     def _restore_ncnn(self, frame: torch.Tensor) -> torch.Tensor:
         """Perform NCNN restoration inference."""
+        import ncnn  # optional dependency; imported here so the module imports without it
         import numpy as np
         
         # Convert tensor to numpy (NCHW to NHWC)

@@ -146,6 +146,15 @@ class RestorationBackend(BaseBackend):
         """Restore a frame."""
         pass
 
+    def run(
+        self,
+        model: BaseModel,
+        frame: Any,
+        **kwargs
+    ) -> Any:
+        """Run restoration inference."""
+        return self.restore(model, frame, **kwargs)
+
 
 class SceneDetectBackend(BaseBackend):
     """Base class for scene detection backends."""
@@ -160,3 +169,13 @@ class SceneDetectBackend(BaseBackend):
     ) -> bool:
         """Detect scene change."""
         pass
+
+    def run(
+        self,
+        model: BaseModel,
+        frame: Any,
+        prev_frame: Optional[Any] = None,
+        **kwargs
+    ) -> Any:
+        """Run scene detection."""
+        return self.detect(model, frame, prev_frame, **kwargs)

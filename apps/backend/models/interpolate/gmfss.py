@@ -13,6 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import math
 from abc import abstractmethod
+import os
 
 from apps.backend.models.base import BaseInterpolateModel, ModelTask, ModelFormat
 from apps.backend.models.registry import register_model
@@ -116,44 +117,41 @@ class GMFSS(nn.Module):
         """Forward pass for GMFSS."""
         if scale is not None:
             self.scale = scale
-        
-        # Extract features
+
+        # Extract features (img0 features are reused from the previous pair)
         if self.feat11 is None:
             feats = self.feat_ext(img0)
             self.feat11 = feats[:, :32, :, :]
             self.feat12 = feats[:, 32:64, :, :]
             self.feat13 = feats[:, 64:, :, :]
-        
+
         feat2 = self.feat_ext(img1)
         feat21 = feat2[:, :32, :, :]
         feat22 = feat2[:, 32:64, :, :]
         feat23 = feat2[:, 64:, :, :]
-        
+
         # Downsample images
         img0_small = F.interpolate(img0, scale_factor=0.5, mode="bilinear")
         img1_small = F.interpolate(img1, scale_factor=0.5, mode="bilinear")
-        
-        # Flow estimation
-        if self.flow01 is None:
-            combined = torch.cat([img0_small, img1_small], dim=1)
-            self.flow01 = self.flownet(combined)
-            self.flow10 = self.flownet(torch.cat([img1_small, img0_small], dim=1))
-        
+
+        # Flow estimation (per frame pair — recomputed every call)
+        flow01 = self.flownet(torch.cat([img0_small, img1_small], dim=1))
+        flow10 = self.flownet(torch.cat([img1_small, img0_small], dim=1))
+
         # Scale flows if needed
         if self.scale != 1.0:
-            self.flow01 = F.interpolate(self.flow01, scale_factor=1.0 / self.scale, mode="bilinear") / self.scale
-            self.flow10 = F.interpolate(self.flow10, scale_factor=1.0 / self.scale, mode="bilinear") / self.scale
-        
-        # Metric estimation
-        if self.metric0 is None:
-            metric_input = torch.cat([img0_small, img1_small, self.flow01, self.flow10], dim=1)
-            self.metric0, self.metric1 = torch.chunk(self.metricnet(metric_input), 2, dim=1)
-        
+            flow01 = F.interpolate(flow01, scale_factor=1.0 / self.scale, mode="bilinear") / self.scale
+            flow10 = F.interpolate(flow10, scale_factor=1.0 / self.scale, mode="bilinear") / self.scale
+
+        # Metric estimation (per frame pair)
+        metric_input = torch.cat([img0_small, img1_small, flow01, flow10], dim=1)
+        metric0, metric1 = torch.chunk(self.metricnet(metric_input), 2, dim=1)
+
         # Compute warped flows and metrics
-        F1t = timestep * self.flow01
-        F2t = (1 - timestep) * self.flow10
-        Z1t = timestep * self.metric0
-        Z2t = (1 - timestep) * self.metric1
+        F1t = timestep * flow01
+        F2t = (1 - timestep) * flow10
+        Z1t = timestep * metric0
+        Z2t = (1 - timestep) * metric1
         
         # Warp images
         I1t = warp(img0_small, F1t, Z1t)
@@ -187,10 +185,13 @@ class GMFSS(nn.Module):
         in4 = torch.cat([feat1t3, feat2t3], dim=1)
         
         out = self.fusionnet(torch.cat([in1, in2, in3, in4], dim=1))
-        
+
         # Crop to original size
         out = out[:, :, :self.height, :self.width]
-        
+
+        # Shift state: current img1's features become the next pair's img0
+        self.feat11, self.feat12, self.feat13 = feat21, feat22, feat23
+
         return out
 
 
@@ -249,7 +250,7 @@ class GmfssModel(BaseInterpolateModel):
         """Get expected input shape."""
         return [1, 3, self.config.height, self.config.width]
     
-    def get_output_shape(self) -> List[int]:
+    def get_output_shape(self, input_shape: tuple = None) -> List[int]:
         """Get expected output shape."""
         return [1, 3, self.config.height, self.config.width]
     
@@ -284,12 +285,15 @@ class GmfssModel(BaseInterpolateModel):
         )
         
         # Load weights if provided
-        if self.model_path and self.model_path.endswith('.pkl'):
+        if self.model_path and os.path.exists(self.model_path):
             self.model.load_state_dict(torch.load(self.model_path, map_location='cpu'))
         
         self.model.eval()
         print(f"Loaded GMFSS PyTorch model: {self.model_path}")
     
+    # backends/pytorch runner dispatches through model.infer() (RIFE-style name)
+    infer = interpolate
+
     def _interpolate_pytorch(
         self,
         frame1: torch.Tensor,

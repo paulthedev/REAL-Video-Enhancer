@@ -47,33 +47,26 @@ class ONNXInterpolateRunner(InterpolateBackend):
         """
         session = model['session']
         inputs = model['inputs']
-        
-        # Prepare input data
-        # ONNX models typically expect: img0, img1, timestep
-        img0_tensor = img0.astype(np.float32) / 255.0
-        img1_tensor = img1.astype(np.float32) / 255.0
-        timestep_tensor = np.array([[timestep]], dtype=np.float32)
-        
+
+        # ONNX models expect NCHW float input: img0, img1, [timestep]
+        img0_tensor = (img0.astype(np.float32) / 255.0).transpose(2, 0, 1)[None]
+        img1_tensor = (img1.astype(np.float32) / 255.0).transpose(2, 0, 1)[None]
+
+        feed = {
+            inputs[0].name: img0_tensor,
+            inputs[1].name: img1_tensor,
+        }
+        if len(inputs) > 2:
+            feed[inputs[2].name] = np.array([[timestep]], dtype=np.float32)
+
         # Run inference
         output_names = [out.name for out in model['outputs']]
-        outputs = session.run(
-            output_names,
-            {
-                inputs[0].name: img0_tensor,
-                inputs[1].name: img1_tensor,
-                inputs[2].name: timestep_tensor if len(inputs) > 2 else None,
-            }
-        )
-        
-        # Get result
-        result = outputs[0]
-        
-        # Convert to numpy if needed
-        if isinstance(result, np.ndarray):
-            result = (result * 255.0).astype(np.uint8)
-        else:
-            result = result.cpu().numpy()
-            result = (result * 255.0).astype(np.uint8)
+        result = session.run(output_names, feed)[0]
+
+        # NCHW float result -> HWC uint8 (session.run always returns ndarrays)
+        if result.ndim == 4:
+            result = result[0]
+        result = (np.clip(result, 0.0, 1.0).transpose(1, 2, 0) * 255.0).astype(np.uint8)
         
         # Write to queue if provided
         if writeQueue is not None:
@@ -136,9 +129,9 @@ class ONNXUpscaleRunner(UpscaleBackend):
         session = model['session']
         inputs = model['inputs']
         
-        # Prepare input data
-        img_tensor = img.astype(np.float32) / 255.0
-        
+        # Prepare input data (NCHW)
+        img_tensor = (img.astype(np.float32) / 255.0).transpose(2, 0, 1)[None]
+
         # Run inference
         output_names = [out.name for out in model['outputs']]
         outputs = session.run(
@@ -149,11 +142,7 @@ class ONNXUpscaleRunner(UpscaleBackend):
         # Get result
         result = outputs[0]
         
-        # Convert to numpy if needed
-        if isinstance(result, np.ndarray):
-            result = (result * 255.0).astype(np.uint8)
-        else:
-            result = result.cpu().numpy()
-            result = (result * 255.0).astype(np.uint8)
+        # float result -> HWC uint8 (session.run always returns ndarrays)
+        result = (np.clip(result, 0.0, 1.0) * 255.0).astype(np.uint8)
         
         return result

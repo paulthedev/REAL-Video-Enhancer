@@ -1,6 +1,11 @@
 import os
 import argparse
 import sys
+
+# allow launching as a script (python apps/backend/rve-backend.py): put the
+# repo root on sys.path so `apps.*` package imports resolve
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 from apps.backend.version import __version__
 from apps.backend.utils.Util import log
 
@@ -16,9 +21,17 @@ class HandleApplication:
             """from pyinstrument import Profiler
             profiler = Profiler()
             profiler.start()"""
-            if self.args.ffmpeg_path == None:
-                from apps.backend.utils.GetFFMpeg import download_ffmpeg
-                self.ffmpeg_path = download_ffmpeg()
+            if self.args.ffmpeg_path is None:
+                # no explicit path: use a previously downloaded ffmpeg next to
+                # the cwd, otherwise fetch one from the official builds
+                local_ffmpeg = os.path.join(
+                    os.getcwd(), "ffmpeg.exe" if sys.platform == "win32" else "ffmpeg"
+                )
+                if os.path.isfile(local_ffmpeg):
+                    self.ffmpeg_path = local_ffmpeg
+                else:
+                    from apps.backend.utils.GetFFMpeg import download_ffmpeg
+                    self.ffmpeg_path = download_ffmpeg()
             else:
                 self.ffmpeg_path = self.args.ffmpeg_path
 
@@ -30,7 +43,7 @@ class HandleApplication:
                 #profiler.stop()
                 #print(profiler.output_text(unicode=True, color=True))
                 sys.exit(0)
-            else:
+            elif self.args.input is not None:
                 video_info = OpenCVInfo(self.args.input, ffmpeg_path=self.ffmpeg_path)
                 print_video_info(video_info)
                 
@@ -58,14 +71,21 @@ class HandleApplication:
         Checks if the input is a text file. If so, it will start batch processing.
         """
         if os.path.splitext(self.args.input)[-1] == ".txt":
+            # preserve outer-invocation settings across each per-line re-parse
+            inherited = {"ffmpeg_path": self.args.ffmpeg_path, "cwd": self.args.cwd}
             with open(self.args.input, "r") as f:
-                for line in f.readlines():  # iterate through each render
+                for line in f.readlines():  # iterate over each render
+                    if not line.strip():
+                        continue  # skip blank lines
                     sys.argv[1:] = (
                         line.split()
                     )  # replace the line after the input file name
                     self.args = (
                         self.handleArguments()
                     )  # overwrite arguments based on the new sys.argv
+                    for arg, value in inherited.items():
+                        if getattr(self.args, arg, None) is None and value is not None:
+                            setattr(self.args, arg, value)
                     self.renderVideo()
             return (
                 True  # batch processing is being done, so no need to call renderVideo
@@ -117,11 +137,19 @@ class HandleApplication:
         if ncnn_ver:
             availableBackends.append("ncnn")
             ncnnGpus = backendDetect.get_gpus_ncnn()
-            printMSG += f"NCNN Version: 20220729\n"
-            from rife_ncnn_vulkan_python import Rife
-
+            printMSG += f"NCNN Version: {ncnn_ver}\n"
             for i, gpu in enumerate(ncnnGpus):
                 printMSG += f"NCNN GPU {i}: {gpu}\n"
+
+        onnx_ver = backendDetect.get_onnxruntime()
+        if onnx_ver:
+            providers = backendDetect.get_onnx_providers()
+            if "DmlExecutionProvider" in providers:
+                availableBackends.append("directml")
+            else:
+                availableBackends.append("onnx")
+            printMSG += f"ONNX Runtime Version: {onnx_ver}\n"
+            printMSG += "ONNX Providers: " + str(providers) + "\n"
        
         printMSG += f"Half precision support: {half_prec_supp}\n"
         printMSG += ("Available Backends: " + str(availableBackends))
@@ -130,7 +158,7 @@ class HandleApplication:
 
     def renderVideo(self):
         
-        from apps.backend.RenderVideo import Render
+        from apps.backend.render.RenderVideo import Render
         
 
         Render(
@@ -230,13 +258,6 @@ class HandleApplication:
         )
 
         parser.add_argument(
-            "-l",
-            "--overlap",
-            help="overlap size on tiled rendering (default=10)",
-            default=0,
-            type=int,
-        )
-        parser.add_argument(
             "-b",
             "--backend",
             help="backend used to upscale image. (pytorch/ncnn/tensorrt/directml, default=pytorch)",
@@ -282,7 +303,7 @@ class HandleApplication:
         )
         parser.add_argument(
             "--scene_detect_method",
-            help="Scene change detection to avoid interpolating transitions. (options=mean, mean_segmented, none)\nMean segmented splits up an image, and if an arbitrary number of segments changes are detected within the segments, it will trigger a scene change. (lower sensativity thresholds are not recommended)",
+            help="Scene change detection to avoid interpolating transitions. (options=pyscenedetect, mean, mean_diff, mean_segmented, none)\nMean segmented splits up an image, and if an arbitrary number of segments changes are detected within the segments, it will trigger a scene change. (lower sensativity thresholds are not recommended)",
             type=str,
             default="pyscenedetect",
         )
@@ -494,7 +515,7 @@ class HandleApplication:
         parser.add_argument(
             "--merge_subtitles",
             help="Merges subtitles into output video",
-            action="store_true",
+            action=argparse.BooleanOptionalAction,
             default=True,
         )
         parser.add_argument(
@@ -512,9 +533,6 @@ class HandleApplication:
         # append extra args
         return parser.parse_args()
 
-    def fullModelPathandName(self):
-        return os.path.join(self.args.modelPath, self.args.modelName)
-
     def checkArguments(self):
         if (
             self.args.output is not None
@@ -523,6 +541,8 @@ class HandleApplication:
             and not self.args.benchmark
         ):
             raise os.error("Output file already exists!")
+        if self.args.input is None:
+            raise os.error("No input file specified! (-i / --input)")
         if "http" not in self.args.input:
             if not os.path.isfile(self.args.input):
                 raise os.error("Input file does not exist!")

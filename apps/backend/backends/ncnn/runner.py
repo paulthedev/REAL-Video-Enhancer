@@ -39,34 +39,34 @@ class NCNNBackendRunner:
         Returns:
             Output numpy array
         """
+        import ncnn
+
         net = model_info["net"]
         input_names = input_names or model_info.get("input_names", ["input"])
         output_names = output_names or model_info.get("output_names", ["output"])
-        
-        # Create NCNN Mat from numpy array
-        # NCNN expects NHWC format, convert from NCHW if needed
-        if len(input_data.shape) == 4 and input_data.shape[1] == 3:
-            # NCHW to NHWC
-            input_data = np.transpose(input_data, (0, 2, 3, 1))
-        
-        # Convert to NCNN Mat
-        mat = model_info["net"].create_input(input_names[0])
-        mat.from_pixels(input_data[0])  # Assume batch size 1
-        
-        # Run inference
-        predictor = net.create_extractor()
-        predictor.set_input(mat, input_names[0])
-        predictor.extract(output_names[0])
-        
-        # Get output
-        output_mat = predictor.extract(output_names[0])
-        output_data = output_mat.to_pixels()
-        
-        # Convert back to NCHW if needed
-        if len(output_data.shape) == 3:
-            output_data = np.transpose(output_data, (2, 0, 1))
-        
-        return output_data.reshape(1, *output_data.shape)
+
+        # Accept NCHW float [0,1] or NHWC uint8; ncnn wants NHWC uint8 pixels
+        data = input_data
+        if data.ndim == 4:
+            data = data[0]  # batch of 1
+            if data.shape[0] == 3 and data.shape[-1] != 3:
+                data = np.transpose(data, (1, 2, 0))
+        if data.dtype != np.uint8:
+            data = (np.clip(data, 0.0, 1.0) * 255.0).astype(np.uint8)
+
+        h, w = data.shape[:2]
+        mat = ncnn.Mat.from_pixels(data, ncnn.Mat.PixelType.PIXEL_RGB, w, h)
+
+        extractor = net.create_extractor()
+        extractor.input(input_names[0], mat)
+        ret, out_mat = extractor.extract(output_names[0])
+        if ret != 0:
+            raise RuntimeError(f"ncnn extract failed with code {ret}")
+
+        out = out_mat.numpy()  # CHW float
+        if out.ndim == 3 and out.shape[0] == 3:
+            out = np.clip(out.transpose(1, 2, 0), 0.0, 1.0)
+        return out[None]  # restore batch dim
     
     def run_batch(
         self,

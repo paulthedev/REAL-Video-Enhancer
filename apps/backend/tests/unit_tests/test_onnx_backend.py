@@ -232,8 +232,8 @@ class TestONNXInterpolateRunner(unittest.TestCase):
         # Run inference
         result = runner.run(model, img0, img1, 0.5)
         
-        # Verify result
-        self.assertEqual(result.shape, (1, 3, 1080, 1920))
+        # Verify result — runner contract is HWC uint8
+        self.assertEqual(result.shape, (1080, 1920, 3))
         mock_session.run.assert_called_once()
     
     def test_run_with_queue(self):

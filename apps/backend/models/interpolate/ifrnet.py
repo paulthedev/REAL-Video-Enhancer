@@ -373,6 +373,8 @@ class IFRNetModel(BaseInterpolateModel):
         
         device_obj = torch.device(self.device)
         dtype_obj = torch.float16 if self.dtype == "fp16" else torch.float32
+        self._device_obj = device_obj
+        self._dtype_obj = dtype_obj
         self.model.eval().to(device=device_obj, dtype=dtype_obj)
         
         print(f"Loaded IFRNet PyTorch model: {self.model_path}")
@@ -441,6 +443,9 @@ class IFRNetModel(BaseInterpolateModel):
         else:
             raise RuntimeError(f"Inference not supported for backend: {self.backend}")
     
+    # backends/pytorch runner dispatches through model.infer() (RIFE-style name)
+    infer = interpolate
+
     def _interpolate_pytorch(
         self,
         frame1: torch.Tensor,
@@ -456,7 +461,9 @@ class IFRNetModel(BaseInterpolateModel):
         frame2_batch = frame2.unsqueeze(0)
         
         # Create timestep tensor
-        timestep_tensor = torch.tensor([[timestep]], dtype=self.model.dtype, device=self.model.device)
+        timestep_tensor = torch.tensor(
+            [[timestep]], dtype=self._dtype_obj, device=self._device_obj
+        )
         timestep_tensor = timestep_tensor.view(1, 1, 1, 1)
         
         # Run inference

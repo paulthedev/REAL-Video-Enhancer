@@ -227,8 +227,9 @@ class RifeModel(BaseInterpolateModel):
         self.gpu_id = gpu_id
         self.backend = None  # Set by backend wrapper
         self.model = None  # Actual model instance
-        
+
         # RIFE-specific attributes
+        self.config = config
         self.width = config.width
         self.height = config.height
         self.ceil_interpolate_factor = config.ceil_interpolate_factor
@@ -560,9 +561,8 @@ class RifeModel(BaseInterpolateModel):
         img1: torch.Tensor,
         timestep: float,
     ) -> torch.Tensor:
-        """Perform NCNN interpncnn" and hasattr(self, 'ncnn_net'):
-            self.ncnn_net = None
-        elif self.backend == "olation inference."""
+        """Perform NCNN interpolation inference."""
+        import ncnn  # optional dependency; imported here so the module imports without it
         import numpy as np
         
         # Convert tensors to numpy (NHWC format for NCNN)
@@ -633,12 +633,12 @@ class RifeModel(BaseInterpolateModel):
 
 
 # Register RIFE model
-register_model(
-    name="RIFE",
-    model=RifeModel(
-        config=RifeConfig(version=RifeVersion.RIFE422_LITE),
-        model_path="",
-        device="cpu",
-        dtype="fp32",
-    ),
+_rife_instance = RifeModel(
+    config=RifeConfig(version=RifeVersion.RIFE422_LITE),
+    model_path="",
+    device="cpu",
+    dtype="fp32",
 )
+register_model(name="RIFE", model=_rife_instance)
+# lowercase alias — every other registry name is lowercase
+register_model(name="rife", model=_rife_instance)

@@ -195,7 +195,9 @@ class GimmModel(BaseInterpolateModel):
         """Load GIMM model using PyTorch backend."""
         import torch
         
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if self.device == "auto":
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        device = torch.device(self.device)
         self.model = GIMMVFI_R(
             model_path=self.model_path,
             width=self.config.width,
@@ -264,6 +266,9 @@ class GimmModel(BaseInterpolateModel):
         else:
             raise RuntimeError(f"Inference not supported for backend: {self.backend}")
     
+    # backends/pytorch runner dispatches through model.infer() (RIFE-style name)
+    infer = interpolate
+
     def _interpolate_pytorch(
         self,
         frame1: torch.Tensor,
@@ -380,7 +385,7 @@ class GimmModel(BaseInterpolateModel):
         """Get expected input shape."""
         return [1, 3, self.config.height, self.config.width]
     
-    def get_output_shape(self) -> List[int]:
+    def get_output_shape(self, input_shape: tuple = None) -> List[int]:
         """Get expected output shape."""
         return [1, 3, self.config.height, self.config.width]
 

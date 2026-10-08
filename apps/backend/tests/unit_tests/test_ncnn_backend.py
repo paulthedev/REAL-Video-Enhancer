@@ -9,6 +9,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from apps.backend.backends.ncnn.loader import NCNNBackendLoader
+import numpy as np
 from apps.backend.backends.ncnn.runner import NCNNBackendRunner
 from apps.backend.models.base import ModelTask
 
@@ -126,30 +127,38 @@ class TestNCNNBackendRunner(unittest.TestCase):
     
     def test_run(self):
         """Test running inference."""
+        import sys
+        from unittest.mock import MagicMock, patch
+
         runner = NCNNBackendRunner()
-        
-        # Mock model info
+
+        # Mock ncnn module (optional dependency, may not be installed)
+        mock_out_mat = MagicMock()
+        mock_out_mat.numpy.return_value = np.random.rand(3, 8, 8).astype(np.float32)
+        mock_extractor = MagicMock()
+        mock_extractor.extract.return_value = (0, mock_out_mat)
+        mock_net = MagicMock()
+        mock_net.create_extractor.return_value = mock_extractor
+
+        mock_ncnn = MagicMock()
+        mock_ncnn.Mat.from_pixels.return_value = MagicMock()
+
         model_info = {
-            "net": MagicMock(),
+            "net": mock_net,
             "input_names": ["input"],
             "output_names": ["output"],
         }
-        
-        # Mock input data
-        input_data = MagicMock()
-        
-        # Mock predictor
-        mock_predictor = MagicMock()
-        mock_output_mat = MagicMock()
-        mock_output_mat.to_pixels.return_value = MagicMock()
-        mock_predictor.extract.return_value = mock_output_mat
-        
-        model_info["net"].create_extractor.return_value = mock_predictor
-        
-        # Run inference
-        result = runner.run(model_info, input_data)
-        
+
+        # NHWC uint8 input frame
+        input_data = np.random.randint(0, 255, (8, 8, 3), dtype=np.uint8)
+
+        with patch.dict(sys.modules, {"ncnn": mock_ncnn}):
+            result = runner.run(model_info, input_data)
+
         self.assertIsNotNone(result)
+        self.assertEqual(result.shape[0], 1)  # batch dim restored
+        mock_ncnn.Mat.from_pixels.assert_called_once()
+        mock_extractor.input.assert_called_once()
     
     def test_get_input_shape(self):
         """Test getting input shape."""

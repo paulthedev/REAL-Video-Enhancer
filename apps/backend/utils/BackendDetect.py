@@ -1,11 +1,16 @@
 
 from .Util import log_error, suppress_stdout_stderr
 
+# minimum NVIDIA compute capability for pytorch inference (Pascal and newer)
+MINIMUM_PYTORCH_CAP = (6, 0)
+
+
 class BackendDetect:
     def __init__(self):
         self.__torch = None
         self.__tensorrt = None
         self.__ncnn = None
+        self.__onnxruntime = None
         self.pytorch_device = None
         self.pytorch_version = None
         try:
@@ -42,11 +47,16 @@ class BackendDetect:
             pass
         except Exception as e:
             log_error("FATAL: " + str(e))
-
-
+        try:
+            import onnxruntime
+            self.__onnxruntime = onnxruntime
+        except ImportError as e:
+            pass
+        except Exception as e:
+            log_error("FATAL: " + str(e))
 
     def __get_pytorch_device(self):
-        if "cu" in self.__torch.__version__: return "cuda" 
+        if "cu" in self.__torch.__version__: return "cuda"
         if "rocm" in self.__torch.__version__: return "rocm"
         if self.__torch.xpu.is_available(): return "xpu"
         if self.__torch.backends.mps.is_available(): return "mps"
@@ -54,9 +64,33 @@ class BackendDetect:
 
     def get_tensorrt(self):
         if self.__tensorrt: return self.__tensorrt.__version__
-    
+
     def get_ncnn(self):
         if self.__ncnn: return self.__ncnn.__version__
+
+    def get_onnxruntime(self):
+        if self.__onnxruntime: return self.__onnxruntime.__version__
+
+    def get_onnx_providers(self):
+        """Available onnxruntime execution providers (empty if onnxruntime is missing)."""
+        if not self.__onnxruntime: return []
+        return list(self.__onnxruntime.get_available_providers())
+
+    @staticmethod
+    def meets_capability(gpu_index: int, minimum_cap: tuple = MINIMUM_PYTORCH_CAP) -> bool:
+        """Check a CUDA/ROCm GPU meets the minimum compute capability.
+
+        Non-CUDA devices (XPU/MPS/CPU) have no compute-capability concept and
+        always pass.
+        """
+        import torch
+        try:
+            if torch.cuda.is_available():
+                cap = torch.cuda.get_device_capability(gpu_index)
+                return cap >= minimum_cap
+        except Exception as e:
+            log_error(str(e))
+        return True
 
     def get_half_precision(self):
         """
@@ -68,22 +102,25 @@ class BackendDetect:
             return True
         except Exception as e:
             log_error(str(e))
-            return False    
-    
+            return False
+
     def get_gpus_torch(self):
         """
         Function that returns a list of available GPU names using PyTorch.
+        Always returns List[str]; ["CPU"] when no accelerator is present.
         """
-        
+
         devices = []
-        
+
         if self.__torch:
-            if self.pytorch_device == "CPU": return self.pytorch_device
-            if self.pytorch_device.lower() == "mps": return [{"index": 0, "name": "Apple MPS"}]
+            if self.pytorch_device == "CPU":
+                return ["CPU"]
+            if self.pytorch_device.lower() == "mps":
+                return ["Apple MPS"]
             torch_cmd_dict = {
             "cuda": self.__torch.cuda,
             "xpu": self.__torch.xpu,
-            "rocm": self.__torch.cuda,  
+            "rocm": self.__torch.cuda,
             }
 
             torch_cmd = torch_cmd_dict[self.pytorch_device]
@@ -93,7 +130,7 @@ class BackendDetect:
                     devices.append(props.name)
             if not devices:
                 devices.append("CPU")
-       
+
         return devices
 
     def get_gpus_ncnn(self):
@@ -124,8 +161,6 @@ class BackendDetect:
                         gpu_info = device.info()
                         devices.append(gpu_info.device_name())
                 return devices
-            except Exception:
-                return ["CPU"]
             except Exception as e:
                 log_error(str(e))
-                return "Unable to get NCNN GPU"
+                return ["CPU"]
