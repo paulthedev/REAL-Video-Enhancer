@@ -17,6 +17,7 @@
 | Unified Backend Selection UI | ✅ Complete | Single dropdown with sub-selection |
 | Benchmark Tests | ✅ Complete | PyTorch, ONNX, NCNN benchmarks |
 | VSR Model Support | ✅ Complete | AnimeSR, TSPAN with 3 backends |
+| Code Review Fixes (2026-10-08) | 🚧 In Progress | 0/63 — see [BUG_TRACKER.md](BUG_TRACKER.md) |
 
 ---
 
@@ -267,9 +268,13 @@ Verify `supports_half` flags for these architectures:
 
 - [AGENTS.md](../AGENTS.md) - Repository guidelines
 - [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) - Folder layout
-- [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) - Migration documentation
 - [pytorch-optimizations.md](pytorch-optimizations.md) - Performance details
-- [onnx-backend-plan.md](onnx-backend-plan.md) - ONNX implementation plan
+- [BUG_TRACKER.md](BUG_TRACKER.md) - Open issues from code review (2026-10-08)
+
+Archived (completed work):
+- [backend-architecture-proposal.md](archived/backend-architecture-proposal.md) - Backend architecture proposal
+- [MIGRATION_GUIDE.md](archived/MIGRATION_GUIDE.md) - Migration documentation
+- [onnx-backend-plan.md](archived/onnx-backend-plan.md) - ONNX implementation plan
 
 ---
 
