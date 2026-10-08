@@ -8,10 +8,11 @@ Decided (user, 2026-10-08):
    app works offline out of the box. At runtime the app **auto-downloads the
    accelerated build matching the detected GPU vendor** into a writable data
    dir and uses it after a restart. The recommendation is **vendor-aware,
-   never vendor-default**: NVIDIA → CUDA build (PyPI), Intel → OpenVINO build
-   (PyPI), AMD → ROCm/MIOpen build (AMD's wheel index — not on PyPI),
-   nothing → bundled CPU. Windows is covered by the bundled DirectML build
-   regardless of vendor.
+   never vendor-default**: NVIDIA → CUDA build (PyPI), with an optional
+   TensorRT tier when the GPU supports it; Intel → OpenVINO build (PyPI);
+   AMD → ROCm/MIOpen build (AMD's wheel index — not on PyPI); nothing →
+   bundled CPU. Windows is covered by the bundled DirectML build regardless
+   of vendor.
 3. Same for binary downloads: **ffmpeg ships via a pip package**
    (`imageio-ffmpeg` bundles a per-platform static ffmpeg build; RVE never uses
    ffprobe, so its missing ffprobe is not a problem). The BtbN download path
@@ -53,11 +54,20 @@ onnx-backend-plan.md`.
 - **Models still download on demand** from the models repo — ONNX files only.
 - Wheel strategy (decided): **bundled** = CPU everywhere + DirectML on
   Windows; **runtime-upgraded, vendor-aware on Linux** = NVIDIA →
-  `onnxruntime-gpu` (PyPI), Intel → `onnxruntime-openvino` (PyPI), AMD →
+  `onnxruntime-gpu` (PyPI; CUDA EP by default, optional TensorRT EP tier —
+  see below), Intel → `onnxruntime-openvino` (PyPI), AMD →
   `onnxruntime-rocm` (AMD's MIOpen/ROCm build from
   `repo.radeon.com/rocm/manylinux/<release>/` — newest release that supports
   the detected GPU, see the provider manager below). macOS stays on
   CPU/CoreML (no download).
+- **NVIDIA TensorRT tier (optional, opt-in)**: the `onnxruntime-gpu` wheel
+  already ships the TensorRT EP; the manager can additionally install the
+  matching `tensorrt` pip libs (NVIDIA publishes them on PyPI as
+  `tensorrt` → `tensorrt_cu13`/`tensorrt-libs`). Gate on compute capability
+  ≥ 7.5 (TRT 10/11 dropped older SMs). Trade-offs to surface to the user:
+  first-run engine building is slow (minutes per model/shape, cached to disk
+  afterwards) and the `tensorrt` version must match what the chosen
+  `onnxruntime-gpu` release was built against.
 
 ---
 
@@ -116,6 +126,11 @@ until:
     `onnxruntime-openvino` (PyPI), AMD → `onnxruntime-rocm` from AMD's wheel
     index, nothing/unsupported → skip; Windows/macOS skip entirely (bundled
     builds cover them);
+  - **NVIDIA TensorRT tier** — after the CUDA install, offer TensorRT EP
+    support when compute capability ≥ 7.5: additionally install the
+    `tensorrt` pip libs version-matched to the chosen `onnxruntime-gpu`
+    release; ORT engine cache directory lives in the app data dir; opt-in
+    (default CUDA EP) because first-run engine building takes minutes;
   - **AMD release selection: newest-supported-first** — detect the GPU's gfx
     architecture (`rocminfo`, or PCI-ID → gfx mapping from sysfs), walk
     `repo.radeon.com/rocm/manylinux/` releases newest-first, and pick the
@@ -171,7 +186,11 @@ until:
 ## Risks / open questions
 
 1. **onnxruntime on Python 3.14** — wheel availability unverified (Phase 0 gate).
-2. **AMD on Linux** — covered by `onnxruntime_rocm` from AMD's index with a
+2. **NVIDIA TensorRT coupling** — each `onnxruntime-gpu` release is built
+   against a specific TensorRT major; the manager must pin `tensorrt` to the
+   matching version and re-pin on ORT upgrades. Engine building costs
+   minutes on first render (cached later) and uses extra VRAM/disk.
+2b. **AMD on Linux** — covered by `onnxruntime_rocm` from AMD's index with a
    newest-supported-first release pick. Caveats: ROCm supports specific GPU
    architectures (very old cards may match no release → bundled CPU), the
    wheel needs a matching python tag (cp310/cp312 published today), and the
