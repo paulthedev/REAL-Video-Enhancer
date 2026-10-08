@@ -62,8 +62,7 @@ class Render:
         backend="pytorch",
         device="default",
         precision="float16",
-        pytorch_gpu_id: int = 0,
-        ncnn_gpu_id: int = 0,
+        gpu_id: int = 0,
         cwd: str = os.getcwd(),
         # model settings
         upscaleModel=None,
@@ -132,8 +131,7 @@ class Render:
         self.UHD_mode = UHD_mode
         self.dynamic_scaled_optical_flow = dynamic_scaled_optical_flow
         self.ensemble = ensemble
-        self.pytorch_gpu_id = pytorch_gpu_id
-        self.ncnn_gpu_id = ncnn_gpu_id
+        self.gpu_id = gpu_id
         self.outputFrameChunkSize = None
         self.hdr_mode = hdr_mode
         self.override_upscale_scale = override_upscale_scale
@@ -238,7 +236,7 @@ class Render:
             hdr_mode=hdr_mode,
             backend=self.backend,
             device=self.device,
-            gpu_id=self.pytorch_gpu_id if self.backend in ["pytorch","tensorrt"] else self.ncnn_gpu_id,
+            gpu_id=self.gpu_id,
             dtype=self.precision,
             color_space=color_space,
             color_primaries=color_primaries,
@@ -322,6 +320,12 @@ class Render:
         frame_array = cv2.cvtColor(frame_array, cv2.COLOR_BGR2RGB)
         cv2.imwrite("frame.jpg", frame_array)
 
+    @staticmethod
+    def _as_bytes(frame):
+        """Engines consume/produce raw frame bytes; the read buffer yields
+        Frame objects — convert at the boundary, keep bytes untouched."""
+        return frame if isinstance(frame, bytes) else frame.get_frame_bytes()
+
     def render(self):
         frames_rendered = 0
         """
@@ -357,10 +361,10 @@ class Render:
 
                         if self.upscaleModel:
                             interpolated_frame = self.upscaleOption(
-                                interpolated_frame
+                                self._as_bytes(interpolated_frame)
                             )
                         if self.override_upscale_scale:
-                            interpolated_frame = resize_image_bytes(interpolated_frame.get_frame_bytes(),
+                            interpolated_frame = resize_image_bytes(self._as_bytes(interpolated_frame),
                                                width=self.width*self.modelScale,
                                                height=self.height*self.modelScale,
                                                target_width=self.width*self.override_upscale_scale,
@@ -373,13 +377,13 @@ class Render:
 
                 if self.upscaleModel:
                     frame = self.upscaleOption(
-                        frame
+                        self._as_bytes(frame)
                     )
-                
-                
-                
+
+
+
                 if self.override_upscale_scale:
-                    frame = resize_image_bytes(frame.get_frame_bytes(),
+                    frame = resize_image_bytes(self._as_bytes(frame),
                                                width=self.width*self.modelScale,
                                                height=self.height*self.modelScale,
                                                target_width=self.width*self.override_upscale_scale,
@@ -411,7 +415,7 @@ class Render:
             height=self.height,
             backend=self.backend,
             tilesize=self.tilesize,
-            gpu_id=self.pytorch_gpu_id,
+            gpu_id=self.gpu_id,
             trt_optimization_level=self.trt_optimization_level,
             hdr_mode=self.hdr_mode,
             trt_static_shape= not self.trt_dynamic_shapes,
@@ -426,7 +430,7 @@ class Render:
             modelPath=modelPath,
             num_threads=1,
             scale=self.upscaleTimes if scale is None else scale,
-            gpuid=self.ncnn_gpu_id,  # might have this be a setting
+            gpuid=self.gpu_id,  # might have this be a setting
             width=self.width,
             height=self.height,
             tilesize=self.tilesize,
@@ -435,11 +439,11 @@ class Render:
         from .onnx.UpscaleONNX import UpscaleONNX
         return UpscaleONNX(
             modelPath=modelPath,
-            deviceID=self.pytorch_gpu_id,
+            gpu_id=self.gpu_id,
             precision=self.precision,
             width=self.width,
             height=self.height,
-            scale=self.upscaleTimes if scale is None else scale,
+            scale=scale if scale is not None else self.modelScale,
             hdr_mode=self.hdr_mode,
         )
 
@@ -458,7 +462,7 @@ class Render:
             from .onnx.UpscaleONNX import UpscaleONNX
 
             self.modelScale = UpscaleONNX.getModelScale(self.upscaleModel)
-            self.upscaleOption = self.upscaleONNXObject(modelPath=self.upscaleModel)
+            self.upscaleOption = self.upscaleONNXObject(scale=self.modelScale, modelPath=self.upscaleModel)
 
         elif self.backend == "pytorch" or self.backend == "tensorrt":
 
@@ -499,7 +503,7 @@ class Render:
             model_backend=self.backend,
             model_dtype=self.precision,
             model_device=self.device,
-            model_gpu_id=self.pytorch_gpu_id if self.backend in ["pytorch","tensorrt"] else self.ncnn_gpu_id,
+            model_gpu_id=self.gpu_id,
         )
         if self.sceneDetectMethod != "none":
             log("Scene Detection Enabled")
@@ -515,7 +519,7 @@ class Render:
                 interpolateFactor=self.ceilInterpolateFactor,
                 width=self.width,
                 height=self.height,
-                deviceID=self.pytorch_gpu_id,
+                deviceID=self.gpu_id,
                 precision=self.precision,
                 hdr_mode=self.hdr_mode,
             )
@@ -527,7 +531,7 @@ class Render:
                 interpolateModelPath=self.interpolateModel,
                 width=self.width,
                 height=self.height,
-                gpuid=self.ncnn_gpu_id,
+                gpuid=self.gpu_id,
                 max_timestep=self.maxTimestep,
                 interpolateFactor=self.ceilInterpolateFactor,
                 hdr_mode=self.hdr_mode,
@@ -548,7 +552,7 @@ class Render:
                 device=self.device,
                 dtype=self.precision,
                 backend=self.backend,
-                gpu_id=self.pytorch_gpu_id,
+                gpu_id=self.gpu_id,
                 UHDMode=self.UHD_mode,
                 drba=self.drba,
                 trt_optimization_level=self.trt_optimization_level,

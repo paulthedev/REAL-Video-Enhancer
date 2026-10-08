@@ -90,28 +90,14 @@ class MaxViTSceneDetectModel(BaseSceneDetectModel):
     def load(self, backend_name: str) -> None:
         """
         Load model with specified backend.
-        
-        Args:
-            backend_name: Backend to use ("pytorch", "onnx", "ncnn")
-        """
-        self.backend = backend_name
-        if backend_name == 'pytorch':
-            self._load_pytorch()
-        elif backend_name == 'onnx':
-            self._load_onnx()
-        elif backend_name == 'ncnn':
-            self._load_ncnn()
-        else:
-            raise ValueError(f'Unsupported backend: {backend_name}')
 
-    def _detect_pytorch(self, frame: torch.Tensor, prev_frame: Optional[torch.Tensor]=None) -> bool:
-        """Perform PyTorch scene detection inference."""
-        if prev_frame is None:
-            return False
-        input_tensor = torch.cat((prev_frame, frame), dim=0)
-        with torch.inference_mode():
-            output = self.model(input_tensor.unsqueeze(0))
-        return output[0][0] > self.config.threshold
+        Args:
+            backend_name: Backend to use (only "onnx" is supported)
+        """
+        if backend_name != 'onnx':
+            raise ValueError(f'Unsupported backend: {backend_name}')
+        self.backend = backend_name
+        self._load_onnx()
 
     def _load_onnx(self) -> None:
         """Load MaxViT model using ONNX backend."""

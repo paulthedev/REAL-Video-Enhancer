@@ -110,14 +110,9 @@ class TSPANModel(BaseUpscaleModel):
             backend_name: Backend to use ("pytorch", "onnx", "ncnn")
         """
         self.backend = backend_name
-        if backend_name == 'pytorch':
-            self._load_pytorch()
-        elif backend_name == 'onnx':
-            self._load_onnx()
-        elif backend_name == 'ncnn':
-            self._load_ncnn()
-        else:
+        if backend_name != 'onnx':
             raise ValueError(f'Unsupported backend: {backend_name}')
+        self._load_onnx()
 
     def _load_onnx(self) -> None:
         """Load TSPAN model using ONNX backend."""
@@ -138,12 +133,7 @@ class TSPANModel(BaseUpscaleModel):
         """Upscale a frame."""
         if self.backend == 'onnx':
             return self._upscale_onnx(frame)
-        elif self.backend == 'ncnn':
-            return self._upscale_ncnn(frame)
-        elif self.backend == 'pytorch':
-            return self._upscale_pytorch(frame)
-        else:
-            raise RuntimeError(f'Inference not supported for backend: {self.backend}')
+        raise RuntimeError(f'Inference not supported for backend: {self.backend}')
 
     def _upscale_onnx(self, frame: torch.Tensor) -> torch.Tensor:
         """Perform ONNX upscale inference."""

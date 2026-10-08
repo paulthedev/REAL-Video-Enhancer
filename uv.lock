@@ -1212,6 +1212,36 @@ wheels = [
 ]
 
 [[package]]
+name = "onnx-ir"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ml-dtypes" },
+    { name = "numpy" },
+    { name = "onnx" },
+    { name = "sympy" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d6/c2/61194cec0dbc5622273c0ebd592d37cc1dca0d7f1a744f02edd45ac905a3/onnx_ir-1.0.0.tar.gz", hash = "sha256:9e261f25fde8da9612ae5cb43b3b374d5ff469c04af0363cad588b2bb000b812", size = 163121, upload-time = "2026-08-11T14:49:46.895Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/91/cd/6d1637172eb59c7b18ac90ed089d1f599a11fe0e63b4db2d017f3bb38a32/onnx_ir-1.0.0-py3-none-any.whl", hash = "sha256:e578f0d608d3062866b48223616eb2d10a6d6d01f8b8faac596129034f483cc7", size = 185849, upload-time = "2026-08-11T14:49:45.524Z" },
+]
+
+[[package]]
+name = "onnxconverter-common"
+version = "1.16.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "onnx" },
+    { name = "packaging" },
+    { name = "protobuf" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4a/67/8dca1868a6e226f8d3f7d666cb6a48b79a60aad5267b16b24627cd8d9eb8/onnxconverter_common-1.16.0-py2.py3-none-any.whl", hash = "sha256:df39ee96f17fff119dff10dd245467651b60b9e8a96020eb93402239794852f7", size = 89511, upload-time = "2025-08-28T19:37:46.988Z" },
+]
+
+[[package]]
 name = "onnxruntime"
 version = "1.30.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1276,6 +1306,23 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/8e/41/3ebd7b9648259adcf3abd245be862a0cb4c24d4b12f4f7b82d3e9fcf18f0/onnxruntime_gpu-1.30.0-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:675d519cab613bc42685ecb998f8e8e8c6d73143496681650d30ef14fedeade7", size = 246684982, upload-time = "2026-09-10T16:13:31.799Z" },
     { url = "https://files.pythonhosted.org/packages/bb/75/09a6c97136c747608867a63114d988384e6ddb5507e08bbe9ced08744a4c/onnxruntime_gpu-1.30.0-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:5aacc98f394a13f4891c0a07e60479d8fb0b1ea6f3328b6b38cfc88f9dfb05ea", size = 246693192, upload-time = "2026-09-10T16:13:41.775Z" },
     { url = "https://files.pythonhosted.org/packages/75/66/11c43d3d544380271aa14fd55c1e5be65f28fac007128e369f1192c9bfa9/onnxruntime_gpu-1.30.0-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:a4dfbe80d4167ff5bc269f266778ee6d0eb771fd9f3c0c4d83757e7ae42fe3c8", size = 246687044, upload-time = "2026-09-10T16:13:52.095Z" },
+]
+
+[[package]]
+name = "onnxscript"
+version = "0.7.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ml-dtypes" },
+    { name = "numpy" },
+    { name = "onnx" },
+    { name = "onnx-ir" },
+    { name = "packaging" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0a/01/3e3fab8d643ca097ea4aa9e51246643699dfaaa0650589744fe44bc46651/onnxscript-0.7.2.tar.gz", hash = "sha256:2c664f6383d10f332a4d47b2876dcab16dba84909fe703656b19abc281fda165", size = 646719, upload-time = "2026-09-09T17:06:44.567Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b9/3b/06260997cdc41138e58718588a6c87d0eb342bbe0dda8a6aae91d163c384/onnxscript-0.7.2-py3-none-any.whl", hash = "sha256:d0e7121c6a1eefd608058928e111cbdb76709f70d269ff0d07aee493bd1d13c9", size = 754215, upload-time = "2026-09-09T17:06:46.442Z" },
 ]
 
 [[package]]
@@ -1628,9 +1675,11 @@ dependencies = [
     { name = "imageio-ffmpeg" },
     { name = "lief" },
     { name = "numpy" },
+    { name = "onnxconverter-common" },
     { name = "onnxruntime", marker = "(platform_machine != 'x86_64' and sys_platform == 'linux') or sys_platform == 'darwin'" },
     { name = "onnxruntime-directml", marker = "sys_platform == 'win32'" },
     { name = "onnxruntime-gpu", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'" },
+    { name = "opencv-python" },
     { name = "packaging" },
     { name = "pillow" },
     { name = "psutil" },
@@ -1664,6 +1713,7 @@ ncnn = [
 onnx = [
     { name = "onnx" },
     { name = "onnxruntime" },
+    { name = "onnxscript" },
     { name = "onnxsim" },
 ]
 pytorch = [
@@ -1684,14 +1734,17 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.5.3" },
     { name = "onnx", marker = "extra == 'all'", specifier = ">=1.14.0" },
     { name = "onnx", marker = "extra == 'onnx'", specifier = ">=1.14.0" },
+    { name = "onnxconverter-common", specifier = ">=1.14.0" },
     { name = "onnxruntime", marker = "sys_platform == 'darwin'", specifier = ">=1.20.0" },
     { name = "onnxruntime", marker = "platform_machine != 'x86_64' and sys_platform == 'linux'", specifier = ">=1.20.0" },
     { name = "onnxruntime", marker = "extra == 'all'", specifier = ">=1.15.0" },
     { name = "onnxruntime", marker = "extra == 'onnx'", specifier = ">=1.15.0" },
     { name = "onnxruntime-directml", marker = "sys_platform == 'win32'", specifier = ">=1.20.0" },
     { name = "onnxruntime-gpu", marker = "platform_machine == 'x86_64' and sys_platform == 'linux'", specifier = ">=1.20.0" },
+    { name = "onnxscript", marker = "extra == 'onnx'", specifier = ">=0.1.0" },
     { name = "onnxsim", marker = "extra == 'all'", specifier = ">=0.4.0" },
     { name = "onnxsim", marker = "extra == 'onnx'", specifier = ">=0.4.0" },
+    { name = "opencv-python", specifier = ">=4.0.0" },
     { name = "packaging", specifier = ">=26.3" },
     { name = "pillow", specifier = ">=12.3.0" },
     { name = "pnnx", marker = "extra == 'ncnn'", specifier = ">=20240101" },

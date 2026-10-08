@@ -164,14 +164,9 @@ class GmfssModel(BaseInterpolateModel):
             backend_name: Backend to use ("pytorch", "onnx", "ncnn")
         """
         self.backend = backend_name
-        if backend_name == 'pytorch':
-            self._load_pytorch()
-        elif backend_name == 'onnx':
-            self._load_onnx()
-        elif backend_name == 'ncnn':
-            self._load_ncnn()
-        else:
+        if backend_name != 'onnx':
             raise ValueError(f'Unsupported backend: {backend_name}')
+        self._load_onnx()
     infer = interpolate
 
     def _load_onnx(self) -> None:

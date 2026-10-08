@@ -18,6 +18,7 @@ build remains the fallback whenever anything fails.
 
 import json
 import os
+import subprocess
 import sys
 import urllib.request
 

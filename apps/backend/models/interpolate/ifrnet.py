@@ -241,22 +241,17 @@ class IFRNetModel(BaseInterpolateModel):
         self.stream = None
         self.prepare_stream = None
 
-    def load(self, backend: str='pytorch') -> None:
+    def load(self, backend: str='onnx') -> None:
         """
         Load the model weights.
-        
+
         Args:
-            backend: Backend to use ("pytorch", "onnx", "ncnn")
+            backend: Backend to use (only "onnx" is supported)
         """
-        self.backend = backend
-        if backend == 'pytorch':
-            self._load_pytorch()
-        elif backend == 'onnx':
-            self._load_onnx()
-        elif backend == 'ncnn':
-            self._load_ncnn()
-        else:
+        if backend != 'onnx':
             raise ValueError(f'Unsupported backend: {backend}')
+        self.backend = backend
+        self._load_onnx()
 
     def _load_onnx(self) -> None:
         """Load IFRNet model using ONNX backend."""
@@ -287,12 +282,7 @@ class IFRNetModel(BaseInterpolateModel):
         """
         if self.backend == 'onnx':
             return self._interpolate_onnx(frame1, frame2, timestep)
-        elif self.backend == 'ncnn':
-            return self._interpolate_ncnn(frame1, frame2, timestep)
-        elif self.backend == 'pytorch':
-            return self._interpolate_pytorch(frame1, frame2, timestep)
-        else:
-            raise RuntimeError(f'Inference not supported for backend: {self.backend}')
+        raise RuntimeError(f'Inference not supported for backend: {self.backend}')
     infer = interpolate
 
     def _interpolate_onnx(self, frame1: torch.Tensor, frame2: torch.Tensor, timestep: float=0.5) -> torch.Tensor:

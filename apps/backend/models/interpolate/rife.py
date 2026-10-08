@@ -195,14 +195,9 @@ class RifeModel(BaseInterpolateModel):
             backend_name: Backend to use ("pytorch", "onnx", "ncnn")
         """
         self.backend = backend_name
-        if backend_name == 'pytorch':
-            self._load_pytorch()
-        elif backend_name == 'onnx':
-            self._load_onnx()
-        elif backend_name == 'ncnn':
-            self._load_ncnn()
-        else:
+        if backend_name != 'onnx':
             raise ValueError(f'Unsupported backend: {backend_name}')
+        self._load_onnx()
 
     def _load_onnx(self) -> None:
         """Load RIFE model using ONNX backend."""
@@ -231,12 +226,7 @@ class RifeModel(BaseInterpolateModel):
         """
         if self.backend == 'onnx':
             return self._infer_onnx(img0, img1, timestep)
-        elif self.backend == 'ncnn':
-            return self._infer_ncnn(img0, img1, timestep)
-        elif self.backend == 'pytorch':
-            return self._infer_pytorch(img0, img1, timestep)
-        else:
-            raise RuntimeError(f'Inference not supported for backend: {self.backend}')
+        raise RuntimeError(f'Inference not supported for backend: {self.backend}')
 
     def _infer_onnx(self, img0: torch.Tensor, img1: torch.Tensor, timestep: float) -> torch.Tensor:
         """Perform ONNX interpolation inference."""

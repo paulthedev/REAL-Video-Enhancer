@@ -212,16 +212,16 @@ class HandleApplication:
 
         parser.add_argument(
             "--ffmpeg_path",
-            default="./bin/ffmpeg",
-            help="Path to the ffmpeg executable",
+            default=None,
+            help="Path to the ffmpeg executable (defaults to the bundled imageio-ffmpeg build)",
             type=str,
         )
 
         parser.add_argument(
             "-b",
             "--backend",
-            help="backend used to upscale image. (pytorch/ncnn/tensorrt/directml, default=pytorch)",
-            default="pytorch",
+            help="backend used to upscale image (only 'onnx' is available)",
+            default="onnx",
             type=str,
         )
         parser.add_argument(

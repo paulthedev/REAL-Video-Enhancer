@@ -9,6 +9,8 @@ dependencies = [
     "onnxruntime-directml>=1.20.0; sys_platform == 'win32'",
     "onnxruntime-gpu>=1.20.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
     "onnxruntime>=1.20.0; sys_platform == 'linux' and platform_machine != 'x86_64'",
+    "onnxconverter-common>=1.14.0",
+    "opencv-python>=4.0.0",
     "PySide6-essentials>=6.11.2",
     "numpy>=2.5.3",
     "lief>=1.0.0",
@@ -32,6 +34,7 @@ onnx = [
     "onnxruntime>=1.15.0",
     "onnx>=1.14.0",
     "onnxsim>=0.4.0",
+    "onnxscript>=0.1.0",
 ]
 ncnn = [
     "ncnn>=1.0.20240101",
@@ -57,9 +60,12 @@ dev = [
 package = false
 
 [tool.pytest.ini_options]
-testpaths = ["apps/backend/tests"]
+testpaths = ["apps/backend/tests", "apps/gui/tests"]
 pythonpath = [".", "apps/backend"]
 addopts = "-v --tb=short"
+markers = [
+    "gui: boots real Qt widgets (needs PySide6; runs offscreen via QT_QPA_PLATFORM)",
+]
 
 [tool.black]
 line-length = 100

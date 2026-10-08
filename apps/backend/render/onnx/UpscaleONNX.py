@@ -5,7 +5,11 @@ import os
 import numpy as np
 import time
 import cv2
-from onnxconverter_common import float16
+
+try:
+    from onnxconverter_common import float16
+except ImportError:  # fp16 conversion unavailable — fp32 keeps rendering
+    float16 = None
 
 
 def getONNXScale(modelPath: str = "") -> int:
@@ -23,7 +27,25 @@ class UpscaleONNX:
             if f"{i}x" in model_name or f"x{i}" in model_name:
                 return i
         raise ValueError("Scale not found in model name!")
-    
+
+    def handlePrecision(self, precision: str) -> np.dtype:
+        if precision == "float16":
+            if float16 is None:
+                print("[UpscaleONNX] onnxconverter-common not installed; falling back to float32.")
+                return np.float32
+            return np.float16
+        if precision == "float32":
+            return np.float32
+        # auto: fp16 only where a GPU provider can run it efficiently
+        gpu_providers = [
+            p
+            for p in ort.get_available_providers()
+            if not p.startswith(("CPU", "Azure"))
+        ]
+        if gpu_providers and float16 is not None:
+            return np.float16
+        return np.float32
+
     def __init__(
         self,
         modelPath: str,
@@ -43,18 +65,18 @@ class UpscaleONNX:
         self.modelPath = modelPath
         self.device = device
         self.i0 = None
-        self.precision = np.float16
-        
+        self.precision = self.handlePrecision(precision)
+
         self.input_buffer = np.empty((1, 3, self.height, self.width), dtype=self.precision)
         self.output_buffer = np.empty((1, self.height * self.scale, self.width * self.scale, 3), dtype=self.precision)
 
         # Pre-compute normalization factor
         self.norm_factor = np.array(1.0/255.0, dtype=self.precision)
-        
+
 
         # load model
         model = onnx.load(self.modelPath)
-        
+
         if self.precision == np.float16:
             model = float16.convert_float_to_float16(model, check_fp16_ready=False)
 
@@ -63,11 +85,17 @@ class UpscaleONNX:
         session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         # session_options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
         # session_options.enable_mem_pattern = True
-        
+
         available_providers = ort.get_available_providers()
 
         # Preferred GPU provider order; gpu_id maps to a device index for each.
-        preferred_order = ["CUDAExecutionProvider", "DmlExecutionProvider"]
+        preferred_order = [
+            "TensorrtExecutionProvider",
+            "CUDAExecutionProvider",
+            "ROCMExecutionProvider",
+            "OpenVINOExecutionProvider",
+            "DmlExecutionProvider",
+        ]
         providers = []
         for name in preferred_order:
             if name not in available_providers:
@@ -78,8 +106,8 @@ class UpscaleONNX:
                 options["do_copy_in_default_stream"] = True
             providers.append((name, options))
 
-        if not any(name.startswith("CUDA") or name.startswith("Dml") for name, _ in providers):
-            print(f"[UpscaleONNX] No CUDA/DirectML provider available ({available_providers}); falling back to CPUExecutionProvider.")
+        if not providers:
+            print(f"[UpscaleONNX] No GPU provider available ({available_providers}); falling back to CPUExecutionProvider.")
             providers = [("CPUExecutionProvider", {})]
 
         self.inference_session = InferenceSession(

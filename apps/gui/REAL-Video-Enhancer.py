@@ -1,6 +1,7 @@
 from apps.gui.constants import CUSTOM_MODELS_PATH, IS_STEAM, MODELS_PATH, CWD,  IS_INSTALLED, TEMP_DOWNLOAD_PATH, USE_LOCAL_BACKEND, PLATFORM
 import os
-try: 
+import platform
+try:
     os.makedirs(CWD) if not os.path.exists(CWD) else None
     # os.chdir(CWD) # need to actually chdir into the directory to have everything run correctly
 except:
@@ -58,8 +59,6 @@ createDirectory(os.path.join(CWD, "bin"))
 
 from apps.gui.utils.backends import (
     DownloadModel,
-    Dependency,
-    Python,
 )
 from apps.gui.pages import assemble_pages
 from apps.gui.pages.process.process import ProcessTab
@@ -160,24 +159,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         end_time = time.time()
         log("Render queue time: " + str(end_time - start_time))
 
-        start_time = time.time()
-        if not IS_INSTALLED:
-            for dep in Dependency.__subclasses__():
-                d = dep()
-                d.download()
-        end_time = time.time()
-        log("Dependency download time: " + str(end_time - start_time))
-        
-        #popupthread = create_independent_process(IndependentQTPopup, "Checking for dependency updates...")
-        #popupthread.start() 
-
         # Dependency downloads are gone: ONNX Runtime and ffmpeg ship bundled.
         # A faster onnxruntime build for the detected GPU is auto-upgraded in
         # the background by utils/backends/ProviderUpgrade.py.
-        #try:
-        #    popupthread.terminate()
-        #except Exception:
-        #    pass
 
         start_time = time.time()
         self.backends, self.fullOutput = (
@@ -244,7 +228,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             + "\n"
             + "\nSoftware Information:\n"
             + f"REAL Video Enhancer Version: {version}\n"
-            + f"Python Version: {Python().get_version()}\n"
+            + f"Python Version: {platform.python_version()}\n"
             + f"Utilizing local backend: {USE_LOCAL_BACKEND}\n"
             + f"Working Directory: {CWD}\n"
             + self.fullOutput
