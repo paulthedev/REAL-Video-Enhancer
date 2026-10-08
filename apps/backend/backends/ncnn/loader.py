@@ -75,13 +75,21 @@ class NCNNBackendLoader(BaseBackend):
         if self.ncnn is None:
             raise RuntimeError("NCNN package not installed")
         
-        # NCNN expects .param and .bin files
-        param_path = model_path.replace('.bin', '.param') if model_path.endswith('.bin') else model_path
-        
+        # NCNN expects a .param (graph) and .bin (weights) pair
+        if model_path.endswith(".param"):
+            bin_path = model_path[: -len(".param")] + ".bin"
+        elif model_path.endswith(".bin"):
+            bin_path = model_path
+            model_path = model_path[: -len(".bin")] + ".param"
+        else:
+            param_path = model_path
+            bin_path = model_path
+        param_path = model_path
+
         # Load model
         net = self.ncnn.Net()
         net.load_param(param_path)
-        net.load_model(model_path)
+        net.load_model(bin_path)
         
         model_info = {
             "net": net,

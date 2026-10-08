@@ -32,7 +32,7 @@ class NPMeanSCDetect(BaseDetector):
         if self.i0 is None:
             self.i0 = frame.get_frame_np()
             self.image0mean = np.mean(self.i0)
-            return
+            return False
         self.i1 = frame.get_frame_np()
         img1mean = np.mean(self.i1)
         if (
@@ -81,7 +81,7 @@ class NPMeanSegmentedSCDetect(BaseDetector):
                     i * segment_height : (i + 1) * segment_height,
                     j * segment_width : (j + 1) * segment_width,
                 ]
-                means[i] = np.mean(segment)
+                means[(i, j)] = np.mean(segment)
 
         return means
 
@@ -91,7 +91,7 @@ class NPMeanSegmentedSCDetect(BaseDetector):
         if self.i0 is None:
             self.i0 = img1
             self.segmentsImg1Mean = self.segmentImage(self.i0)
-            return
+            return False
         self.i1 = img1
         segmentsImg2Mean = self.segmentImage(self.i1)
         detections = 0
@@ -120,7 +120,7 @@ class NPMeanDiffSCDetect(BaseDetector):
         img1 = img1.get_frame_np()
         if self.i0 is None:
             self.i0 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
-            return
+            return False
 
         self.i1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
         frame_diff = cv2.absdiff(self.i1, self.i0)
@@ -169,7 +169,6 @@ class PyTorchSudoSceneDetect(ModelDetector):
                             ).squeeze(0)
         if self.i0 is None:
             self.i0 = frame
-            self.model.model
             return False
         out = self.model(self.i0, frame)
         self.i0 = frame
@@ -244,6 +243,7 @@ class SceneDetect:
             "mean_diff": NPMeanDiffSCDetect,
             "mean_segmented": NPMeanSegmentedSCDetect,
             "pyscenedetect": PySceneDetect,
+            "rve": RVESceneDetect,
             "none": BaseDetector,
         }
 

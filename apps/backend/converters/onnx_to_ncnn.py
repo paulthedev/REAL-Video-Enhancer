@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Optional, Dict, Any, Tuple
 import os
 import subprocess
+import sys
 import shutil
 from pathlib import Path
 
@@ -68,34 +69,6 @@ class OnnxToNcnnConverter(BaseOnnxToNcnnConverter):
         
         raise FileNotFoundError("pnnx not found. Please install pnnx: pip install pnnx")
     
-    def _find_ncnnoptimize(self) -> str:
-        """Find ncnnoptimize binary."""
-        # Check common locations
-        candidates = [
-            "ncnnoptimize",
-            os.path.expanduser("~/.ncnn/bin/ncnnoptimize"),
-            "/usr/local/bin/ncnnoptimize",
-            "./ncnnoptimize",
-        ]
-        
-        for candidate in candidates:
-            if shutil.which(candidate):
-                return candidate
-        
-        # Try to find in common installation paths
-        import glob
-        patterns = [
-            "**/ncnnoptimize",
-            "**/bin/ncnnoptimize",
-        ]
-        
-        for pattern in patterns:
-            matches = glob.glob(pattern, recursive=True)
-            if matches:
-                return matches[0]
-        
-        raise FileNotFoundError("ncnnoptimize not found. Please install NCNN tools.")
-    
     def convert(
         self,
         model_path: str,
@@ -136,7 +109,10 @@ class OnnxToNcnnConverter(BaseOnnxToNcnnConverter):
         ]
         
         if input_shape:
-            cmd.extend([f"inputshape=[1,{input_shape[1]},{input_shape[2]},{input_shape[3]}]"])
+            if len(input_shape) >= 4:
+                cmd.extend([f"inputshape=[1,{input_shape[1]},{input_shape[2]},{input_shape[3]}]"])
+            else:
+                cmd.extend([f"inputshape=[{','.join(str(d) for d in input_shape)}]"])
         
         if self.fp16:
             cmd.append("fp16=1")

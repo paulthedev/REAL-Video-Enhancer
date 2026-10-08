@@ -38,7 +38,7 @@ def removeFile(file):
     try:
         os.remove(file)
     except Exception:
-        log("Failed to remove file! " + file)
+        log(f"Failed to remove file! {file}")
 
 
 def removeFolder(folder):
@@ -77,9 +77,14 @@ def bytesToImg(
 ):
     channels = len(image) / (height * width) # 3 if RGB24/SDR, 6 if RGB48/HDR
     hdr = channels == 6
-    frame = np.frombuffer(image, dtype=np.uint16 if hdr else np.uint8).reshape(height, width, 3).astype(np.uint8) # downgrade to sdr for scenedetect... its good enough.
+    raw = np.frombuffer(image, dtype=np.uint16 if hdr else np.uint8).reshape(height, width, 3)
+    if hdr:
+        # take the high byte (10/16-bit data) instead of truncating it
+        frame = (raw >> 8).astype(np.uint8)
+    else:
+        frame = raw.astype(np.uint8)
     if outputHeight and outputWidth:
-        frame = cv2.resize(frame, dsize=(100, 100))
+        frame = cv2.resize(frame, dsize=(int(outputWidth), int(outputHeight)))
     return frame
 
 

@@ -77,31 +77,42 @@ class TorchToOnnxConverter(BaseTorchToOnnxConverter):
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
         
-        # Load model
+        # Load model — the wrapper is a plain object; eval() the inner nn.Module
         model.load("pytorch")
-        model.eval()
-        
-        # Enable operator fusion if requested
-        if self.enable_fusion and self.fuse_conv_bn:
-            try:
-                # Fuse Conv+BatchNorm+ReLU patterns for better performance
-                model = torch.utils.fusion.fuse_model(model)
-                print("Fused Conv+BatchNorm+ReLU patterns")
-            except Exception as e:
-                print(f"Operator fusion skipped: {e}")
-        
-        # Create dummy input
-        dummy_input = torch.randn(*input_shape)
-        
+        nn_module = getattr(model, "model", None)
+        if isinstance(nn_module, torch.nn.Module):
+            nn_module.eval()
+
+        # Interpolation models take (img0, img1, timestep); upscale/restoration
+        # take a single frame. Export the signature the loaders expect.
+        is_interpolate = getattr(model, "infer", None) is not None or hasattr(model, "ceil_interpolate_factor")
+        if is_interpolate:
+            c, h, w = input_shape[1], input_shape[2], input_shape[3]
+            dummy_inputs = (
+                torch.randn(1, c, h, w),
+                torch.randn(1, c, h, w),
+                torch.zeros(1, 1, 1, 1),
+            )
+            input_names = ["img0", "img1", "timestep"]
+            dynamic_axes = {
+                "img0": {2: "height", 3: "width"},
+                "img1": {2: "height", 3: "width"},
+                "output": {2: "height", 3: "width"},
+            }
+        else:
+            dummy_inputs = torch.randn(*input_shape)
+            input_names = ["input"]
+            dynamic_axes = self.dynamic_axes
+
         # Export to ONNX
         torch.onnx.export(
-            model,
-            dummy_input,
+            nn_module if isinstance(nn_module, torch.nn.Module) else model,
+            dummy_inputs,
             output_path,
             opset_version=self.opset_version,
-            input_names=["input"],
+            input_names=input_names,
             output_names=["output"],
-            dynamic_axes=self.dynamic_axes,
+            dynamic_axes=dynamic_axes,
             verbose=False,
         )
         

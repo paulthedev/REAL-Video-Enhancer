@@ -38,11 +38,13 @@ class FileHandler:
         origCWD = os.getcwd()
         dir_path = os.path.dirname(os.path.realpath(file))
         os.chdir(dir_path)
-        log("Extracting: " + file)
-        with zipfile.ZipFile(file, "r") as f:
-            f.extractall(outputDirectory)
-        FileHandler.removeFile(file)
-        os.chdir(origCWD)
+        try:
+            log("Extracting: " + file)
+            with zipfile.ZipFile(file, "r") as f:
+                f.extractall(outputDirectory)
+            FileHandler.removeFile(file)
+        finally:
+            os.chdir(origCWD)
 
     @staticmethod
     def removeFolder(folder):
@@ -113,7 +115,7 @@ class FileHandler:
         """
         iteration = 0
         output_file = base_file_name
-        while os.path.isfile(base_file_name):
+        while os.path.isfile(output_file):
             output_file = os.path.join(
                 outputDirectory,
                 f"{base_file_name}_({iteration}).{extension}",

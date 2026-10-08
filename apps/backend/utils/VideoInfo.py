@@ -118,7 +118,9 @@ class FFMpegInfoWrapper(VideoInfo):
                 
         ]
 
-        self.ffmpeg_output_raw:str = subprocess_popen_without_terminal(command,  stderr=subprocess.PIPE, errors="replace").stderr.read()
+        process = subprocess_popen_without_terminal(command, stderr=subprocess.PIPE, errors="replace")
+        self.ffmpeg_output_raw:str = process.stderr.read()
+        process.wait()
         self.ffmpeg_output_stripped = self.ffmpeg_output_raw.lower().strip()
         try:
             for line in self.ffmpeg_output_raw.split("\n"):
@@ -142,7 +144,10 @@ class FFMpegInfoWrapper(VideoInfo):
     def get_duration_seconds(self) -> float:
         total_duration:float = 0.0
 
-        duration = re.search(r"duration: (.*?),", self.ffmpeg_output_stripped).groups()[0]
+        match = re.search(r"duration: (.*?),", self.ffmpeg_output_stripped)
+        if match is None:
+            raise ValueError("Could not parse duration from ffmpeg output")
+        duration = match.groups()[0]
         hours, minutes, seconds = duration.split(":")
         total_duration += int(int(hours) * 3600)
         total_duration += int(int(minutes) * 60)
@@ -153,12 +158,20 @@ class FFMpegInfoWrapper(VideoInfo):
         return int(self.get_duration_seconds() * self.get_fps())
 
     def get_width_x_height(self) -> List[int]:
-        width, height = re.search(r"video:.* (\d+)x(\d+)",self.ffmpeg_output_stripped).groups()[:2]
+        match = re.search(r"video:.* (\d+)x(\d+)", self.ffmpeg_output_stripped)
+        if match is None:
+            raise ValueError("Could not parse resolution from ffmpeg output")
+        width, height = match.groups()[:2]
         return [int(width), int(height)]
 
     def get_fps(self) -> float:
-        fps = re.search(r"(\d+\.?\d*) fps", self.ffmpeg_output_stripped).groups()[0]
-        return float(fps)
+        match = re.search(r"(\d+\.?\d*) fps", self.ffmpeg_output_stripped)
+        if match is None:
+            raise ValueError("Could not parse fps from ffmpeg output")
+        fps = float(match.groups()[0])
+        if fps <= 0:
+            raise ValueError(f"Invalid fps parsed from ffmpeg output: {fps}")
+        return fps
     
     def check_color_opt(self, color_opt:str) -> str | None:
         if self.stream_line:
@@ -257,7 +270,8 @@ class OpenCVInfo(VideoInfo):
         return self.cap.isOpened() and self.cap.get(cv2.CAP_PROP_FRAME_COUNT) 
 
     def get_duration_seconds(self) -> float:
-        duration = self.cap.get(cv2.CAP_PROP_FRAME_COUNT) / self.get_fps()
+        fps = self.get_fps()
+        duration = self.cap.get(cv2.CAP_PROP_FRAME_COUNT) / fps if fps > 0 else 0.0
 
         if self.start_time is not None and self.end_time is not None:
             duration = self.end_time - self.start_time
@@ -310,7 +324,9 @@ class OpenCVInfo(VideoInfo):
     
 
     def __del__(self):
-        self.cap.release()
+        cap = getattr(self, "cap", None)
+        if cap is not None:
+            cap.release()
 
 def print_video_info(video_info: VideoInfo):
     print(f"Duration: {video_info.get_duration_seconds()} seconds")

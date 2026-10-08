@@ -9,23 +9,29 @@ _pytorch_dtype = None
 _pytorch_stream = None
 _torch_utils = None
 _torch = None
+_torch_utils_signature = None
 
 def _init_pytorch(device, gpu_id, dtype, width, height, hdr_mode):
     global _pytorch_device, _pytorch_dtype, _torch_utils, _torch, _pytorch_stream
-    if _torch_utils is None:
+    global _torch_utils_signature
+    signature = (device, gpu_id, dtype, width, height, hdr_mode)
+    if _torch_utils is None or _torch_utils_signature != signature:
+        # rebuild when the video geometry/device changes — the cached utils
+        # would otherwise keep the first video's dimensions forever
         import torch
         from ..pytorch.TorchUtils import TorchUtils
         _torch = torch
         _torch_utils = TorchUtils(
-            width=width, 
-            height=height, 
-            device_type=device, 
-            hdr_mode=hdr_mode, 
+            width=width,
+            height=height,
+            device_type=device,
+            hdr_mode=hdr_mode,
             gpu_id=gpu_id
             )
         _pytorch_stream = _torch_utils.init_stream(gpu_id=gpu_id)
         _pytorch_device = _torch_utils.handle_device(device, gpu_id)
         _pytorch_dtype = _torch_utils.handle_precision(dtype)
+        _torch_utils_signature = signature
         print("Initialized Frame PyTorch utils")
 
 
@@ -72,7 +78,8 @@ class Frame:
             raise TypeError(f"Expected torch.Tensor, got {type(frame).__name__}")
         self._invalidate_cache("tensor")
         self._tensor = frame.clone()
-        _torch_utils.sync_all_streams()
+        if _torch_utils is not None:
+            _torch_utils.sync_all_streams()
         return self
 
     def set_frame_np(self, frame: Any) -> "Frame":
@@ -99,7 +106,9 @@ class Frame:
                 )
         if clear_cache:
             self._invalidate_cache("tensor")
-            
+
+        if self._tensor is None:
+            raise RuntimeError("Frame has no data — set frame bytes/np/tensor first")
         return self._tensor.clone() # this helps so the frame wont be overwritten? have to test later.
 
     def get_frame_bytes(self, clear_cache: bool = False) -> bytes:
@@ -163,12 +172,13 @@ class Frame:
     
     def get_np_sdr(self):
         """
-        Get the frame as a numpy array in SDR format (H, W, C) with dtype uint8.
+        Get the frame as numpy array in SDR format (H, W, C) with dtype uint8.
         """
         np_frame = self.get_frame_np()
         if self.hdr_mode:
-            # Convert from HDR (uint16) to SDR (uint8)
-            np_frame = (np.clip(np_frame.astype(np.float32) / 65535.0, 0, 1) * 255).astype(np.uint8)
+            # HDR frames are 10-bit-in-16-bit; take the high byte — same
+            # convention as Util.bytesToImg and the GUI preview
+            np_frame = (np_frame >> 8).astype(np.uint8)
         return np_frame
 
     
