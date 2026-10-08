@@ -171,14 +171,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #popupthread = create_independent_process(IndependentQTPopup, "Checking for dependency updates...")
         #popupthread.start() 
 
-        start_time = time.time()
-        for dep in Dependency.__subclasses__():
-            d = dep()
-            if d.get_if_update_available():
-        #        popupthread.terminate()
-                d.update_if_updates_available()
-        end_time = time.time()
-        log("Dependency update time: " + str(end_time - start_time))
+        # Dependency downloads are gone: ONNX Runtime and ffmpeg ship bundled.
+        # A faster onnxruntime build for the detected GPU is auto-upgraded in
+        # the background by utils/backends/ProviderUpgrade.py.
         #try:
         #    popupthread.terminate()
         #except Exception:

@@ -32,9 +32,6 @@ RELEASES_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 RELEASE_DOWNLOAD_URL_TEMPLATE = (
     "https://github.com/" + GITHUB_REPO + "/releases/download/{tag}/{file_name}"
 )
-BACKEND_RELEASE_URL_TEMPLATE = (
-    "https://github.com/" + GITHUB_REPO + "/releases/download/RVE-{version}/backend-v{version}.tar.gz"
-)
 
 # Official upstream sources (do not re-host these — see docs/BUG_TRACKER.md,
 # "Sources — runtime download provenance").
@@ -102,21 +99,20 @@ VIDEOS_PATH = (
 )
 BACKEND_PATH = "/app/bin/apps/backend" if IS_FLATPAK else os.path.join(CWD, "apps", "backend")
 TEMP_DOWNLOAD_PATH = os.path.join(CWD, "temp")
-# exes
-FFMPEG_PATH = (
-    os.path.join(CWD, "bin", "ffmpeg.exe")
-    if PLATFORM == "win32"
-    else os.path.join(CWD, "bin", "ffmpeg")
-)
-PYTHON_DIRECTORY = os.path.join(CWD, "python")
+# ffmpeg ships via the imageio-ffmpeg pip package (static per-platform
+# build); RVE_FFMPEG_PATH / --ffmpeg_path override it
+try:
+    import imageio_ffmpeg
+    FFMPEG_PATH = imageio_ffmpeg.get_ffmpeg_exe()
+except Exception:
+    FFMPEG_PATH = (
+        os.path.join(CWD, "bin", "ffmpeg.exe")
+        if PLATFORM == "win32"
+        else os.path.join(CWD, "bin", "ffmpeg")
+    )
 
-PYTHON_EXECUTABLE_PATH = (
-    os.path.join(CWD, "python", "python", "python.exe")
-    if PLATFORM == "win32"
-    else os.path.join(CWD, "python", "python", "bin", "python3")
-)
-#PYTHON_VERSION = "3.13.2" if PLATFORM != "darwin" else "3.12.9" # sets python version of backend
-PYTHON_VERSION = "3.12.9"
+PYTHON_EXECUTABLE_PATH = sys.executable  # the backend runs on our own interpreter
+PYTHON_DIRECTORY = os.path.dirname(sys.executable)
 
 EXE_PATH = os.path.join(
     CWD,
@@ -128,7 +124,7 @@ LIBS_PATH = os.path.join(
 )
 
 # is installed
-IS_INSTALLED = os.path.isfile(FFMPEG_PATH) and os.path.isfile(PYTHON_EXECUTABLE_PATH)
+IS_INSTALLED = os.path.isfile(FFMPEG_PATH)
 
 IMAGE_SHARED_MEMORY_ID = "/image_preview" + str(os.getpid())
 PAUSED_STATE_SHARED_MEMORY_ID = "/paused_state" + str(os.getpid())

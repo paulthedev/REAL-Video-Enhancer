@@ -1,92 +1,13 @@
-import json
-import re
-import os
-import subprocess
-import shutil
-import urllib.request
+"""Application self-update via GitHub releases."""
 
-from apps.gui.lib.QTcustom import DownloadProgressPopup, NetworkCheckPopup, RegularQTPopup
+import os
+import stat
+
 from apps.gui.constants import (
-    PYTHON_EXECUTABLE_PATH,
-    PYTHON_DIRECTORY,
-    BACKEND_PATH,
-    EXE_NAME,
-    LIBS_PATH,
-    EXE_PATH,
-    PLATFORM,
-    TEMP_DOWNLOAD_PATH,
-    LIBS_NAME,
-    PYTHON_VERSION,
-    HAS_NETWORK_ON_STARTUP,
     RELEASES_LATEST_API_URL,
     RELEASE_DOWNLOAD_URL_TEMPLATE,
 )
-from apps.gui.utils.backends import DownloadDependencies
-from apps.gui.version import version, backend_dev_version
-from apps.gui.util import FileHandler, networkCheck, log
-
-# version = "2.1.0" # for debugging
-
-
-
-class PythonUpdater:
-    def __init__(self):
-        
-        self.current_python_version = self.get_current_python_version()
-        self.deps = DownloadDependencies()
-            
-    def get_current_python_version(self):
-        try:
-            output = subprocess.run([PYTHON_EXECUTABLE_PATH, "--version"], check=True, capture_output=True, text=True)
-        except subprocess.CalledProcessError: # if python is not found
-            RegularQTPopup("Python not found! Downloading Python...")
-            self.deps.downloadPython(mode="Downloading")
-        output = output.stdout.strip().split(" ")[1] # this extracts the version number from the output
-        return output
-    
-    def is_python_up_to_date(self):
-        log(f"Python up to date: {PYTHON_VERSION == self.current_python_version}")
-        return PYTHON_VERSION == self.current_python_version
-
-    def update_python(self):
-        if HAS_NETWORK_ON_STARTUP:
-            
-            FileHandler.removeFolder(PYTHON_DIRECTORY) # remove the old python directory  
-            os.mkdir(PYTHON_DIRECTORY) # create a new python directory
-            self.deps.downloadPython(mode="Updating")
-            self.current_python_version = self.get_current_python_version()
-        else:
-            RegularQTPopup("No network connection found! Please connect to the internet to update Python.")        
-            
-class BackendUpdater:
-    def __init__(self):
-        self.deps = DownloadDependencies()
-        self.backend_version = self.get_backend_version()
-       
-        
-    def get_backend_version(self, iter=0):
-        try:
-            output = subprocess.run([PYTHON_EXECUTABLE_PATH, os.path.join(BACKEND_PATH, "rve-backend.py"), "--version"], check=True, capture_output=True, text=True)
-            output = output.stdout.strip() # this extracts the version number from the output
-            log(f"Backend Version: {output}")
-            return output
-        except subprocess.CalledProcessError: # if the backend is not found
-            self.deps.downloadBackend()
-            return None
-        
-        
-    
-    def is_backend_up_to_date(self):
-        _s = backend_dev_version == self.backend_version
-        log(f"Backend up to date: {_s} {backend_dev_version} == {self.backend_version}")
-        return backend_dev_version == self.backend_version
-    
-    def update_backend(self):
-        if HAS_NETWORK_ON_STARTUP:
-            FileHandler.removeFolder(BACKEND_PATH) # remove the old backend directory
-            self.deps.downloadBackend()
-        else:
-            RegularQTPopup("No network connection found! Please connect to the internet to update the backend.")
+from apps.gui.util import FileHandler, log
 
 
 class ApplicationUpdater:
@@ -179,24 +100,3 @@ class ApplicationUpdater:
                 RegularQTPopup("Update complete! Please restart the app.")
             else:
                 RegularQTPopup("No update available!")
-
-
-class DependencyUpdateChecker:
-    def __init__(self, installed_dependencies: list[str]):
-        self.installed_dependencies = installed_dependencies
-
-    def getPipVersion(self, dependency):
-        command = [
-            PYTHON_EXECUTABLE_PATH,
-        ]
-
-    def getDepVers(self):
-        for dependency in self.installed_dependencies:
-            if "pytorch (rocm)" in dependency:
-                pass
-
-
-if __name__ == "__main__":
-    updater = ApplicationUpdater()
-    print(updater.check_for_updates())
-    print(updater.build_download_url())
