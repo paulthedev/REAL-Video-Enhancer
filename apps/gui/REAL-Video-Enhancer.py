@@ -943,7 +943,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 def main(file_to_open=None):
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
-    app.setPalette(Palette())
+    app.setPalette(rve_palette())
 
     """if not "--unlock" in sys.argv:
         lock_file = QLockFile(LOCKFILE)
