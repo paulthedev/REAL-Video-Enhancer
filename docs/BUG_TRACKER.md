@@ -13,12 +13,12 @@ Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
 
 | Priority | Count | Fixed |
 |----------|-------|-------|
-| P0 — nothing runs end-to-end | 11 | 0 |
+| P0 — nothing runs end-to-end | 11 | 1 |
 | P1 — GUI crashes / wrong output | 25 | 1 |
 | Wiring — GUI refactor breakage (found + fixed 2026-10-08) | 4 | 4 |
 | Download — backend download/install wiring (found 2026-10-08) | 4 | 0 |
-| Sources — runtime download provenance (found 2026-10-08) | 5 | 0 |
-| P2 — robustness | 15 | 1 |
+| Sources — runtime download provenance (found 2026-10-08) | 5 | 3 |
+| P2 — robustness | 15 | 2 |
 | P3 — cleanup | 14 | 0 |
 
 ---
@@ -41,10 +41,11 @@ Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
   "FATAL ERROR" popup and `exit(1)`. GUI cannot start against this backend.
   Fix: implement compute-capability check (e.g. `torch.cuda.get_device_capability(i) >= (6,0)`),
   define `MINIMUM_PYTORCH_CAP = (6, 0)`.
-- [ ] **B4. `apps/backend/constants.py` missing.** `utils/GetFFMpeg.py:1` and
-  `utils/BackendDetect.py:101` do `from ..constants import CPU_ARCH/PLATFORM` → ImportError
-  on ffmpeg download and on NCNN GPU detection. `utils/Util.py:31-34` shows the correct
-  guarded pattern — replicate or create the module.
+- [x] **B4. `apps/backend/constants.py` missing.** ~~`utils/GetFFMpeg.py:1` and~~
+  **Fixed 2026-10-08**: created `apps/backend/constants.py` (PLATFORM/CPU_ARCH +
+  upstream FFmpeg URLs) while doing the S1/S3 provenance pass; the guarded imports
+  in `utils/Util.py` / `utils/BackendDetect.py` and the unguarded one in
+  `GetFFMpeg.py` all resolve now (verified by import).
 - [ ] **B5. `RifeModel` never stores `self.config`.** `rife.py:377` reads `self.config.drba`
   but `__init__` (201-250) copies fields individually. `AttributeError` on every PyTorch RIFE load.
   Fix: `self.config = config` in `__init__` (every other model does this).
@@ -250,30 +251,30 @@ bundle, app self-update, changelog (`tntwise/real-video-enhancer` releases),
 and the curated AI models (models repo). The items below should move to
 standard upstream sources.
 
-- [ ] **S1. FFmpeg is downloaded from three different tntwise URLs.**
-  `FFMpeg.py:27` (models repo release), `GetFFMpeg.py:7` (hardcoded models-repo
+- [x] **S1. FFmpeg is downloaded from three different tntwise URLs.**
+  ~~`FFMpeg.py:27` (models repo release), `GetFFMpeg.py:7` (hardcoded models-repo
   URL, backend fallback), `QTcustom.py:818` (an ffmpeg binary parked in the
-  **`TNTwise/Rife-Vulkan-Models`** repo — the RIFE models repo). All should use
-  official builds instead:
-  - Windows/Linux: `https://github.com/BtbN/FFmpeg-Builds/releases` (static
-    GPL builds, win+linux, x86_64+arm64 — de-facto standard automated source)
-  - macOS: `https://evermeet.cx/ffmpeg/` (x86_64) / osxexperts (arm64)
-  Keep the per-platform `match` structure; swap the base URLs; add checksum
-  verification while touching it.
-- [ ] **S2. CPython standalone interpreter is re-hosted in the models repo.**
-  `Python.py:33` builds `CPYTHON_RELEASE_BASE_URL` (`TNTwise/REAL-Video-Enhancer-models`
-  releases) + `cpython-3.12.9+20250317-<target>-install_only.tar.gz` — that naming is
-  **python-build-standalone**'s; the artifact is a re-upload. Point at the official
-  release: `https://github.com/astral-sh/python-build-standalone/releases`
-  (tag `20250317`, asset name identical). Note `CPYTHON_RELEASE_BASE_URL` lives in
-  `MODELS_REPO` while models themselves use `MODEL_HOSTED_REPO` — same repo, two
-  spellings (see S3).
-- [ ] **S3. Model/backend repo constants are inconsistent and partly hardcoded.**
-  Three spellings in play: `MODEL_HOSTED_REPO` (`TNTwise/real-video-enhancer-models`,
-  used for models), `MODELS_REPO` (`TNTwise/REAL-Video-Enhancer-models`, used for
-  CPython), plus fully hardcoded URLs in `GetFFMpeg.py:7` and `QTcustom.py:818`.
-  Consolidate every remote URL into `apps/gui/constants.py` so provenance is auditable
-  from one file.
+  **`TNTwise/Rife-Vulkan-Models`** repo — the RIFE models repo).~~
+  **Fixed 2026-10-08**: all three now use official builds — BtbN
+  (`ffmpeg-master-latest-{linux64,linuxarm64,win64,winarm64}-gpl`) for
+  Windows/Linux, evermeet.cx for macOS (x86_64; arm64 via Rosetta). Upstream
+  ships archives, so both installers now download → extract (`bin/ffmpeg`) →
+  install (GUI: `FFMpeg.extract_ffmpeg_binary`; backend: `_extract_ffmpeg_binary`).
+  Verified end-to-end on linux x86_64: real download + `ffmpeg -version` runs.
+  Follow-up (optional): checksum pinning — BtbN "latest" is rolling (can't pin
+  a hash); python-build-standalone publishes `.sha256` sidecars (see S2) if
+  verification is wanted there.
+- [x] **S2. CPython standalone interpreter is re-hosted in the models repo.**
+  ~~`Python.py:33` builds `CPYTHON_RELEASE_BASE_URL` ...~~ **Fixed 2026-10-08**:
+  `Python.get_download_link()` now points at
+  `https://github.com/astral-sh/python-build-standalone/releases/download/20250317`
+  (`PYTHON_BUILD_STANDALONE_URL`/`_TAG` in constants) — identical asset names,
+  all five platform targets verified 200 upstream.
+- [x] **S3. Model/backend repo constants are inconsistent and partly hardcoded.**
+  ~~Three spellings in play...~~ **Fixed 2026-10-08**: `MODELS_REPO` /
+  `CPYTHON_RELEASE_BASE_URL` removed; every remote URL now lives in
+  `apps/gui/constants.py` (GUI) and `apps/backend/constants.py` (backend).
+  Models remain on `MODEL_HOSTED_REPO` by design.
 - [ ] **S4. `networkCheck()` conflates "network up" with "GitHub up".**
   `constants.py:6` HEAD-pings `https://raw.githubusercontent.com`; offline-but-not-
   GitHub-down is indistinguishable from captive portals etc. Ping a stable
@@ -302,8 +303,11 @@ standard upstream sources.
   (`rife.py:417-426` does this correctly).
 - [ ] **R5. `unzipFile` chdir without try/finally.** `utils/FileHandler.py:38-45`: cwd never
   restored if `extractall` raises; chdir is process-global (thread-unsafe).
-- [ ] **R6. `download_ffmpeg` never chmod +x, drops `.exe` on Windows, unknown platform saves
-  an HTML page as the binary.** `utils/GetFFMpeg.py:21-29`.
+- [x] **R6. `download_ffmpeg` never chmod +x, drops `.exe` on Windows, unknown platform
+  saves an HTML page as the binary.** ~~`utils/GetFFMpeg.py:21-29`.~~ **Fixed 2026-10-08**
+  in the S1 rewrite: chmod `0o755` on POSIX, `.exe` suffix preserved on Windows, and the
+  unknown-platform case is gone (link builder covers win/linux/mac explicitly from
+  constants).
 - [ ] **R7. `onnx_to_ncnn` error path uses unimported `sys`; dead ncnnoptimize config.**
   `converters/onnx_to_ncnn.py:58` (`NameError` exactly when pnnx is missing);
   `ncnnoptimize_path` accepted but never used (28, 71-97).

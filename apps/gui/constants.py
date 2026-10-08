@@ -20,14 +20,10 @@ HAS_NETWORK_ON_STARTUP = networkCheck()
 
 # GitHub locations for RVE releases (owner/repo is case-insensitive in the API)
 GITHUB_REPO = "tntwise/real-video-enhancer"
-MODELS_REPO = "TNTwise/REAL-Video-Enhancer-models"
 MODEL_HOSTED_REPO = "TNTwise/real-video-enhancer-models"
 APP_URL = f"https://github.com/{GITHUB_REPO}"
 MODELS_RELEASE_BASE_URL = (
     f"https://github.com/{MODEL_HOSTED_REPO}/releases/download/models/"
-)
-CPYTHON_RELEASE_BASE_URL = (
-    f"https://github.com/{MODELS_REPO}/releases/download/models/"
 )
 RELEASES_LATEST_API_URL = (
     f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
@@ -38,6 +34,18 @@ RELEASE_DOWNLOAD_URL_TEMPLATE = (
 )
 BACKEND_RELEASE_URL_TEMPLATE = (
     "https://github.com/" + GITHUB_REPO + "/releases/download/RVE-{version}/backend-v{version}.tar.gz"
+)
+
+# Official upstream sources (do not re-host these — see docs/BUG_TRACKER.md,
+# "Sources — runtime download provenance").
+FFMPEG_BTBN_RELEASE_URL = (
+    "https://github.com/BtbN/FFmpeg-Builds/releases/latest/download"
+)
+FFMPEG_EVERMEET_RELEASE_URL = "https://evermeet.cx/ffmpeg/getrelease/zip"
+PYTHON_BUILD_STANDALONE_TAG = "20250317"
+PYTHON_BUILD_STANDALONE_URL = (
+    "https://github.com/astral-sh/python-build-standalone/releases/download/"
+    f"{PYTHON_BUILD_STANDALONE_TAG}"
 )
 
 LOCKFILE = QDir.tempPath() + "/REAL-Video-Enhancer.lock"

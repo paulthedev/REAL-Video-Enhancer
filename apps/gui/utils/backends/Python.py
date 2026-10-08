@@ -11,10 +11,11 @@ import os
 from PySide6.QtWidgets import QMessageBox
 
 from apps.gui.constants import (
-    CPYTHON_RELEASE_BASE_URL,
     CWD,
     CPU_ARCH,
     PLATFORM,
+    PYTHON_BUILD_STANDALONE_TAG,
+    PYTHON_BUILD_STANDALONE_URL,
     PYTHON_DIRECTORY,
     PYTHON_EXECUTABLE_PATH,
     PYTHON_VERSION,
@@ -30,7 +31,7 @@ class Python(Dependency):
     is_update_available: bool
 
     def get_download_link(self) -> str:
-        link = f"{CPYTHON_RELEASE_BASE_URL}cpython-{PYTHON_VERSION}+20250317-"
+        link = f"{PYTHON_BUILD_STANDALONE_URL}/cpython-{PYTHON_VERSION}+{PYTHON_BUILD_STANDALONE_TAG}-"
         match PLATFORM:
             case "linux":
                 link += "x86_64-unknown-linux-gnu-install_only.tar.gz" if CPU_ARCH == "x86_64" else "aarch64-unknown-linux-gnu-install_only.tar.gz"
