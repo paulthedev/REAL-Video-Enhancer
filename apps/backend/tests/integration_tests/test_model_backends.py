@@ -177,128 +177,62 @@ class TestModelBackendSelection(unittest.TestCase):
 
 
 class TestModelInferenceMethods(unittest.TestCase):
-    """Test model inference methods."""
-    
+    """Models are ONNX-only since the onnx-only migration: they expose the
+    ONNX load/infer pair and refuse every other backend."""
+
+    def _assert_onnx_only(self, model, infer_method):
+        self.assertTrue(hasattr(model, "_load_onnx"))
+        self.assertTrue(hasattr(model, infer_method))
+        self.assertFalse(hasattr(model, "_load_pytorch"))
+        self.assertFalse(hasattr(model, "_load_ncnn"))
+        with self.assertRaises(ValueError):
+            model.load("pytorch")
+        with self.assertRaises(ValueError):
+            model.load("ncnn")
+
     def test_rife_inference_methods_exist(self):
-        """Test RIFE has all inference methods."""
         model = RifeModel(model_path="/tmp/test.pt", config=RifeConfig(version=RifeVersion.RIFE422_LITE))
-        
-        self.assertTrue(hasattr(model, '_load_pytorch'))
-        self.assertTrue(hasattr(model, '_load_onnx'))
-        self.assertTrue(hasattr(model, '_load_ncnn'))
-        self.assertTrue(hasattr(model, '_infer_pytorch'))
-        self.assertTrue(hasattr(model, '_infer_onnx'))
-        self.assertTrue(hasattr(model, '_infer_ncnn'))
-    
+        self._assert_onnx_only(model, "_infer_onnx")
+
     def test_ifrnet_inference_methods_exist(self):
-        """Test IFRNet has all inference methods."""
         model = IFRNetModel(config=IFRNetConfig())
-        
-        self.assertTrue(hasattr(model, '_load_pytorch'))
-        self.assertTrue(hasattr(model, '_load_onnx'))
-        self.assertTrue(hasattr(model, '_load_ncnn'))
-        self.assertTrue(hasattr(model, '_interpolate_pytorch'))
-        self.assertTrue(hasattr(model, '_interpolate_onnx'))
-        self.assertTrue(hasattr(model, '_interpolate_ncnn'))
-    
+        self._assert_onnx_only(model, "_interpolate_onnx")
+
     def test_gimm_inference_methods_exist(self):
-        """Test GIMM has all inference methods."""
         model = GimmModel(config=GimmConfig())
-        
-        self.assertTrue(hasattr(model, '_load_pytorch'))
-        self.assertTrue(hasattr(model, '_load_onnx'))
-        self.assertTrue(hasattr(model, '_load_ncnn'))
-        self.assertTrue(hasattr(model, '_interpolate_pytorch'))
-        self.assertTrue(hasattr(model, '_interpolate_onnx'))
-        self.assertTrue(hasattr(model, '_interpolate_ncnn'))
-    
+        self._assert_onnx_only(model, "_interpolate_onnx")
+
     def test_span_inference_methods_exist(self):
-        """Test SPAN has all inference methods."""
         model = SPANModel(config=SPANConfig())
-        
-        self.assertTrue(hasattr(model, '_load_pytorch'))
-        self.assertTrue(hasattr(model, '_load_onnx'))
-        self.assertTrue(hasattr(model, '_load_ncnn'))
-        self.assertTrue(hasattr(model, '_upscale_pytorch'))
-        self.assertTrue(hasattr(model, '_upscale_onnx'))
-        self.assertTrue(hasattr(model, '_upscale_ncnn'))
-    
+        self._assert_onnx_only(model, "_upscale_onnx")
+
     def test_animesr_inference_methods_exist(self):
-        """Test AnimeSR has all inference methods."""
         model = AnimeSRModel(config=AnimeSRConfig())
-        
-        self.assertTrue(hasattr(model, '_load_pytorch'))
-        self.assertTrue(hasattr(model, '_load_onnx'))
-        self.assertTrue(hasattr(model, '_load_ncnn'))
-        self.assertTrue(hasattr(model, '_upscale_pytorch'))
-        self.assertTrue(hasattr(model, '_upscale_onnx'))
-        self.assertTrue(hasattr(model, '_upscale_ncnn'))
-    
+        self._assert_onnx_only(model, "_upscale_onnx")
+
     def test_tspan_inference_methods_exist(self):
-        """Test TSPAN has all inference methods."""
         model = TSPANModel(config=TSPANConfig())
-        
-        self.assertTrue(hasattr(model, '_load_pytorch'))
-        self.assertTrue(hasattr(model, '_load_onnx'))
-        self.assertTrue(hasattr(model, '_load_ncnn'))
-        self.assertTrue(hasattr(model, '_upscale_pytorch'))
-        self.assertTrue(hasattr(model, '_upscale_onnx'))
-        self.assertTrue(hasattr(model, '_upscale_ncnn'))
-    
+        self._assert_onnx_only(model, "_upscale_onnx")
+
     def test_fbcnn_inference_methods_exist(self):
-        """Test FBCNN has all inference methods."""
         model = FBCNNModel(config=FBCNNConfig())
-        
-        self.assertTrue(hasattr(model, '_load_pytorch'))
-        self.assertTrue(hasattr(model, '_load_onnx'))
-        self.assertTrue(hasattr(model, '_load_ncnn'))
-        self.assertTrue(hasattr(model, '_restore_pytorch'))
-        self.assertTrue(hasattr(model, '_restore_onnx'))
-        self.assertTrue(hasattr(model, '_restore_ncnn'))
-    
+        self._assert_onnx_only(model, "_restore_onnx")
+
     def test_nafnet_inference_methods_exist(self):
-        """Test NAFNet has all inference methods."""
         model = NAFNetModel(config=NAFNetConfig())
-        
-        self.assertTrue(hasattr(model, '_load_pytorch'))
-        self.assertTrue(hasattr(model, '_load_onnx'))
-        self.assertTrue(hasattr(model, '_load_ncnn'))
-        self.assertTrue(hasattr(model, '_restore_pytorch'))
-        self.assertTrue(hasattr(model, '_restore_onnx'))
-        self.assertTrue(hasattr(model, '_restore_ncnn'))
-    
+        self._assert_onnx_only(model, "_restore_onnx")
+
     def test_dncnn_inference_methods_exist(self):
-        """Test DnCNN has all inference methods."""
         model = DnCNNModel(config=DnCNNConfig())
-        
-        self.assertTrue(hasattr(model, '_load_pytorch'))
-        self.assertTrue(hasattr(model, '_load_onnx'))
-        self.assertTrue(hasattr(model, '_load_ncnn'))
-        self.assertTrue(hasattr(model, '_denoise_pytorch'))
-        self.assertTrue(hasattr(model, '_denoise_onnx'))
-        self.assertTrue(hasattr(model, '_denoise_ncnn'))
-    
+        self._assert_onnx_only(model, "_denoise_onnx")
+
     def test_gmfss_inference_methods_exist(self):
-        """Test GMFSS has all inference methods."""
         model = GmfssModel(config=GmfssConfig())
-        
-        self.assertTrue(hasattr(model, '_load_pytorch'))
-        self.assertTrue(hasattr(model, '_load_onnx'))
-        self.assertTrue(hasattr(model, '_load_ncnn'))
-        self.assertTrue(hasattr(model, '_interpolate_pytorch'))
-        self.assertTrue(hasattr(model, '_interpolate_onnx'))
-        self.assertTrue(hasattr(model, '_interpolate_ncnn'))
-    
+        self._assert_onnx_only(model, "_interpolate_onnx")
+
     def test_scene_detect_inference_methods_exist(self):
-        """Test scene detect has all inference methods."""
         model = MaxViTSceneDetectModel(config=MaxViTConfig())
-        
-        self.assertTrue(hasattr(model, '_load_pytorch'))
-        self.assertTrue(hasattr(model, '_load_onnx'))
-        self.assertTrue(hasattr(model, '_load_ncnn'))
-        self.assertTrue(hasattr(model, '_detect_pytorch'))
-        self.assertTrue(hasattr(model, '_detect_onnx'))
-        self.assertTrue(hasattr(model, '_detect_ncnn'))
+        self._assert_onnx_only(model, "_detect_onnx")
 
 
 class TestModelUnload(unittest.TestCase):

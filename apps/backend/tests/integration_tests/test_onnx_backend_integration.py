@@ -214,14 +214,14 @@ class TestOnnxInterpolateRunner(unittest.TestCase):
             'outputs': [mock_output],
         }
         
-        # Convert to numpy (runner expects numpy arrays)
-        frame1 = torch.zeros(1, 3, 1080, 1920).numpy()
-        frame2 = torch.zeros(1, 3, 1080, 1920).numpy()
+        # runners take HWC frames (see ONNXInterpolateRunner.run docs)
+        frame1 = torch.zeros(1080, 1920, 3).numpy()
+        frame2 = torch.zeros(1080, 1920, 3).numpy()
         timestep = 0.5
-        
+
         result = runner.run(model, frame1, frame2, timestep)
-        
-        self.assertEqual(result.shape, (1, 3, 1080, 1920))
+
+        self.assertEqual(result.shape, (1080, 1920, 3))
 
 
 class TestOnnxUpscaleRunner(unittest.TestCase):
@@ -261,11 +261,11 @@ class TestOnnxUpscaleRunner(unittest.TestCase):
             'outputs': [mock_output],
         }
         
-        # Convert to numpy (runner expects numpy arrays)
-        frame = torch.zeros(1, 3, 1080, 1920).numpy()
-        
+        # runner takes an HWC frame (see ONNXUpscaleRunner.run docs)
+        frame = torch.zeros(1080, 1920, 3).numpy()
+
         result = runner.run(model, frame)
-        
+
         self.assertEqual(result.shape, (1, 3, 2160, 3840))
 
 
