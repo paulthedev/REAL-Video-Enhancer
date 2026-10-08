@@ -46,6 +46,11 @@ class DownloadTab:
             "pytorchBackendInstallerContainer_4", "directMLBackendInstallerContainer",
             "backend_type_combo", "backend_variant_combo", "loadBackendBtn",
             "pytorch_version", "pytorch_backend",
+            # stale text labels from the legacy backends panel
+            "label_4", "label_25", "label_backend_selector", "label_backend_type",
+            "label_64", "label_65", "label_66", "label_53",
+            "encoderLabel_4",          # "Import Custom Upscale Model"
+            "label_backend_variant",   # "Variant:"
         ):
             widget = getattr(self.parent, name, None)
             if widget is not None:
@@ -67,7 +72,8 @@ class DownloadTab:
             QMessageBox.StandardButton.No,  # type: ignore
         )
         if reply == QMessageBox.Yes:  # type: ignore
-            os.chdir(HOME_PATH)
+            os.chdir(os.path.expanduser("~"))
             FileHandler().removeFolder(CWD)
             os._exit(0)
+
 

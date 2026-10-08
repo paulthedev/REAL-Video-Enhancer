@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QFileDialog,
     QMessageBox,
+    QWidget,
 
 )
 from PySide6.QtGui import QIcon
@@ -68,7 +69,7 @@ from apps.gui.pages.settings.settings import SettingsTab, Settings
 from apps.gui.lib.BackendHandler import BackendHandler
 from apps.gui.lib.ModelHandler import totalModels
 from apps.gui.lib.AnimationHandler import AnimationHandler
-from apps.gui.lib.QTstyle import Palette
+from apps.gui.lib.QTstyle import styleSheet as rve_style_sheet, Palette as rve_palette
 from apps.gui.lib.QTcustom import RegularQTPopup, NotificationOverlay, TextOutputPopup
 from apps.gui.lib.RenderQueue import RenderQueue, RenderOptions
 from apps.gui.utils.VideoInfo import VideoLoader
@@ -135,6 +136,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # Set up the user interface from Designer.
         start_time = time.time()
+        # Fusion + token palette before any widget exists: native dialogs and
+        # anything outside QSS then match the dark theme on every entry path
+        QApplication.instance().setStyle("Fusion")
+        QApplication.instance().setPalette(rve_palette())
         self.setupUi(self)
         # Re-point homeBtn / processBtn / settingsBtn / downloadBtn onto the
         # instances owned by the promoted QTabNavigation sidebar widget so all
@@ -144,6 +149,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # re-pointing every page widget onto this window so the existing
         # flat ``self.<widget>`` references keep resolving after the .ui split.
         assemble_pages(self.stackedWidget, controller=self)
+        self.setStyleSheet(rve_style_sheet())
+        # Drop the old per-page stylesheet copies: each generated page embeds
+        # the legacy global sheet, and a closer-ancestor stylesheet beats the
+        # window's on every conflicting rule (Qt cascade). Must run AFTER
+        # assemble_pages — the page setupUi re-applies its embedded sheet.
+        from apps.gui.pages import PAGES
+        for page_cls in PAGES:
+            slot = self.stackedWidget.findChild(QWidget, page_cls.CONTAINER_NAME)
+            if slot is not None:
+                slot.setStyleSheet("")
         end_time = time.time()
         log("Setup ui time: " + str(end_time - start_time))
         #self.VideoPreview.setVisible(False)
@@ -155,7 +170,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         log("Backend handler time: " + str(end_time - start_time))
 
         start_time = time.time()
-        self.renderQueue = RenderQueue(self.renderQueueListWidget)
+        self.renderQueue = RenderQueue()  # model only; QueuePanel renders it
         end_time = time.time()
         log("Render queue time: " + str(end_time - start_time))
 
@@ -228,9 +243,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             + "\n"
             + "\nSoftware Information:\n"
             + f"REAL Video Enhancer Version: {version}\n"
-            + f"Python Version: {platform.python_version()}\n"
-            + f"Utilizing local backend: {USE_LOCAL_BACKEND}\n"
-            + f"Working Directory: {CWD}\n"
+            + f"Backend: ONNX Runtime\n"
             + self.fullOutput
         )
         self.systemInfoText.setText(printOut)
@@ -696,42 +709,19 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if len(renderQueue.queue) == 0:
             NotificationOverlay("Render queue is empty!", self, timeout=1500)
             return
-        self.startRenderButton.setEnabled(False)
-        self.VideoPreview.setVisible(False)
-        self.previewLabel.setVisible(True)
-
-        self.disableProcessPage()
-        
+        # the queue stays live during a render — nothing is disabled here;
+        # the action bar (start/pause/stop) carries the running state
+        self.processTab.preview_stack.setCurrentIndex(0)
         self.processTab.run(renderQueue)
 
     def disableProcessPage(self):
-        for child in self.generalSettings.children():
-            child.setEnabled(False)
-        for child in self.advancedSettings.children():
-            child.setEnabled(False)
-        for child in self.renderQueueTab.children():
-            child.setEnabled(False)
-        for child in self.encoderSettings.children():
-            child.setEnabled(False)
-        self.RenderedPreviewControlsContainer.setEnabled(False)
-        self.scrollArea_4.setEnabled(True)
-        self.scrollAreaWidgetContents_4.setEnabled(False)
-        self.widget_5.setEnabled(True)
-        self.outputFileContainer.setEnabled(True)
-        self.openOutputFolderButton.setEnabled(True)
-        self.outputFileContainer.setEnabled(True)
+        # Studio Polish: renders no longer lock the page (jobs can be added
+        # while a render runs); kept as a hook for future partial locking
+        pass
 
     def enableProcessPage(self):
-        for child in self.generalSettings.children():
-            child.setEnabled(True)
-        for child in self.advancedSettings.children():
-            child.setEnabled(True)
-        for child in self.renderQueueTab.children():
-            child.setEnabled(True)
-        for child in self.encoderSettings.children():
-            child.setEnabled(True)
-        self.RenderedPreviewControlsContainer.setEnabled(True)
-        self.scrollAreaWidgetContents_4.setEnabled(True)
+        # see disableProcessPage — nothing to re-enable
+        pass
 
     def loadVideo(self, inputFile, multi_file=False):
         if "{MULTIPLE_FILES}" in inputFile.strip().replace(" ", ""):

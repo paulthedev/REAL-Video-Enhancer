@@ -19,6 +19,7 @@
 | VSR Model Support | ✅ Complete | AnimeSR, TSPAN with 3 backends |
 | Code Review Fixes (2026-10-08) | 🚧 In Progress | 74/78 — see [BUG_TRACKER.md](BUG_TRACKER.md) |
 | ONNX-Only Migration | 🚧 In Progress | Phases 0-3 done, Phase 5 render verification pending — [onnx-only-migration-plan.md](onnx-only-migration-plan.md) |
+| UI Redesign "Studio Polish" | 🚧 In Progress | Tracker created 2026-10-08 — [UI_REDESIGN_TRACKER.md](UI_REDESIGN_TRACKER.md) |
 
 ---
 
