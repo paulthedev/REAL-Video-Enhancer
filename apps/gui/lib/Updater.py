@@ -1,6 +1,7 @@
 """Application self-update via GitHub releases."""
 
 import os
+import re
 import stat
 import urllib.request
 
