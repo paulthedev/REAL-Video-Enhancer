@@ -12,12 +12,12 @@
 | Spandrel Half-Precision | ✅ Complete | 18/18 architectures |
 | Code Quality | ✅ Complete | All TODO/FIXME addressed |
 | Documentation | ✅ Complete | Architecture clarified |
-| Backend-Agnostic Hardware Detection | ✅ Complete | GpuHardware.py extended |
+| Backend-Agnostic Hardware Detection | ✅ Complete | GPUDetect.py extended |
 | GUI Organization | ✅ Complete | REAL-Video-Enhancer.py moved to apps/gui/ |
-| Unified Backend Selection UI | ✅ Complete | Single dropdown with sub-selection |
+| Unified Backend Selection UI | ✅ Complete | Wired through 2026-10-08 (see GUI Refactor Wiring Fix) |
 | Benchmark Tests | ✅ Complete | PyTorch, ONNX, NCNN benchmarks |
 | VSR Model Support | ✅ Complete | AnimeSR, TSPAN with 3 backends |
-| Code Review Fixes (2026-10-08) | 🚧 In Progress | 0/63 — see [BUG_TRACKER.md](BUG_TRACKER.md) |
+| Code Review Fixes (2026-10-08) | 🚧 In Progress | 6/69 fixed — see [BUG_TRACKER.md](BUG_TRACKER.md) |
 
 ---
 
@@ -44,7 +44,7 @@
 - [x] Added Qualcomm QNN support (Snapdragon HTP/NPU)
 
 ### Backend-Agnostic Hardware Detection (2026-09-29)
-- [x] Extended GpuHardware.py with backend-agnostic detection
+- [x] Extended GPUDetect.py (`apps/gui/lib/GPUDetect.py`, originally GpuHardware.py) with backend-agnostic detection
 - [x] Added BACKEND_HARDWARE_COMPATIBILITY mapping (pytorch, onnx, ncnn)
 - [x] Added ONNX_PROVIDER_HARDWARE mapping
 - [x] Added NCNN_BACKEND_HARDWARE mapping
@@ -55,12 +55,20 @@
 - [x] Added get_ncnn_backend() function
 - [x] Added check_backend_health() function
 - [x] Added get_backend_reinstall_info() function
-- [x] Integrated with DownloadDeps.py
+- [x] Integrated with DownloadDependencies.py (`apps/gui/utils/backends/`, originally DownloadDeps.py)
 - [x] Added check_backend_health() method
 - [x] Added check_backend_hardware_change() method
 - [x] Added reinstall_backend() method
 - [x] Added get_backend_recommendation() method
 - [x] All 293 tests passing (5 skipped)
+
+### GUI Refactor Wiring Fix (2026-10-08)
+- [x] `assemble_pages` re-points every page widget onto MainWindow (flat namespace preserved) — ~140 broken references fixed
+- [x] Restored `DownloadTab.hideUninstallButtons` / `showUninstallButton` (lost in the ui/ → pages/ move)
+- [x] Fixed `resources.qrc` paths (rcc resolves relative to the .qrc dir) — icon bundle compiled again (0-byte before)
+- [x] `getModels`: merged `onnx | tensorrt | directml` case; unknown backends raise instead of returning `{}`
+- [x] Removed dead refactor leftovers: empty `apps/gui/tests/`, `ModelRegistry.py` (no importers), stale local `mainwindow.py`
+- [x] Verified by offscreen smoke test: MainWindow constructs, models populate, home page renders (details in BUG_TRACKER.md Wiring section)
 
 ### Unified Backend Selection UI (2026-09-29)
 - [x] Replaced separate download buttons with unified backend selector
@@ -71,7 +79,10 @@
 - [x] Platform-aware variant options (Linux: CUDA/ROCm/XPU, Windows: CUDA, macOS: MPS)
 - [x] Integrated with ProcessTab for unified backend selection during processing
 - [x] Updated REAL-Video-Enhancer.py to use unified backend selector
-- [x] All 298 tests passing (5 skipped)
+- [x] All 293 tests passing (5 skipped)
+- Note (2026-10-08): the selector widgets were unreachable from MainWindow until the
+  GUI Refactor Wiring Fix above — the `backend_type_combo` / `backend_variant_combo`
+  accesses were `hasattr`-guarded and always False.
 
 ### Benchmark Tests (2026-09-29)
 - [x] PyTorch interpolation benchmark (bench_torch_interpolate.py)
@@ -281,8 +292,8 @@ Archived (completed work):
 ## Recent Changes (2026-09-29)
 
 ### Backend-Agnostic Hardware Detection
-- Extended `apps/gui/GpuHardware.py` to work with all backends (PyTorch, ONNX, NCNN)
-- Added health checking and repair logic to `apps/gui/DownloadDeps.py`
+- Extended `apps/gui/lib/GPUDetect.py` (then GpuHardware.py) to work with all backends (PyTorch, ONNX, NCNN)
+- Added health checking and repair logic to `apps/gui/utils/backends/DownloadDependencies.py` (then DownloadDeps.py)
 - System now detects hardware and recommends appropriate backend automatically
 
 ### GUI Organization

@@ -14,8 +14,9 @@ Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
 | Priority | Count | Fixed |
 |----------|-------|-------|
 | P0 — nothing runs end-to-end | 11 | 0 |
-| P1 — GUI crashes / wrong output | 23 | 0 |
-| P2 — robustness | 15 | 0 |
+| P1 — GUI crashes / wrong output | 25 | 1 |
+| Wiring — GUI refactor breakage (found + fixed 2026-10-08) | 4 | 4 |
+| P2 — robustness | 15 | 1 |
 | P3 — cleanup | 14 | 0 |
 
 ---
@@ -75,11 +76,13 @@ Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
 
 ## P1 — GUI crashes / incorrect behavior
 
-- [ ] **G1. `getModels` crashes for real backend names.** `apps/gui/lib/ModelHandler.py:520-545`:
+- [x] **G1. `getModels` crashes for real backend names.** `apps/gui/lib/ModelHandler.py:520-545`:
   `listBackends` emits `"tensorrt"` but there is no `tensorrt` case → `case _` returns `{}` →
   `ValueError` unpacking 6 values in `populateModels` (`process.py:93`) at GUI startup.
   The `directml` case binds only 3 of 6 variables → `UnboundLocalError`.
   Error path returns `{}` instead of raising.
+  **Fixed 2026-10-08**: `onnx | tensorrt | directml` share one case assigning all six sets;
+  unknown backends now raise `ValueError` instead of returning `{}`.
 - [ ] **G2. Declining the overwrite dialog crashes and wipes the queue.** `process.py:244-251`
   calls `guiChangesOnRenderCompletion` directly; line 409 reads `self.currentRenderOptions.isPreview`
   — `None` on first run → `AttributeError`. Line 408 also `renderQueue.clear()`s the whole
@@ -152,6 +155,52 @@ Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
   on restore/scene-detect hits `BaseBackend.run` → `NotImplementedError`.
 - [ ] **G23. Registry name drift.** `rife.py:637` registers `"RIFE"` (uppercase); all other
   models register lowercase. Lowercase lookups (matching the CLI help convention) miss RIFE.
+- [ ] **G24. Startup update check silently kills or hangs the app.** Found during the
+  2026-10-08 smoke test. `REAL-Video-Enhancer.py:169` (`if d.get_if_update_available()`)
+  runs `rve-backend.py --version` (broken, see B2) → `CalledProcessError` path treats it as
+  "backend missing" and calls `Backend.download()` (`Backend.py:43`) → **modal**
+  `DownloadProgressPopup` downloading `BACKEND_RELEASE_URL_TEMPLATE`, which 404s. Then:
+  `cancel_process` (`QTcustom.py:461-462`) calls `QApplication.quit()` + `sys.exit()` from
+  a dialog slot → the whole app dies silently with exit 0 before the window shows.
+  If instead the worker thread dies on the 404, nothing emits `finished` and the modal
+  `exec()` never closes → hang. Fix: don't auto-download at startup (surface a prompt),
+  handle HTTP errors in the worker, and never `sys.exit()` from a widget slot.
+- [ ] **G25. `DownloadAndReportToQTThread.run` has no error handling.** `QTcustom.py:352`:
+  `urlopen(...)` is outside any try — any HTTP/network error kills the worker thread without
+  emitting `finished`/`canceled`, leaving `DownloadProgressPopup.exec()` open forever.
+  Wrap the download, emit `canceled` (or a new `failed` signal) on error, and give the
+  dialog a timeout path. Related: `setProgress`'s `sys.exit()` (`QTcustom.py:466`) raises
+  SystemExit through the event loop — replace with dialog close.
+
+## Wiring — GUI refactor breakage (found + fixed 2026-10-08)
+
+The `.ui` split (monolithic `testRVEInterface.ui` → `mainwindow.ui` + per-page `.ui`)
+was never wired through to the logic code: page widgets became attributes of throwaway
+`Ui_*` instances inside `assemble_pages`, so every `self.<widget>` on MainWindow and
+`self.parent.<widget>` in page modules (~140 references) pointed at nothing. All four
+items below are fixed and verified by an offscreen `MainWindow()` smoke test
+(constructs, populates models, renders — screenshot checked).
+
+- [x] **W1. Page-widget wiring (~140 broken references).** `apps/gui/pages/__init__.py`
+  `assemble_pages` now accepts `controller=` and re-points every widget each generated
+  `Ui_*` class creates onto the MainWindow (same flat namespace as the pre-split
+  monolithic `.ui`, same approach as `QTabNavigation.bind_controlled_attributes`).
+  Call site: `REAL-Video-Enhancer.py:137` passes `controller=self`. Collision audit:
+  only benign overlaps (page slot names, tab `title` attributes); `get_current_backend`
+  now falls back when the unified selector is still empty at ProcessTab init time.
+- [x] **W2. `DownloadTab.hideUninstallButtons` / `showUninstallButton` missing.**
+  `REAL-Video-Enhancer.py:289-290` calls both; they were lost in the ui/ → pages/ move.
+  Restored from history (`950abc80:src/ui/DownloadTab.py`); all referenced buttons
+  verified present in `download.ui`.
+- [x] **W3. `resources.qrc` paths made the whole icon bundle fail to compile.** Entries
+  were repo-root-relative (`apps/gui/icons/...`) but rcc resolves them relative to the
+  `.qrc` file's directory → `Cannot find file` → **0-byte `resources_rc.py`** → no icons
+  at all. Fixed to qrc-relative (`icons/...`), matching the `:/icons/icons/...` paths the
+  code uses; rebuilt bundle is ~211 KB with all 288 icons.
+- [x] **W4. Dead refactor leftovers removed.** `apps/gui/tests/` (empty dir),
+  `apps/gui/ModelRegistry.py` (zero importers), stale local `mainwindow.py` (see R14);
+  duplicate names in `download.py:12` import deduped; unused `RegularQTPopup`/`errorAndLog`
+  imports removed from `ModelHandler.py`.
 
 ## P2 — Robustness / resource handling
 
@@ -193,10 +242,10 @@ Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
   or a structured output mode.
 - [ ] **R13. Preview scrollbar connections accumulate.** `process.py:427`: a new lambda +
   `QMediaPlayer` connected per preview render; stale handlers fire on deleted players.
-- [ ] **R14. Stale checked-in `apps/gui/mainwindow.py`.** Generated file imports **PySide2**
-  and a `resources_rc` module that doesn't exist in-repo. Runtime imports `mainwindow` from
-  `dist/` (built by `build.py`), so this file only bites before a build — delete it and
-  gitignore (it shadows the intended dist module).
+- [x] **R14. Stale `apps/gui/mainwindow.py`.** ~~Generated file imports **PySide2**~~
+  Correction 2026-10-08: the file was **never tracked** — `.gitignore` already covers
+  `mainwindow.py`; it was only a local stale artifact (PySide2-era build output) that could
+  shadow the intended `dist/mainwindow.py` before a build. Deleted from disk 2026-10-08.
 - [ ] **R15. Pause race.** `process.py:200-202`: `pauseRender` reads `self.pausedSharedMemory`
   created inside the render thread (`renderToPipeThread` → `createPausedSharedMemory`) —
   clicking pause in the first moments of a render → `AttributeError` in the GUI thread.

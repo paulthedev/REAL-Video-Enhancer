@@ -64,9 +64,68 @@ All documentation files must be placed in the `docs/` folder. This includes:
    - Use existing utilities instead of reimplementing functionality
 
 6. **Before writing new code**:
-   - Search for existing utilities using `zvec_grep_search` with semantic queries
+   - Search for existing utilities using zvec grep with semantic queries (see [Semantic Code Search](#semantic-code-search))
    - Check if the functionality already exists in `apps/backend/utils/`
    - If not, consider whether it should be added as a reusable utility
+
+### Semantic Code Search
+
+This repository is wired for **[zvec grep](https://github.com/zvec-ai/zvec-grep)**
+(`zg`) — a local-first search tool that unifies ripgrep, BM25, and vector
+search — through a project-scoped MCP server. The index lives in
+`.zvec-grep/` (git-ignored local cache, never commit it). Prefer semantic
+search over reading files blind or grepping through raw dumps when you are
+looking for behavior or concepts.
+
+**Setup — no global install needed.** This repo ships an MCP config at
+`.zcode/mcp.json` that launches the server on demand via npx (requires
+Node 22+):
+
+```json
+{
+  "mcpServers": {
+    "zvec-grep": {
+      "command": "npx",
+      "args": ["-y", "@zvec/zvec-grep", "--server", "--stdio"],
+      "env": { "ZVEC_GREP_MCP_TOOLSET": "search" }
+    }
+  }
+}
+```
+
+Agents connected to this MCP server get a `zvec_grep_search` tool that takes
+a natural-language `query`, optional `fts` keyword terms, `globs`, and
+`fuse: true` to blend semantic + keyword results. The default `search`
+toolset is intentional — agents should not silently create, rebuild, or
+delete the index (see
+[docs/03-mcp.md](https://github.com/zvec-ai/zvec-grep/blob/main/docs/03-mcp.md)
+for the `full` toolset and transport options).
+
+**Indexing** — the search tool needs the `.zvec-grep/` index to exist. Build
+or refresh it (local `potion-code` embedding model — everything stays
+on-machine):
+
+```bash
+npx -y @zvec/zvec-grep index --embedding local/potion-code-16m-v2
+```
+
+Re-run this after large file moves or renames. `ZVEC_GREP_MCP_TOOLSET=full`
+exposes index-management tools to agents instead, but the CLI form above is
+the default workflow.
+
+**CLI equivalent** (same package, no MCP): `npx -y @zvec/zvec-grep query
+--human "<query>" --limit 5`, or `npx -y @zvec/zvec-grep --rg -F "symbol" src`
+for exact search. Diagnose index problems with
+`npx -y @zvec/zvec-grep status --mode direct --debug`.
+
+**When to reach for it**:
+- Before writing any new code (find existing utilities that already solve it)
+- When refactoring (find duplicated patterns worth extracting into `apps/backend/utils/`)
+- When tracing behavior that spans backend and GUI (render pipeline, settings, encoders)
+- When onboarding to an unfamiliar subsystem
+
+**When plain grep is still better**: exact symbol names, error strings, file
+paths, or listing every call site of a known function.
 
 ### Dependencies
 - Use `pyproject.toml` for all dependencies
@@ -80,9 +139,9 @@ All documentation files must be placed in the `docs/` folder. This includes:
 - Generated files: `dist/mainwindow.py`, `dist/resources_rc.py`
 
 ### Testing
-- Tests in `tests/` directory
+- Tests in `apps/backend/tests/` directory
 - Run with `uv run pytest`
-- 178 tests passing
+- 293 tests passing, 5 skipped
 
 ### Logging
 - Runtime logs go to `logs/log.txt`
