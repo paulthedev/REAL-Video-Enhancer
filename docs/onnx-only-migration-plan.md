@@ -84,6 +84,26 @@ onnx-backend-plan.md`.
 
 ---
 
+## Performance-first implementation principles (confirmed 2026-10-08)
+
+Beyond provider selection, the performance-first rule applies to the
+runtime itself:
+
+- **fp16 everywhere it helps** — prefer fp16 model variants when the models
+  repo offers them, default `--precision` to fp16 on GPU accelerators (CPU
+  stays fp32), and run I/O conversions in fp16 where the model graph
+  expects it.
+- **ORT graph optimization at max** — set
+  `session_options.graph_optimization_level = ORT_ENABLE_ALL` explicitly in
+  `OnnxLoader` (plus the existing mem arena/pattern/reuse flags), so every
+  session gets full kernel fusion regardless of defaults.
+- **Engine/session caches treated as first-class** — TensorRT engine cache
+  (Phase 2) and ORT's optimized-model caching live in the app data dir and
+  survive upgrades keyed by model + provider + shape signature.
+- **No unnecessary round-trips** — frames stay in their native dtype/range
+  between pipeline stages (the G10/G11 fixes establish the single
+  NCHW/0-1/uint8 convention at the boundaries only).
+
 ## Phase 0 — Verification gate (do before deleting anything)
 
 The ONNX inference path is the least-exercised code in the repo (bugs G10/G11
