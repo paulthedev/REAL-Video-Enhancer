@@ -16,6 +16,7 @@ Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
 | P0 — nothing runs end-to-end | 11 | 0 |
 | P1 — GUI crashes / wrong output | 25 | 1 |
 | Wiring — GUI refactor breakage (found + fixed 2026-10-08) | 4 | 4 |
+| Download — backend download/install wiring (found 2026-10-08) | 4 | 0 |
 | P2 — robustness | 15 | 1 |
 | P3 — cleanup | 14 | 0 |
 
@@ -202,6 +203,43 @@ items below are fixed and verified by an offscreen `MainWindow()` smoke test
   duplicate names in `download.py:12` import deduped; unused `RegularQTPopup`/`errorAndLog`
   imports removed from `ModelHandler.py`.
 
+## Download — backend download/install wiring (found 2026-10-08)
+
+Trace of the download page's install paths against the restructured backend
+(`download.py` → `DownloadDependencies.py` → `rve-backend.py`). PyTorch and
+NCNN install paths are wired correctly (pip targets `PYTHON_EXECUTABLE_PATH`,
+same env every launch path uses). ONNX is broken at both ends.
+
+- [ ] **D1. ONNX install is a silent no-op.** `load_backend()` (`download.py:181`) and
+  `installRecommended()` (`download.py:208`) call `self.download("onnx", install=True)` →
+  `downloadPythonDeps` (`DownloadDependencies.py:593+`), whose `match` has **no
+  `case "onnx"` and no `case _`** → installs only the platform-independent shared deps
+  (opencv, scenedetect, …), returns 0 → UI pops "Download Complete! Please restart"
+  while `onnxruntime` was never installed.
+  Fix: add `case "onnx"` installing `onnxruntime` (+ provider/extra deps per platform).
+- [ ] **D2. Backend never lists ONNX.** `rve-backend.py:listBackends` only appends
+  `"tensorrt"`, `"pytorch (...)"`, `"ncnn"` — zero ONNX detection logic in the backend.
+  Even with a working install (D1), `getAvailableBackends()` never includes `"onnx"` so
+  the app treats it as not installed. Backend-side half of the "ONNX as primary backend"
+  strategy (TRACKER 2026-09-29) was never implemented — same family as B1/B3.
+  Fix: add an ONNX branch (probe `onnxruntime` + available providers in the backend env)
+  mirroring the pytorch/ncnn blocks.
+- [ ] **D3. Backend update/version check is dead until B2.** `Backend.get_if_update_available`
+  (`Backend.py:50`) probes `PYTHON_EXECUTABLE_PATH rve-backend.py --version` →
+  `ModuleNotFoundError` (B2) on every run → every startup takes the "backend not found"
+  auto-download path (see G24). Also catches only `CalledProcessError` — a missing backend
+  directory raises uncaught `FileNotFoundError`. Resolves via B2 + the G24/G25 error
+  handling; the `FileNotFoundError` guard is a separate small fix.
+- [ ] **D4. `check_backend_health` probes the wrong environment (dormant).**
+  `BackendDetect.py:215-303` (`_check_pytorch/_onnx/_ncnn_health`) does
+  `import torch` / `import onnxruntime` / `import ncnn` **in-process** — the GUI/frozen
+  interpreter — while backend deps live in the standalone python env (`CWD/python/...`).
+  Currently only reachable via `DownloadDependencies.check_backend_hardware_change` /
+  `reinstall_backend`, which have no callers in the live flow. Fix before wiring them in:
+  run the probes with `PYTHON_EXECUTABLE_PATH -c "import ..."` like the rest of the
+  backend integration.
+
+
 ## P2 — Robustness / resource handling
 
 - [ ] **R1. `FFMpegInfoWrapper` leaks subprocess, unguarded regexes.** `utils/VideoInfo.py:121`:
@@ -280,7 +318,9 @@ items below are fixed and verified by an offscreen `MainWindow()` smoke test
 4. **B8, B9 + G7, G8, G10, G11** (inference correctness) — frames come out right.
 5. **G1, G2, G3, G4** (GUI startup + mid-render crashes).
 6. **B11, G6, G12, G13, G14** and remaining P1s.
-7. P2/P3 in a cleanup pass.
+7. **D1 + D2 together** (ONNX install + backend listing — one is useless without the other);
+   **D3** resolves via B2 + G24/G25; **D4** when wiring in the health checks.
+8. P2/P3 in a cleanup pass.
 
 ## Verification notes
 
