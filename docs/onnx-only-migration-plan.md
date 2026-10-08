@@ -1,6 +1,7 @@
 # ONNX-Only Migration Plan
 
-Status: **planned — not started**
+Status: **planned — not started**. Render verification happens **after**
+the refactor completes (Phase 5), not as a pre-gate.
 Decided (user, 2026-10-08):
 
 1. ONNX Runtime becomes the **only** inference backend. PyTorch and NCNN go away.
@@ -104,20 +105,18 @@ runtime itself:
   between pipeline stages (the G10/G11 fixes establish the single
   NCHW/0-1/uint8 convention at the boundaries only).
 
-## Phase 0 — Verification gate (do before deleting anything)
+## Phase 0 — Build-prep checks
 
-The ONNX inference path is the least-exercised code in the repo (bugs G10/G11
-etc. were fixed but never proven against a real model). Nothing below runs
-until:
+Quick engineering checks (not render gates) that inform the refactor:
 
-- [ ] Real ONNX render end-to-end: download one ONNX model from the models
-  repo (e.g. `tspan.onnx`) and render a short clip through
-  `rve-backend.py -b onnx` — verify output frames are sane.
 - [ ] onnxruntime wheel availability for the **build venv's Python (3.14)**.
   If 3.14 wheels don't exist, move the build venv (and cx_Freeze target) to
-  3.12/3.13 first. This is a hard gate for "bundled from the get-go".
+  3.12/3.13 as part of Phase 2.
 - [ ] Confirm `imageio-ffmpeg`'s bundled build handles RVE's usage: rawvideo
   piped via stdin/stdout, `-filter_complex`, HDR pix fmts.
+
+The ONNX inference path is the least-exercised code in the repo — it gets
+proven in **Phase 5** after the refactor, per decision (2026-10-08).
 
 ## Phase 1 — GUI: ONNX-only user flows
 
@@ -214,7 +213,21 @@ until:
 - [ ] Docs: AGENTS.md (key technologies), FOLDER_STRUCTURE.md, TRACKER.md —
   new "ONNX-only (2026-10)" completed section; archive superseded plans.
 - [ ] BUG_TRACKER: mark S1/S2/D1/D2/D3 superseded-by-this-plan; G21 stays
-  until the Phase 0 gate.
+  until the Phase 5 render verification.
+
+## Phase 5 — Post-refactor verification (user decision 2026-10-08)
+
+The render test runs here, once the refactor is complete:
+
+- [ ] Real ONNX render end-to-end: download one ONNX model from the models
+  repo (e.g. `tspan.onnx`) and render a short clip through
+  `rve-backend.py -b onnx` — verify output frames are sane (also settles
+  G21's scaling questions with real output).
+- [ ] Provider upgrade flow: simulate NVIDIA/AMD/Intel hardware paths —
+  download, sys.path activation, restart, fallback to bundled CPU on failure.
+- [ ] TRT tier on capable hardware: engine build, cache reuse on second run.
+- [ ] imageio-ffmpeg path: render through the bundled ffmpeg binary.
+- [ ] Performance spot-checks against the pre-refactor app (fp16 on/off).
 
 ## Risks / open questions
 
