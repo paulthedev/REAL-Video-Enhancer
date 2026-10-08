@@ -58,7 +58,10 @@ class PyTorchInterpolateRunner(InterpolateBackend):
         with torch.inference_mode():
             result = model.infer(img0_tensor, img1_tensor, timestep)
         
-        # Convert back to numpy
+        # Convert back to numpy — normalize rank: some models return
+        # [B,C,H,W], others [C,H,W]
+        if result.ndim == 3:
+            result = result.unsqueeze(0)
         result = result.squeeze(0).permute(1, 2, 0).clamp(0, 1).cpu().numpy()
         result = (result * 255.0).astype(np.uint8)
         
@@ -130,7 +133,10 @@ class PyTorchUpscaleRunner(UpscaleBackend):
         with torch.inference_mode():
             result = model.infer(img_tensor, **kwargs)
         
-        # Convert back to numpy
+        # Convert back to numpy — normalize rank: some models return
+        # [B,C,H,W], others [C,H,W]
+        if result.ndim == 3:
+            result = result.unsqueeze(0)
         result = result.squeeze(0).permute(1, 2, 0).clamp(0, 1).cpu().numpy()
         result = (result * 255.0).astype(np.uint8)
         

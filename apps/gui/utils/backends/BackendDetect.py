@@ -215,6 +215,10 @@ def get_ncnn_backend(hardware: Optional[list] = None) -> str:
 def check_backend_health(backend: str) -> dict:
     """Check if a backend is healthy and working.
 
+    Probes the standalone backend python (PYTHON_EXECUTABLE_PATH) in a
+    subprocess — backend dependencies are installed there, not in the GUI's
+    own environment, so in-process imports would report the wrong thing.
+
     Args:
         backend: Backend name (pytorch, onnx, ncnn).
 
@@ -224,25 +228,71 @@ def check_backend_health(backend: str) -> dict:
         - error: str or None
         - details: dict with additional info
     """
+    import json
+    import subprocess
+
+    from apps.gui.constants import PYTHON_EXECUTABLE_PATH
+
     result = {
         "healthy": False,
         "error": None,
         "details": {}
     }
 
-    try:
-        if backend == "pytorch":
-            return _check_pytorch_health(result)
-        elif backend == "onnx":
-            return _check_onnx_health(result)
-        elif backend == "ncnn":
-            return _check_ncnn_health(result)
-        else:
-            result["error"] = f"Unknown backend: {backend}"
-            return result
-    except Exception as e:
-        result["error"] = str(e)
+    probes = {
+        "pytorch": (
+            "import json, torch; print(json.dumps({"
+            "'version': torch.__version__,"
+            "'cuda_available': torch.cuda.is_available(),"
+            "'mps_available': bool(getattr(torch.backends, 'mps', None) and torch.backends.mps.is_available()),"
+            "'cuda_device_count': torch.cuda.device_count() if torch.cuda.is_available() else 0,"
+            "'cuda_device_name': torch.cuda.get_device_name(0) if torch.cuda.is_available() else None}))"
+        ),
+        "onnx": (
+            "import json, onnxruntime as ort; providers = ort.get_available_providers();"
+            "print(json.dumps({"
+            "'version': ort.__version__,"
+            "'providers': providers,"
+            "'gpu_providers_available': any(p != 'CPUExecutionProvider' for p in providers)}))"
+        ),
+        "ncnn": (
+            "import json; out = {};\n"
+            "try:\n"
+            "    import ncnn; out['version'] = getattr(ncnn, '__version__', 'unknown')\n"
+            "except ImportError:\n"
+            "    try:\n"
+            "        import rife_ncnn_vulkan_python_tntwise as m; out['rife_ncnn_version'] = m.__version__\n"
+            "    except ImportError:\n"
+            "        import upscale_ncnn_py as m; out['upscale_ncnn_version'] = m.__version__\n"
+            "print(json.dumps(out))"
+        ),
+    }
+
+    if backend not in probes:
+        result["error"] = f"Unknown backend: {backend}"
         return result
+
+    try:
+        proc = subprocess.run(
+            [PYTHON_EXECUTABLE_PATH, "-c", probes[backend]],
+            capture_output=True, text=True, timeout=60,
+        )
+        if proc.returncode != 0:
+            result["error"] = f"{backend} probe failed: {proc.stderr.strip()[:500]}"
+            return result
+        output = proc.stdout.strip().splitlines()[-1] if proc.stdout.strip() else "{}"
+        result["details"] = json.loads(output)
+        result["healthy"] = True
+    except FileNotFoundError:
+        result["error"] = "Backend python not found (standalone CPython not installed)"
+    except subprocess.TimeoutExpired:
+        result["error"] = f"{backend} health check timed out"
+    except json.JSONDecodeError as e:
+        result["error"] = f"Could not parse health check output: {e}"
+    except Exception as e:
+        result["error"] = f"{backend} health check failed: {e}"
+
+    return result
 
 
 def _check_pytorch_health(result: dict) -> dict:

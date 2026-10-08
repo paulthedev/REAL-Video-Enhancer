@@ -146,7 +146,7 @@ class VideoLoader:
        
         self.fps = self.ffmpeg_info.get_fps()
         self.total_frames = int(self.ffmpeg_info.get_total_frames())
-        self.duration = self.total_frames / self.fps
+        self.duration = self.total_frames / self.fps if self.fps > 0 else 0.0
         self.color_space = self.ffmpeg_info.get_color_space()
         self.color_transfer = self.ffmpeg_info.get_color_transfer()
         self.color_primaries = self.ffmpeg_info.get_color_primaries()

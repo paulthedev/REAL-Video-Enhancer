@@ -63,7 +63,7 @@ class Backend(Dependency):
             update_available = not output == backend_dev_version
             self.is_update_available = update_available
             return update_available
-        except subprocess.CalledProcessError as e: # if the backend is not found
+        except (subprocess.CalledProcessError, FileNotFoundError) as e: # if the backend is not found
             log("Backend not found, downloading..." + str(e))
             self.download()
             self.is_update_available = False

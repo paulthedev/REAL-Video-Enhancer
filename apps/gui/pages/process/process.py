@@ -201,7 +201,10 @@ class ProcessTab:
             log("No render process!")
 
     def pauseRender(self):
-        shmbuf = self.pausedSharedMemory.buf
+        shm = getattr(self, "pausedSharedMemory", None)
+        if shm is None:
+            return  # render thread has not created the shared memory yet
+        shmbuf = shm.buf
         shmbuf[0] = 1  # 1 = True
         hide_layout_widgets(self.parent.onRenderButtonsContiainer)
         self.parent.startRenderButton.setVisible(True)
@@ -339,7 +342,7 @@ class ProcessTab:
                 **kwargs,
             )
             textOutput = []
-            for line in iter(self.renderProcess.stdout.readline, b""):
+            for line in iter(self.renderProcess.stdout.readline, ""):
                 if self.renderProcess.poll() is not None:
                     break  # Exit the loop if the process has terminated
 
@@ -351,11 +354,15 @@ class ProcessTab:
                         textOutput = textOutput[
                             :-1
                         ]  # slice the list to only get the last updated data
-                        self.currentFrame = int(
-                            re.search(r"Current Frame: (\d+)", line).group(1)
-                        )
-                        self.fps = re.search(r"FPS: (\d+)", line).group(1)
-                        self.eta = re.search(r"ETA: (.+)", line).group(1)
+                        frame_match = re.search(r"Current Frame: (\d+)", line)
+                        fps_match = re.search(r"FPS: (\d+)", line)
+                        eta_match = re.search(r"ETA: (.+)", line)
+                        if frame_match:
+                            self.currentFrame = int(frame_match.group(1))
+                        if fps_match:
+                            self.fps = int(fps_match.group(1))
+                        if eta_match:
+                            self.eta = eta_match.group(1)
                         self.status = "Rendering"
 
                     if "this may take a while" in line.lower():
@@ -408,8 +415,10 @@ class ProcessTab:
         self.parent.FPS.setText("FPS: ")
         self.parent.ETA.setText("ETA: ")
         self.parent.STATUS.setText("Status: ")
-        self.parent.renderQueue.clear()
-        if self.currentRenderOptions.isPreview:
+        # NOTE: no renderQueue.clear() here — the render loop clears the queue
+        # on completion, and clearing on the overwrite-declined path would wipe
+        # the user's queued items.
+        if self.currentRenderOptions is not None and self.currentRenderOptions.isPreview:
             from PySide6.QtMultimedia import QMediaPlayer
             try:
                 def onScroll(preview:QMediaPlayer, value):
@@ -427,7 +436,12 @@ class ProcessTab:
                 self.parent.VideoPreview.setVisible(True)
                 self.parent.previewLabel.setVisible(False)
                 self.parent.timeInVideoScrollBar.setRange(0, (((self.currentRenderOptions.endTime-self.currentRenderOptions.startTime))*10)-1) # convert to ms
+                try:
+                    self.parent.timeInVideoScrollBar.valueChanged.disconnect()
+                except RuntimeError:
+                    pass  # nothing connected yet
                 self.parent.timeInVideoScrollBar.valueChanged.connect(lambda: onScroll(player, int(self.parent.timeInVideoScrollBar.value()*100)))
+                self._preview_player = player  # keep a reference so Qt doesn't GC it
 
             except Exception as e:
                 log(f"Error: {e}")
@@ -443,7 +457,8 @@ class ProcessTab:
         # Have to swap the visibility of these here otherwise crash for some reason
         if (
             self.settings.settings["discord_rich_presence"] == "True"
-        ):  # only close if it exists
+            and getattr(self, "discordRPC", None) is not None
+        ):  # only close if it actually started
             self.discordRPC.closeRPC()
         try:
             self.workerThread.stop()

@@ -3,7 +3,7 @@ import sys
 import urllib.request
 import platform
 from PySide6.QtCore import QDir
-def networkCheck(hostname="https://raw.githubusercontent.com") -> bool:
+def networkCheck(hostname="https://pypi.org") -> bool:
     """
     checks network availability against a url, default url: raw.githubusercontent.com
     """

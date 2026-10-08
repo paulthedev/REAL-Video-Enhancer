@@ -59,7 +59,15 @@ class ONNXBackendLoader(BaseBackend):
         if provider == "auto":
             self.provider = self._select_best_provider()
         else:
-            self.provider = provider
+            available = self.available_providers
+            if provider not in available:
+                print(
+                    f"WARNING: provider '{provider}' not available "
+                    f"(have: {available}); falling back to auto selection"
+                )
+                self.provider = self._select_best_provider()
+            else:
+                self.provider = provider
         
         # Default provider options
         self.provider_options = provider_options or {}

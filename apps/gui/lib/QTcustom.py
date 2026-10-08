@@ -252,12 +252,21 @@ class UpdateGUIThread(QThread):
     
     def createNewSharedMemory(self, channels: int):
         self.channels = channels
-        if self.outputVideoHeight and self.outputVideoWidth:
-            self.shm = shared_memory.SharedMemory(
-                name=self.imagePreviewSharedMemoryID, create=True, size = self.channels * self.outputVideoHeight * self.outputVideoWidth
-            )
-        else:
+        if not (self.outputVideoHeight and self.outputVideoWidth):
             raise ValueError("Output video resolution not set.")
+        size = self.channels * self.outputVideoHeight * self.outputVideoWidth
+        try:
+            self.shm = shared_memory.SharedMemory(
+                name=self.imagePreviewSharedMemoryID, create=True, size=size
+            )
+        except FileExistsError:
+            # stale segment from a previously crashed render — drop and recreate
+            stale = shared_memory.SharedMemory(name=self.imagePreviewSharedMemoryID)
+            stale.close()
+            stale.unlink()
+            self.shm = shared_memory.SharedMemory(
+                name=self.imagePreviewSharedMemoryID, create=True, size=size
+            )
 
     def deleteSharedMemory(self):
         try:
@@ -324,7 +333,7 @@ class UpdateGUIThread(QThread):
             bytes_per_line,
             QtGui.QImage.Format_RGB888
         )
-        return convert_to_Qt_format
+        return convert_to_Qt_format.copy()  # own the pixel data — the numpy buffer dies this iteration
 
     def stop(self):
         
@@ -348,6 +357,14 @@ class DownloadAndReportToQTThread(QThread):
         self.downloadLocation = downloadLocation
 
     def run(self):
+        try:
+            self._download()
+        except Exception as e:
+            # close the dialog instead of leaving the modal loop hanging forever
+            log(f"Download failed: {self.link} ({e})")
+            self.finished.emit()
+
+    def _download(self):
         log("Downloading: " + self.link)
         response = urllib.request.urlopen(self.link, timeout=30)
         if response.headers.get("Content-Length") is not None:
@@ -458,12 +475,16 @@ class DownloadProgressPopup(QtWidgets.QProgressDialog):
         self.workerThread.start()
 
     def cancel_process(self):
-        QtWidgets.QApplication.quit()
-        sys.exit()
+        # close only this dialog — quitting the application from a popup
+        # killed the whole app when a startup download was cancelled (G24)
+        self.cancelled = True
+        self.close()
 
     def setProgress(self, value):
         if self.wasCanceled():
-            sys.exit()
+            self.cancelled = True
+            self.close()
+            return
         self.setValue(value + 10)
 
 

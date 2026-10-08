@@ -247,7 +247,7 @@ class MaxViTSceneDetectModel(BaseSceneDetectModel):
         
         # Create NCNN Mat
         c, h, w = input_np.shape[0], input_np.shape[2], input_np.shape[3]
-        mat = ncnn.Mat(h, w, c, input_np[0].transpose(1, 2, 0).flatten())
+        mat = ncnn.Mat.from_pixels(input_np[0].transpose(1, 2, 0), ncnn.Mat.PixelType.PIXEL_RGB, w, h)
         
         # Create extractor
         extractor = self.ncnn_net.create_extractor()

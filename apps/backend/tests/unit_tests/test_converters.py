@@ -161,23 +161,19 @@ class TestOnnxToNcnnConverter(unittest.TestCase):
     """Test OnnxToNcnnConverter class."""
     
     @patch('apps.backend.converters.onnx_to_ncnn.OnnxToNcnnConverter._find_pnnx')
-    @patch('apps.backend.converters.onnx_to_ncnn.OnnxToNcnnConverter._find_ncnnoptimize')
-    def test_init(self, mock_find_ncnn, mock_find_pnnx):
+    def test_init(self, mock_find_pnnx):
         """Test converter initialization."""
         mock_find_pnnx.return_value = "/usr/local/bin/pnnx"
-        mock_find_ncnn.return_value = "/usr/local/bin/ncnnoptimize"
-        
+
         converter = OnnxToNcnnConverter()
         self.assertFalse(converter.fp16)
         self.assertEqual(converter.pnnx_path, "/usr/local/bin/pnnx")
     
     @patch('apps.backend.converters.onnx_to_ncnn.OnnxToNcnnConverter._find_pnnx')
-    @patch('apps.backend.converters.onnx_to_ncnn.OnnxToNcnnConverter._find_ncnnoptimize')
-    def test_init_fp16(self, mock_find_ncnn, mock_find_pnnx):
+    def test_init_fp16(self, mock_find_pnnx):
         """Test converter initialization with FP16."""
         mock_find_pnnx.return_value = "/usr/local/bin/pnnx"
-        mock_find_ncnn.return_value = "/usr/local/bin/ncnnoptimize"
-        
+
         converter = OnnxToNcnnConverter(fp16=True)
         self.assertTrue(converter.fp16)
         self.assertEqual(converter.pnnx_path, "/usr/local/bin/pnnx")

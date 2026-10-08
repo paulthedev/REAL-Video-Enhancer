@@ -396,8 +396,8 @@ class GmfssModel(BaseInterpolateModel):
         
         # Create NCNN Mats
         h, w, c = frame1_np.shape
-        mat1 = ncnn.Mat(h, w, c, frame1_np.flatten())
-        mat2 = ncnn.Mat(h, w, c, frame2_np.flatten())
+        mat1 = ncnn.Mat.from_pixels(frame1_np, ncnn.Mat.PixelType.PIXEL_RGB, w, h)
+        mat2 = ncnn.Mat.from_pixels(frame2_np, ncnn.Mat.PixelType.PIXEL_RGB, w, h)
         
         # Create extractor
         extractor = self.ncnn_net.create_extractor()
@@ -409,8 +409,8 @@ class GmfssModel(BaseInterpolateModel):
         _, out_mat = extractor.extract("output.1")
         
         # Convert output to tensor
-        output_data = out_mat.to_pixels()
-        result = torch.from_numpy(output_data).permute(2, 0, 1).unsqueeze(0) / 255.0
+        output_data = out_mat.numpy()  # CHW float
+        result = torch.from_numpy(output_data).unsqueeze(0).clamp(0.0, 1.0)
         
         return result.squeeze(0)
     

@@ -92,6 +92,12 @@ class OnnxModelLoader:
                 if preferred_provider in self.available_providers:
                     return preferred_provider
             return "CPUExecutionProvider"
+        if provider not in self.available_providers:
+            print(
+                f"WARNING: provider {provider!r} not available "
+                f"(have: {self.available_providers}); falling back to auto"
+            )
+            return self._select_provider("auto")
         return provider
     
     def load(self, model_path: str) -> None:

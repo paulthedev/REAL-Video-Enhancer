@@ -612,6 +612,17 @@ class DownloadDependencies:
                 ]
                 return_code = self.pip(deps, install)
                 return_codes.append(return_code)
+            case "onnx":
+                # onnxruntime-directml covers every GPU on Windows via DX12;
+                # elsewhere ship the CPU package (GPU EPs can be added via
+                # reinstall_backend for CUDA systems)
+                deps += [
+                    "onnx>=1.14.0",
+                    "onnxconverter-common>=1.14.0",
+                    "onnxruntime-directml>=1.15.0" if PLATFORM == "win32" else "onnxruntime>=1.15.0",
+                ]
+                return_code = self.pip(deps, install)
+                return_codes.append(return_code)
             case "torch":
                 # Nightly wheels carry a date stamp (e.g. 2.15.0.dev20260925) that
                 # can't be expressed with a plain == pin, so resolve the latest

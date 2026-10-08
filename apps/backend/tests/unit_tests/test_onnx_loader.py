@@ -25,10 +25,21 @@ class TestOnnxModelLoader(unittest.TestCase):
         self.assertIsNotNone(loader.session_options)
         self.assertIsNone(loader.session)
     
-    def test_init_with_provider(self):
-        """Test loader initialization with specific provider."""
+    @patch('apps.backend.utils.OnnxLoader.ort')
+    def test_init_with_provider(self, mock_ort):
+        """Test loader initialization with an available specific provider."""
+        mock_ort.get_available_providers.return_value = [
+            "CUDAExecutionProvider", "CPUExecutionProvider"
+        ]
         loader = OnnxModelLoader(provider="CUDAExecutionProvider")
         self.assertEqual(loader.provider, "CUDAExecutionProvider")
+
+    @patch('apps.backend.utils.OnnxLoader.ort')
+    def test_init_with_unavailable_provider_falls_back(self, mock_ort):
+        """Requesting an unavailable provider warns and falls back to auto."""
+        mock_ort.get_available_providers.return_value = ["CPUExecutionProvider"]
+        loader = OnnxModelLoader(provider="CUDAExecutionProvider")
+        self.assertEqual(loader.provider, "CPUExecutionProvider")
     
     def test_init_with_provider_options(self):
         """Test loader initialization with provider options."""
@@ -152,7 +163,10 @@ class TestOnnxModelLoader(unittest.TestCase):
     
     @patch('apps.backend.utils.OnnxLoader.ort')
     def test_select_provider_explicit(self, mock_ort):
-        """Test explicit provider selection."""
+        """Test explicit provider selection when the provider is available."""
+        mock_ort.get_available_providers.return_value = [
+            "CUDAExecutionProvider", "CPUExecutionProvider"
+        ]
         loader = OnnxModelLoader(provider="CUDAExecutionProvider")
         self.assertEqual(loader.provider, "CUDAExecutionProvider")
     

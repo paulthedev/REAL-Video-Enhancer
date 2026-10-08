@@ -591,8 +591,8 @@ class RifeModel(BaseInterpolateModel):
         _, out_mat = extractor.extract("output.1")
         
         # Convert output to tensor
-        output_data = out_mat.to_pixels()
-        result = torch.from_numpy(output_data).permute(2, 0, 1).unsqueeze(0)
+        output_data = out_mat.numpy()  # CHW float
+        result = torch.from_numpy(output_data).unsqueeze(0).clamp(0.0, 1.0)
         
         return result
     
