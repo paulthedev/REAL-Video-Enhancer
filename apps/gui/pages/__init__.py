@@ -1,7 +1,7 @@
 """Assembled pages.
 
 ``build.py`` compiles the main window and each page's ``.ui`` file into
-generated ``Ui_*`` classes under ``apps/gui/dist/`` (the main window's
+generated ``Ui_*`` classes under the repo-root ``dist/`` (the main window's
 stacked widget contains empty placeholder slots named ``homePage`` /
 ``morePage`` / ``procPage`` / ``settingsPage`` / ``downloadPage``).
 
@@ -15,10 +15,12 @@ This package provides the page widgets:
 import os
 import sys
 
-# generated page modules live in apps/gui/dist (written by build.py) which
-# is already on sys.path via the entry point's dist/ insert.
-_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dist")
-for _p in (_DIST, os.path.join(_DIST, "pages")):
+# generated page modules live in the repo-root dist/ (build.py OUTPUT_FOLDER,
+# three levels up from this package) which the entry point also puts on
+# sys.path; script-adjacent dist/ kept as a packaged-layout fallback.
+_DIST = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "dist")
+_SCRIPT_DIST = os.path.join(os.path.dirname(os.path.dirname(__file__)), "dist")
+for _p in (_DIST, os.path.join(_DIST, "pages"), _SCRIPT_DIST, os.path.join(_SCRIPT_DIST, "pages")):
     if os.path.isdir(_p) and _p not in sys.path:
         sys.path.insert(0, _p)
 
@@ -113,14 +115,26 @@ class Download(_PageBase):
 PAGES = (Home, More, Process, SettingsPage, Download)
 
 
-def assemble_pages(stacked_widget: QWidget) -> None:
-    """Populate each page placeholder in ``stackedWidget`` in place."""
+def assemble_pages(stacked_widget: QWidget, controller: QWidget | None = None) -> None:
+    """Populate each page placeholder in ``stackedWidget`` in place.
+
+    When ``controller`` is given (the ``MainWindow``), every widget the
+    generated ``Ui_*`` class creates is re-pointed onto it under its
+    ``objectName`` — the same flat namespace the pre-split monolithic
+    ``.ui`` produced, and the same approach as
+    ``QTabNavigation.bind_controlled_attributes``. Page logic keeps using
+    ``self.<widget>`` / ``self.parent.<widget>`` unchanged.
+    """
     for cls in PAGES:
         slot = stacked_widget.findChild(
             QWidget, cls.CONTAINER_NAME
         )
         if slot is not None:
-            cls.populate(slot)
+            ui = cls._ui_instance()
+            ui.setupUi(slot)
+            if controller is not None:
+                for name, widget in ui.__dict__.items():
+                    setattr(controller, name, widget)
 
 
 __all__ = ["Home", "More", "Process", "SettingsPage", "Download", "PAGES", "assemble_pages"]

@@ -77,8 +77,11 @@ class ProcessTab:
 
     def get_current_backend(self) -> str:
         """Get the current backend from the unified selector or fallback to backendComboBox."""
-        if hasattr(self.parent, 'backend_type_combo') and self.parent.backend_type_combo.isEnabled():
-            backend_type = self.parent.backend_type_combo.currentText()
+        backend_type_combo = getattr(self.parent, "backend_type_combo", None)
+        # the unified selector is populated later (DownloadTab init), so an
+        # empty combo means it is not ready yet and we fall back
+        if backend_type_combo is not None and backend_type_combo.currentText() and backend_type_combo.isEnabled():
+            backend_type = backend_type_combo.currentText()
             if backend_type == "PyTorch" and self.parent.backend_variant_combo.isEnabled():
                 variant = self.parent.backend_variant_combo.currentText()
                 return f"{backend_type.lower()} ({variant.lower()})"

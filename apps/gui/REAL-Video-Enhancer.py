@@ -23,8 +23,11 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QIcon
 
 import sys
-_DIST = os.path.join(os.path.dirname(__file__), 'dist')
-for _p in (_DIST, os.path.join(_DIST, 'pages')):
+# generated UI modules live in the repo-root dist/ (build.py OUTPUT_FOLDER);
+# script-adjacent dist/ kept as a fallback for packaged layouts
+_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "dist"))
+_SCRIPT_DIST = os.path.join(os.path.dirname(__file__), 'dist')
+for _p in (_DIST, os.path.join(_DIST, 'pages'), _SCRIPT_DIST, os.path.join(_SCRIPT_DIST, 'pages')):
     if os.path.isdir(_p) and _p not in sys.path:
         sys.path.insert(0, _p)
 from mainwindow import Ui_MainWindow
@@ -133,8 +136,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # instances owned by the promoted QTabNavigation sidebar widget so all
         # existing references keep resolving without duplication in the .ui.
         self.leftMenuContainer.bind_controlled_attributes(self)
-        # Fill the main window's empty page slots with the per-page compiled UI.
-        assemble_pages(self.stackedWidget)
+        # Fill the main window's empty page slots with the per-page compiled UI,
+        # re-pointing every page widget onto this window so the existing
+        # flat ``self.<widget>`` references keep resolving after the .ui split.
+        assemble_pages(self.stackedWidget, controller=self)
         end_time = time.time()
         log("Setup ui time: " + str(end_time - start_time))
         #self.VideoPreview.setVisible(False)

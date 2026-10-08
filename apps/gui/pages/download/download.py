@@ -10,7 +10,7 @@ from apps.gui.utils.backends import (
     get_torch_backend_family,
 )
 from apps.gui.lib.Updater import ApplicationUpdater
-from apps.gui.constants import IS_FLATPAK, PLATFORM, CWD, USE_LOCAL_BACKEND, HOME_PATH, PLATFORM, IS_FLATPAK, CWD, CPU_ARCH
+from apps.gui.constants import IS_FLATPAK, PLATFORM, CWD, USE_LOCAL_BACKEND, HOME_PATH, CPU_ARCH
 from apps.gui.lib.GPUDetect import GPUDetect
 from apps.gui.util import FileHandler, log
 
@@ -143,6 +143,40 @@ class DownloadTab:
         self.parent.pytorch_version.addItems(
             [version.torch_version for version in self.torch_versions]
         )
+
+    def hideUninstallButtons(self):
+        self.parent.uninstallTorchBtn.setVisible(False)
+        self.parent.uninstallNCNNBtn.setVisible(False)
+        self.parent.uninstallTensorRTBtn.setVisible(False)
+        self.parent.uninstallDirectMLBtn.setVisible(False)
+
+    def showUninstallButton(self, backends):
+        if "pytorch (cuda)" in backends:
+            self.parent.downloadTorchBtn.setVisible(False)
+            self.parent.uninstallTorchBtn.setVisible(True)
+        if "pytorch (rocm)" in backends:
+            self.parent.downloadTorchBtn.setVisible(False)
+            self.parent.uninstallTorchBtn.setVisible(True)
+        if "pytorch (xpu)" in backends:
+            self.parent.downloadTorchBtn.setVisible(False)
+            self.parent.uninstallTorchBtn.setVisible(True)
+        if "pytorch (mps)" in backends:
+            self.parent.downloadTorchBtn.setVisible(False)
+            self.parent.uninstallTorchBtn.setVisible(True)
+        if "ncnn" in backends:
+            self.parent.downloadNCNNBtn.setVisible(False)
+            self.parent.uninstallNCNNBtn.setVisible(True)
+        if "tensorrt" in backends:
+            self.parent.downloadTensorRTBtn.setVisible(False)
+            self.parent.uninstallTensorRTBtn.setVisible(True)
+
+        # disable as it is not complete
+        try:
+            self.parent.downloadDirectMLBtn.setEnabled(False)
+            if PLATFORM != "win32":
+                self.parent.downloadDirectMLBtn.setEnabled(False)
+        except Exception as e:
+            print(e)
 
     def uninstallApp(self):
         reply = QMessageBox.question(

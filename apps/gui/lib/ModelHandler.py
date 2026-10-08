@@ -1,9 +1,8 @@
 import os
 import re
 
-from apps.gui.util import createDirectory, log, errorAndLog
+from apps.gui.util import createDirectory, log
 from apps.gui.constants import CUSTOM_MODELS_PATH
-from apps.gui.lib.QTcustom import RegularQTPopup
 
 """
 Key value pairs of the model name in the GUI
@@ -536,16 +535,16 @@ def getModels(backend:str):
             denoiseModels = pytorchDenoiseModels
             decompressModels = pytorchDecompressModels
             sceneChangeModels = pytorchSceneChangeModels
-        case "directml":
+        # tensorrt / directml are onnx runtime execution providers
+        case "onnx" | "tensorrt" | "directml":
             interpolateModels = onnxInterpolateModels
             upscaleModels = onnxUpscaleModels
             deblurModels = {}
+            denoiseModels = {}
+            decompressModels = {}
+            sceneChangeModels = {}
         case _:
-            RegularQTPopup(
-                "Failed to import any backends!, please try to reinstall the app!"
-            )
-            errorAndLog("Failed to import any backends!")
-            return {}
+            raise ValueError(f"Unknown backend: '{backend}'")
     return interpolateModels, upscaleModels, deblurModels, denoiseModels, decompressModels, sceneChangeModels
 
 def getModelDisplayName(model: str):
