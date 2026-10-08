@@ -17,11 +17,19 @@
 | Unified Backend Selection UI | ✅ Complete | Wired through 2026-10-08 (see GUI Refactor Wiring Fix) |
 | Benchmark Tests | ✅ Complete | PyTorch, ONNX, NCNN benchmarks |
 | VSR Model Support | ✅ Complete | AnimeSR, TSPAN with 3 backends |
-| Code Review Fixes (2026-10-08) | 🚧 In Progress | 6/69 fixed — see [BUG_TRACKER.md](BUG_TRACKER.md) |
+| Code Review Fixes (2026-10-08) | 🚧 In Progress | 74/78 — see [BUG_TRACKER.md](BUG_TRACKER.md) |
+| ONNX-Only Migration | 🚧 In Progress | Phases 0-3 done, Phase 5 render verification pending — [onnx-only-migration-plan.md](onnx-only-migration-plan.md) |
 
 ---
 
 ## Completed Work
+
+### ONNX-Only Migration, Phases 0-3 (2026-10-08)
+- [x] Phase 0: cp314 wheels confirmed (onnxruntime/-directml/-gpu, imageio-ffmpeg); imageio-ffmpeg rawvideo piping verified
+- [x] Phase 1: GUI ONNX-only — ModelHandler rebuilt (ONNX tables), DownloadTab slimmed to updates/uninstall, backend fixed to 'onnx'
+- [x] Phase 2: bundled runtime — ffmpeg via imageio-ffmpeg, backend runs on the app interpreter, download-the-backend machinery deleted, vendor-aware ProviderUpgrade manager (NVIDIA/Intel/AMD)
+- [x] Phase 3: rve-backend onnx-only args + listBackends; backends/pytorch, backends/ncnn, render/ncnn, onnx_to_ncnn converter removed
+- [ ] Phase 5 (pending): real ONNX render, provider upgrade flow, TRT tier, perf spot-checks
 
 ### Backend Architecture Migration (100%)
 - [x] Phase 1: Foundation (Base Classes & Structure) - 10/10

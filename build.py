@@ -281,6 +281,10 @@ class CxFreeze(BuildManager):
             + " --target-dir"
             + f" {PACKAGE_FOLDER}"
             + " build_exe"
+            # the generated UI modules (dist/mainwindow.py, dist/pages) import
+            # these, but nothing the freeze scanner traces does — include them
+            # explicitly or the frozen app dies on first import
+            + " --packages apps.gui.widgets"
             )
         )
 

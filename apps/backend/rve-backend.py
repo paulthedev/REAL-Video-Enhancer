@@ -94,65 +94,29 @@ class HandleApplication:
             return False
 
     def listBackends(self):
-        from apps.backend.utils.BackendDetect import (
-            BackendDetect,
-            MINIMUM_PYTORCH_CAP,
-        )
-        half_prec_supp = False
+        from apps.backend.utils.BackendDetect import BackendDetect
+
         availableBackends = []
         printMSG = "RVE Backend Version: " + __version__ + "\n"
         backendDetect = BackendDetect()
 
-        tensorrt_ver = backendDetect.get_tensorrt()
-        pytorch_device, pytorch_version = backendDetect.pytorch_device, backendDetect.pytorch_version
-        ncnn_ver = backendDetect.get_ncnn()
-
-        if tensorrt_ver:
-            """
-            checks for tensorrt availability, and the current gpu works with it (if half precision is supported)
-            Trt 10 only supports RTX 20 series and up.
-            Half precision is only availaible on RTX 20 series and up
-            """
-
-            half_prec_supp = backendDetect.get_half_precision()
-            if half_prec_supp:
-                availableBackends.append("tensorrt")
-                printMSG += f"TensorRT Version: {tensorrt_ver}\n"
-            else:
-                printMSG += "ERROR: Cannot use tensorrt backend, as it is not supported on your current GPU"
-
-        if pytorch_device:
-            pyTorchGpus = backendDetect.get_gpus_torch()
-            if not pyTorchGpus or pyTorchGpus == ["CPU"]:
-                printMSG += "ERROR: Cannot use pytorch backend, as no CUDA/ROCm/XPU device is available\n"
-            elif not all(backendDetect.meets_capability(i, MINIMUM_PYTORCH_CAP) for i in range(len(pyTorchGpus))):
-                printMSG += "ERROR: Cannot use pytorch backend, as the current GPU compute capability is below the required minimum (cc >= 6.0)\n"
-            else:
-                availableBackends.append(f"pytorch ({pytorch_device})")
-                printMSG += f"PyTorch Version: {pytorch_version}\n"
-                half_prec_supp = backendDetect.get_half_precision()
-                for i, gpu in enumerate(pyTorchGpus):
-                    printMSG += f"PyTorch GPU {i}: {gpu}\n"
-
-        if ncnn_ver:
-            availableBackends.append("ncnn")
-            ncnnGpus = backendDetect.get_gpus_ncnn()
-            printMSG += f"NCNN Version: {ncnn_ver}\n"
-            for i, gpu in enumerate(ncnnGpus):
-                printMSG += f"NCNN GPU {i}: {gpu}\n"
-
         onnx_ver = backendDetect.get_onnxruntime()
         if onnx_ver:
             providers = backendDetect.get_onnx_providers()
-            if "DmlExecutionProvider" in providers:
-                availableBackends.append("directml")
-            else:
-                availableBackends.append("onnx")
+            availableBackends.append("onnx")
             printMSG += f"ONNX Runtime Version: {onnx_ver}\n"
             printMSG += "ONNX Providers: " + str(providers) + "\n"
-       
-        printMSG += f"Half precision support: {half_prec_supp}\n"
-        printMSG += ("Available Backends: " + str(availableBackends))
+            gpu_providers = [
+                p for p in providers
+                if p not in ("CPUExecutionProvider", "AzureExecutionProvider")
+            ]
+            if not gpu_providers:
+                printMSG += "No GPU execution provider available — running on CPU.\n"
+        else:
+            printMSG += "ERROR: onnxruntime is not installed in the backend environment\n"
+
+        printMSG += "Half precision support: False\n"
+        printMSG += "Available Backends: " + str(availableBackends)
         self.printMSG = printMSG
         print(printMSG)
 
@@ -175,8 +139,7 @@ class HandleApplication:
             device=self.args.device,
             backend=self.args.backend,
             precision=self.args.precision if self.args.device != "cpu" else "float32",
-            pytorch_gpu_id=self.args.pytorch_gpu_id,
-            ncnn_gpu_id=self.args.ncnn_gpu_id,
+            gpu_id=self.args.gpu_id,
             cwd=self.args.cwd,
             # ffmpeg settings
             ffmpeg_path = self.ffmpeg_path,
@@ -199,8 +162,6 @@ class HandleApplication:
             sceneDetectMethod=self.args.scene_detect_method,
             sceneDetectSensitivity=self.args.scene_detect_threshold,
             sharedMemoryID=self.args.preview_shared_memory_id,
-            trt_optimization_level=self.args.tensorrt_opt_profile,
-            trt_dynamic_shapes=self.args.tensorrt_dynamic_shapes,
             override_upscale_scale=self.args.override_upscale_scale,
             UHD_mode=self.args.UHD_mode,
             drba=False,
@@ -208,7 +169,6 @@ class HandleApplication:
             dynamic_scaled_optical_flow=self.args.dynamic_scaled_optical_flow,
             ensemble=self.args.ensemble,
             output_to_mpv=self.args.output_to_mpv,
-            torch_compile=not self.args.no_torch_compile,
         )
         
 
@@ -291,21 +251,16 @@ class HandleApplication:
             default="auto",
         )
         parser.add_argument(
-            "--tensorrt_opt_profile",
-            help="sets tensorrt optimization profile for model, (1/2/3/4/5, default=3)",
-            type=int,
-            default=3,
-        )
-        parser.add_argument(
-            "--tensorrt_dynamic_shapes",
-            help="Saves time by generating a dynamic engine so the tensorrt engine can be used with multiple resolutions.",
-            action="store_true",
-        )
-        parser.add_argument(
             "--scene_detect_method",
             help="Scene change detection to avoid interpolating transitions. (options=pyscenedetect, mean, mean_diff, mean_segmented, none)\nMean segmented splits up an image, and if an arbitrary number of segments changes are detected within the segments, it will trigger a scene change. (lower sensativity thresholds are not recommended)",
             type=str,
             default="pyscenedetect",
+        )
+        parser.add_argument(
+            "--gpu_id",
+            help="GPU to use for inference",
+            default=0,
+            type=int,
         )
         parser.add_argument(
             "--scene_detect_model",
@@ -426,18 +381,6 @@ class HandleApplication:
             ]
         )
         parser.add_argument(
-            "--pytorch_gpu_id",
-            help="GPU ID for pytorch backend, default is 0",
-            default=0,
-            type=int,
-        )
-        parser.add_argument(
-            "--ncnn_gpu_id",
-            help="GPU ID for ncnn backend, default is 0",
-            default=0,
-            type=int,
-        )
-        parser.add_argument(
             "--benchmark",
             help="Benchmark without saving video",
             action="store_true",
@@ -445,12 +388,6 @@ class HandleApplication:
         parser.add_argument(
             "--UHD_mode",
             help="Lowers the resoltion flow is calculated at, speeding up model and saving vram. Helpful for higher resultions.",
-            action="store_true",
-            default=False,
-        )
-        parser.add_argument(
-            "--no_torch_compile",
-            help="Disable torch.compile for the PyTorch backend and run the model in eager mode.",
             action="store_true",
             default=False,
         )

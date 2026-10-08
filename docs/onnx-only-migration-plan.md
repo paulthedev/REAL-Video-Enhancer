@@ -109,10 +109,10 @@ runtime itself:
 
 Quick engineering checks (not render gates) that inform the refactor:
 
-- [ ] onnxruntime wheel availability for the **build venv's Python (3.14)**.
+- [x] onnxruntime wheel availability for the **build venv's Python (3.14)**.
   If 3.14 wheels don't exist, move the build venv (and cx_Freeze target) to
   3.12/3.13 as part of Phase 2.
-- [ ] Confirm `imageio-ffmpeg`'s bundled build handles RVE's usage: rawvideo
+- [x] Confirm `imageio-ffmpeg`'s bundled build handles RVE's usage: rawvideo
   piped via stdin/stdout, `-filter_complex`, HDR pix fmts.
 
 The ONNX inference path is the least-exercised code in the repo — it gets
@@ -120,35 +120,35 @@ proven in **Phase 5** after the refactor, per decision (2026-10-08).
 
 ## Phase 1 — GUI: ONNX-only user flows
 
-- [ ] `download/download.ui` + `DownloadTab`: remove the unified selector's
+- [x] `download/download.ui` + `DownloadTab`: remove the unified selector's
   type/variant combos and Load Backend button (ONNX is implicit); remove the
   PyTorch Version/Backend rows and the restack logic that manages them;
   remove `installRecommended`/`load_backend`/`download("torch"/"ncnn")` paths.
-- [ ] `ModelHandler.getModels`: collapse to the ONNX model sets only.
+- [x] `ModelHandler.getModels`: collapse to the ONNX model sets only.
 - [ ] `lib/ModelHandler.py` model tables: keep `.onnx` entries only.
-- [ ] Process page: fixed backend ("ONNX"); `get_current_backend` returns
+- [x] Process page: fixed backend ("ONNX"); `get_current_backend` returns
   "onnx" unconditionally; `build_command` drops `-b` variants.
-- [ ] Remove `TorchVersions`, torch-consistency/reinstall flows
+- [x] Remove `TorchVersions`, torch-consistency/reinstall flows
   (`check_torch_hardware`, `check_torch_consistency`, `_reinstall_torch`,
   `detect_rocm_targets`, `install_rocm_meta`, `ensure_rocm_targets`),
   `GPUDetect` torch paths.
-- [ ] `constants.py`: drop `BACKEND_RELEASE_URL_TEMPLATE`,
+- [x] `constants.py`: drop `BACKEND_RELEASE_URL_TEMPLATE`,
   `CPYTHON`/`PYTHON_EXECUTABLE_PATH` machinery (Phase 2), keep models URL.
 
 ## Phase 2 — Bundled runtime + provider auto-upgrade
 
-- [ ] `pyproject.toml`: add `imageio-ffmpeg`, `onnxruntime`, and
+- [x] `pyproject.toml`: add `imageio-ffmpeg`, `onnxruntime`, and
   `onnxruntime-directml; sys_platform == 'win32'` (bundled baseline;
   Linux/macOS bundle plain CPU — the GPU build is runtime-downloaded).
-- [ ] ffmpeg resolution: `FFMPEG_PATH` ← `imageio_ffmpeg.get_ffmpeg_exe()`;
+- [x] ffmpeg resolution: `FFMPEG_PATH` ← `imageio_ffmpeg.get_ffmpeg_exe()`;
   delete `utils/backends/FFmpeg.py`, `apps/backend/utils/GetFFMpeg.py`
   download logic and BtbN/evermeet URLs (supersedes S1).
-- [ ] Delete `utils/backends/Python.py` (standalone CPython download) and
+- [x] Delete `utils/backends/Python.py` (standalone CPython download) and
   `utils/backends/Backend.py` (backend.tar.gz download); supersede S2.
-- [ ] Backend launch: `BackendHandler`/`process.py`/`Updater.py` switch from
+- [x] Backend launch: `BackendHandler`/`process.py`/`Updater.py` switch from
   `PYTHON_EXECUTABLE_PATH` to `sys.executable` (frozen) / dev venv python.
   `BACKEND_PATH` resolves to the bundled `backend/` folder.
-- [ ] `DownloadDependencies` shrinks to **model downloads** +
+- [x] `DownloadDependencies` shrinks to **model downloads** +
   **provider upgrade** (`BackendsModels.py`); `downloadPythonDeps` and the
   generic `pip()` are deleted.
 - [ ] **Provider upgrade manager** (new module, e.g. `utils/backends/
@@ -183,17 +183,17 @@ proven in **Phase 5** after the refactor, per decision (2026-10-08).
     one restart; a marker file records the active provider and version;
   - updater flow mirrors the app updater: check → recommend → apply on
     restart.
-- [ ] cx_Freeze build: include onnxruntime/cv2/imageio_ffmpeg; verify the
+- [x] cx_Freeze build: include onnxruntime/cv2/imageio_ffmpeg; verify the
   freeze on all three OSes; update `packages/` layout notes.
 
 ## Phase 3 — Backend code removal
 
-- [ ] `rve-backend.py`: drop `-b` choices except onnx, drop pytorch/ncnn/tensorrt
+- [x] `rve-backend.py`: drop `-b` choices except onnx, drop pytorch/ncnn/tensorrt
   args (`--precision` stays), `--pytorch_gpu_id`/`--ncnn_gpu_id` → `--gpu_id`,
   remove `--no_torch_compile`/TRT dynamic-shape flags.
-- [ ] `listBackends` → report ONNX Runtime version + providers only
+- [x] `listBackends` → report ONNX Runtime version + providers only
   (`BackendDetect` shrinks accordingly).
-- [ ] Delete: `backends/pytorch/`, `backends/ncnn/`, `render/ncnn/`,
+- [x] Delete: `backends/pytorch/`, `backends/ncnn/`, `render/ncnn/`,
   `models/*/pytorch|ncnn` loader branches (registry models become
   ONNX-only), `models/scene_detect` NCNN path, `TorchVersions`,
   `converters/onnx_to_ncnn.py`.

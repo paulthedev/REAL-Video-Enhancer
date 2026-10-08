@@ -14,7 +14,6 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 from apps.backend.converters.torch_to_onnx import TorchToOnnxConverter, convert_model
-from apps.backend.converters.onnx_to_ncnn import OnnxToNcnnConverter, convert_model as convert_onnx_to_ncnn
 
 
 class TestTorchToOnnxConverter(unittest.TestCase):
@@ -157,137 +156,6 @@ class TestTorchToOnnxConverter(unittest.TestCase):
                 self.assertEqual(result, output_path)
 
 
-class TestOnnxToNcnnConverter(unittest.TestCase):
-    """Test OnnxToNcnnConverter class."""
-    
-    @patch('apps.backend.converters.onnx_to_ncnn.OnnxToNcnnConverter._find_pnnx')
-    def test_init(self, mock_find_pnnx):
-        """Test converter initialization."""
-        mock_find_pnnx.return_value = "/usr/local/bin/pnnx"
-
-        converter = OnnxToNcnnConverter()
-        self.assertFalse(converter.fp16)
-        self.assertEqual(converter.pnnx_path, "/usr/local/bin/pnnx")
-    
-    @patch('apps.backend.converters.onnx_to_ncnn.OnnxToNcnnConverter._find_pnnx')
-    def test_init_fp16(self, mock_find_pnnx):
-        """Test converter initialization with FP16."""
-        mock_find_pnnx.return_value = "/usr/local/bin/pnnx"
-
-        converter = OnnxToNcnnConverter(fp16=True)
-        self.assertTrue(converter.fp16)
-        self.assertEqual(converter.pnnx_path, "/usr/local/bin/pnnx")
-    
-    @patch('apps.backend.converters.onnx_to_ncnn.shutil.which')
-    def test_find_pnnx(self, mock_which):
-        """Test finding pnnx binary."""
-        mock_which.return_value = "/usr/local/bin/pnnx"
-        
-        converter = OnnxToNcnnConverter()
-        # shutil.which returns the path if found
-        self.assertIn("pnnx", converter.pnnx_path)
-    
-    @patch('apps.backend.converters.onnx_to_ncnn.shutil.which')
-    def test_find_ncnnoptimize(self, mock_which):
-        """Test finding ncnnoptimize binary (deprecated, kept for compatibility)."""
-        mock_which.return_value = "/usr/local/bin/ncnnoptimize"
-        
-        converter = OnnxToNcnnConverter()
-        # ncnnoptimize is no longer used, but we test that it doesn't crash
-        self.assertIsNotNone(converter.pnnx_path)
-    
-    @patch('apps.backend.converters.onnx_to_ncnn.subprocess.run')
-    @patch('apps.backend.converters.onnx_to_ncnn.os.makedirs')
-    @patch('builtins.print')
-    def test_convert(self, mock_print, mock_makedirs, mock_subprocess):
-        """Test ONNX to NCNN conversion."""
-        converter = OnnxToNcnnConverter()
-        
-        # Mock subprocess for pnnx
-        mock_result = Mock()
-        mock_result.returncode = 0
-        mock_subprocess.return_value = mock_result
-        
-        # Create temp files
-        with tempfile.TemporaryDirectory() as tmpdir:
-            onnx_path = os.path.join(tmpdir, "test.onnx")
-            ncnn_path = os.path.join(tmpdir, "test")
-            
-            # Create dummy ONNX file
-            with open(onnx_path, 'w') as f:
-                f.write("dummy")
-            
-            output = converter.convert(
-                model_path=onnx_path,
-                output_path=ncnn_path,
-                input_shape=(1, 3, 1080, 1920),
-            )
-            
-            # Verify subprocess call
-            self.assertEqual(mock_subprocess.call_count, 1)
-            mock_subprocess.assert_called_once()
-    
-    @patch('apps.backend.converters.onnx_to_ncnn.subprocess.run')
-    @patch('builtins.print')
-    def test_convert_pnnx_fails(self, mock_print, mock_subprocess):
-        """Test conversion when pnnx fails."""
-        converter = OnnxToNcnnConverter()
-        
-        # Mock subprocess to fail
-        mock_fail_result = Mock()
-        mock_fail_result.returncode = 1
-        mock_fail_result.stderr = "pnnx error"
-        mock_subprocess.return_value = mock_fail_result
-        
-        with self.assertRaises(RuntimeError):
-            converter.convert(
-                model_path="/tmp/test.onnx",
-                output_path="/tmp/test",
-            )
-    
-    @patch('apps.backend.converters.onnx_to_ncnn.subprocess.run')
-    @patch('builtins.print')
-    def test_convert_ncnn_fails(self, mock_print, mock_subprocess):
-        """Test conversion when pnnx fails (ncnnoptimize no longer used)."""
-        converter = OnnxToNcnnConverter()
-        
-        # Mock subprocess to fail
-        mock_fail_result = Mock()
-        mock_fail_result.returncode = 1
-        mock_fail_result.stderr = "pnnx error"
-        mock_subprocess.return_value = mock_fail_result
-        
-        with self.assertRaises(RuntimeError):
-            converter.convert(
-                model_path="/tmp/test.onnx",
-                output_path="/tmp/test",
-            )
-    
-    @patch('apps.backend.converters.onnx_to_ncnn.subprocess.run')
-    @patch('builtins.print')
-    def test_convert_rife(self, mock_print, mock_subprocess):
-        """Test RIFE model conversion."""
-        converter = OnnxToNcnnConverter()
-        
-        mock_result = Mock()
-        mock_result.returncode = 0
-        mock_subprocess.return_value = mock_result
-        
-        with tempfile.TemporaryDirectory() as tmpdir:
-            onnx_path = os.path.join(tmpdir, "test.onnx")
-            ncnn_path = os.path.join(tmpdir, "test")
-            
-            with open(onnx_path, 'w') as f:
-                f.write("dummy")
-            
-            output = converter.convert_rife(
-                onnx_path=onnx_path,
-                output_path=ncnn_path,
-            )
-            
-            self.assertEqual(output, ncnn_path + ".bin")
-
-
 class TestConvertFunctions(unittest.TestCase):
     """Test convenience convert functions."""
     
@@ -302,20 +170,6 @@ class TestConvertFunctions(unittest.TestCase):
             output_path="/tmp/test.onnx",
             model_type="rife",
             version="rife422_lite",
-        )
-        
-        mock_converter.convert_rife.assert_called_once()
-    
-    @patch('apps.backend.converters.onnx_to_ncnn.OnnxToNcnnConverter')
-    def test_convert_onnx_to_ncnn(self, mock_converter_class):
-        """Test convert_model function for onnx to ncnn."""
-        mock_converter = Mock()
-        mock_converter_class.return_value = mock_converter
-        
-        convert_onnx_to_ncnn(
-            model_path="/tmp/test.onnx",
-            output_path="/tmp/test",
-            model_type="rife",
         )
         
         mock_converter.convert_rife.assert_called_once()

@@ -544,10 +544,8 @@ class ProcessTab:
             f" {renderOptions.encoderCommand} ",
             "--pause_shared_memory_id",
             f"{PAUSED_STATE_SHARED_MEMORY_ID}",
-            "--ncnn_gpu_id",
-            f"{Settings.gpu_index(self.parent.fullOutput, 'ncnn', self.settings.settings['gpu_id'])}",
-            "--pytorch_gpu_id",
-            f"{Settings.gpu_index(self.parent.fullOutput, 'pytorch', self.settings.settings['gpu_id'])}",
+            "--gpu_id",
+            f"{Settings.gpu_index(self.parent.fullOutput, 'onnx', self.settings.settings['gpu_id'])}",
             "--cwd",
             f"{CWD}",
             "--ffmpeg_path",
@@ -658,10 +656,6 @@ class ProcessTab:
             if renderOptions.videoWidth > 1920 or renderOptions.videoHeight > 1080:
                 command += ["--UHD_mode"]
                 log("UHD mode enabled")
-
-        if self.settings.settings["torch_compile_enabled"] == "False":
-            command += ["--no_torch_compile"]
-            log("torch.compile disabled via settings")
 
         if self.isOverwrite:
             command += ["--overwrite"]

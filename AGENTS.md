@@ -155,8 +155,10 @@ paths, or listing every call site of a known function.
 
 ## Key Technologies
 - **PySide6** - GUI framework
-- **PyTorch** - Primary ML backend
-- **ONNX/NCNN** - Alternative backends
+- **ONNX Runtime** - The inference backend (bundled; DirectML on Windows,
+  runtime-upgraded CUDA/TensorRT/OpenVINO/ROCm builds per GPU — see
+  docs/onnx-only-migration-plan.md)
+- **imageio-ffmpeg** - Bundled static ffmpeg (no binary downloads)
 - **FFmpeg** - Video processing
 - **cx_Freeze/PyInstaller** - Windows builds
 - **NSIS** - Windows installer
