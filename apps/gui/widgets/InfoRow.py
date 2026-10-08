@@ -33,7 +33,7 @@ Behaviour / access
   ``retranslateUi`` call, so translations still work.
 
 The module is named after the plan's "InfoRow" pattern (see
-``docs/gui-refactor-plan.md``); the reusable leaf actually extracted from those
+``docs/archived/gui-refactor-plan.md``); the reusable leaf actually extracted from those
 rows is the help icon itself, hence :class:`HelpIconLabel`.
 """
 
