@@ -73,27 +73,17 @@ class ProcessTab:
 
         # get default backend
         self.QConnect()
-        self.populateModels(self.get_current_backend())
+        self.populateModels()
 
     def get_current_backend(self) -> str:
-        """Get the current backend from the unified selector or fallback to backendComboBox."""
-        backend_type_combo = getattr(self.parent, "backend_type_combo", None)
-        # the unified selector is populated later (DownloadTab init), so an
-        # empty combo means it is not ready yet and we fall back
-        if backend_type_combo is not None and backend_type_combo.currentText() and backend_type_combo.isEnabled():
-            backend_type = backend_type_combo.currentText()
-            if backend_type == "PyTorch" and self.parent.backend_variant_combo.isEnabled():
-                variant = self.parent.backend_variant_combo.currentText()
-                return f"{backend_type.lower()} ({variant.lower()})"
-            return backend_type.lower()
-        return self.parent.backendComboBox.currentText()
+        """ONNX is the only backend."""
+        return "onnx"
 
-    def populateModels(self, backend) -> dict:
+    def populateModels(self) -> None:
         """
-        returns
-        the current models available given a method (interpolate, upscale) and a backend (ncnn, pytorch)
+        Populates the model comboboxes from the ONNX model tables.
         """
-        interpolateModels, upscaleModels, deblurModels, denoiseModels, decompressModels, _ = getModels(backend)
+        interpolateModels, upscaleModels, deblurModels, denoiseModels, decompressModels, _ = getModels()
         self.parent.interpolateModelComboBox.clear()
         self.parent.upscaleModelComboBox.clear()
         self.parent.deblurModelComboBox.clear()
@@ -176,17 +166,6 @@ class ProcessTab:
         self.parent.denoiseCheckBox.clicked.connect(self.parent.updateVideoGUIDetails)
         self.parent.decompressCheckBox.clicked.connect(self.parent.updateVideoGUIDetails)   
         self.parent.sloMoModeCheckBox.clicked.connect(self.parent.updateVideoGUIDetails)  
-        self.parent.backendComboBox.currentIndexChanged.connect(
-            lambda: self.populateModels(self.get_current_backend())
-        )
-        # Also connect to unified backend selector if available
-        if hasattr(self.parent, 'backend_type_combo'):
-            self.parent.backend_type_combo.currentIndexChanged.connect(
-                lambda: self.populateModels(self.get_current_backend())
-            )
-            self.parent.backend_variant_combo.currentIndexChanged.connect(
-                lambda: self.populateModels(self.get_current_backend())
-            )
         self.parent.EncoderCommand.textChanged.connect(lambda: self.parent.EncoderCommand.setFixedWidth(max(50, QFontMetrics(self.parent.EncoderCommand.font()).horizontalAdvance(self.parent.EncoderCommand.text()) + 10)))
         # connect up pausing
         hide_layout_widgets(self.parent.onRenderButtonsContiainer)

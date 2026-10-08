@@ -45,14 +45,16 @@ class QTabNavigation(QWidget):
         self.setStyleSheet(u"")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
 
         # Home button is checked by default so the app lands on the home tab.
         self.buttons = []
         for icon_key in NAV_ICONS:
             btn = QPushButton(self)
             btn.setCheckable(True)
-            btn.setSizePolicy(QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed))
+            btn.setSizePolicy(QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed))
             btn.setMaximumSize(QSize(55, 16777215))
+            btn.setMinimumSize(QSize(55, 40))
             btn.setIcon(QIcon(NAV_ICONS[icon_key][0]))
             btn.setIconSize(QSize(35, 35))
             btn.setToolTip(NAV_ICONS[icon_key][1])
@@ -63,6 +65,11 @@ class QTabNavigation(QWidget):
             # Re-expose the "*Button" names a parent controller used to rely on.
             setattr(self, "%sBtn" % icon_key, btn)
             self.buttons.append(btn)
+            # without this the layout stays empty, the widget's size hint is 0
+            # and the main window's grid collapses the sidebar to zero width
+            layout.addWidget(btn)
+
+        self.setFixedWidth(72)
 
     # Bound method: ``self`` is available here (the previous @staticmethod could
     # not emit ``self.buttonClicked``). Clicking one tab emits its zero-based index.

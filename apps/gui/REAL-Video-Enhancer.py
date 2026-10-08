@@ -8,6 +8,11 @@ except:
 import sys
 import os
 import time
+import multiprocessing
+# python 3.14 switched linux's default start method to forkserver, which
+# pickles cpuinfo's internal wrappers mid-import and crashes the System
+# Information probe — pin spawn (the windows-default, well-tested path)
+multiprocessing.set_start_method("spawn", force=True)
 os.environ["PYTHONNOUSERSITE"] = "1" # Prevents python from installing packages in user site
 os.environ["PYTHONIOENCODING"] = "utf-8"
 os.environ["NVIDIA_TENSORRT_DISABLE_INTERNAL_PIP"] = "0"
@@ -55,7 +60,6 @@ from apps.gui.utils.backends import (
     DownloadModel,
     Dependency,
     Python,
-    DownloadDependencies,
 )
 from apps.gui.pages import assemble_pages
 from apps.gui.pages.process.process import ProcessTab
@@ -180,22 +184,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         #except Exception:
         #    pass
 
-        # An older RVE release may have left behind a torch build that doesn't
-        # match the torchvision that will be (re)installed now, which breaks
-        # the backend with "operator torchvision::nms does not exist".
-        start_time = time.time()
-        downloadDeps = DownloadDependencies()
-        if downloadDeps.check_torch_consistency(self.settings):
-            log("Reinstalled a matching torch/torchvision pair")
-        # The GPU hardware may have changed since the installed torch build
-        # was made (e.g. a ROCm install on a machine that now has an
-        # Nvidia GPU), in which case the build no longer matches the
-        # hardware and needs to be reinstalled for it.
-        if downloadDeps.check_torch_hardware(self.settings):
-            log("Reinstalled torch for the current GPU hardware")
-        end_time = time.time()
-        log("Torch consistency check time: " + str(end_time - start_time))
-
         start_time = time.time()
         self.backends, self.fullOutput = (
             backendHandler.getAvailableBackends()
@@ -217,8 +205,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             )
             automaticInstall = reply == QMessageBox.Yes  # type: ignore
             if automaticInstall:
-                self.downloadTab = DownloadTab(parent=self, backends=self.backends, skip_info_popup=True)
-                self.downloadTab.installRecommended()
                 self.backends, self.fullOutput = (
                     backendHandler.getAvailableBackends()
                 )
@@ -245,7 +231,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.QConnect()
         # set up tabs
-        self.backendComboBox.addItems(self.backends)
+        self.backendComboBox.addItems(["onnx"])  # ONNX is the only backend
         printOut = (
             "System Information:\n"
             + "OS: "
@@ -289,10 +275,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             halfPrecisionSupport=halfPrecisionSupport,
             backend_output=self.fullOutput,
         )
-        downloadDeps = DownloadDependencies(False)
-        self.downloadTab.hideUninstallButtons()
-        self.downloadTab.showUninstallButton(self.backends)
-
         # Startup Animation
         self.animationHandler = AnimationHandler()
         self.animationHandler.fadeInAnimation(self)
@@ -533,17 +515,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             NotificationOverlay("Please select at least one model!", self, timeout=1500)
             return 1
 
-        backend = self.backendComboBox.currentText()
-        # Use unified backend selector if available
-        if hasattr(self, 'backend_type_combo') and self.backend_type_combo.isEnabled():
-            backend_type = self.backend_type_combo.currentText()
-            if backend_type == "PyTorch" and hasattr(self, 'backend_variant_combo') and self.backend_variant_combo.isEnabled():
-                variant = self.backend_variant_combo.currentText()
-                backend = f"{backend_type.lower()} ({variant.lower()})"
-            else:
-                backend = backend_type.lower()
+        backend = "onnx"
         upscaleModelArch = "custom"
-        interpolateModels, upscaleModels, deblurModels, denoiseModels, decompressModels, sceneChangeModels = getModels(backend)
+        interpolateModels, upscaleModels, deblurModels, denoiseModels, decompressModels, sceneChangeModels = getModels()
 
         if interpolate:
             interpolateDownloadFile = interpolateModels[interpolate][1]
@@ -652,11 +626,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             tilingEnabled=self.tilingCheckBox.isChecked(),
             tilesize=self.tileSizeComboBox.currentText(),
             videoFrameCount=self.videoFrameCount,
-            backend=self.backendComboBox.currentText() if not (hasattr(self, 'backend_type_combo') and self.backend_type_combo.isEnabled()) else (
-                f"{self.backend_type_combo.currentText().lower()} ({self.backend_variant_combo.currentText().lower()})"
-                if self.backend_type_combo.currentText() == "PyTorch" and self.backend_variant_combo.isEnabled()
-                else self.backend_type_combo.currentText().lower()
-            ),
+            backend="onnx",
             interpolateTimes=self.getInterpolationMultiplier(
                 self.interpolateModelComboBox.currentText()
             ),
