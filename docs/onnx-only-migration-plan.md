@@ -55,9 +55,9 @@ onnx-backend-plan.md`.
   Windows; **runtime-upgraded, vendor-aware on Linux** = NVIDIA →
   `onnxruntime-gpu` (PyPI), Intel → `onnxruntime-openvino` (PyPI), AMD →
   `onnxruntime-rocm` (AMD's MIOpen/ROCm build from
-  `repo.radeon.com/rocm/manylinux/<release>/` — verified published, e.g.
-  onnxruntime_rocm-1.21.0 cp310/cp312). macOS stays on CPU/CoreML (no
-  download).
+  `repo.radeon.com/rocm/manylinux/<release>/` — newest release that supports
+  the detected GPU, see the provider manager below). macOS stays on
+  CPU/CoreML (no download).
 
 ---
 
@@ -113,11 +113,16 @@ until:
   ProviderUpgrade.py`):
   - vendor-aware recommendation built on the existing torch-free
     `detect_gpu_hardware()` — NVIDIA → `onnxruntime-gpu` (PyPI), Intel →
-    `onnxruntime-openvino` (PyPI), AMD → `onnxruntime-rocm` from AMD's
-    wheel index (`--extra-index-url https://repo.radeon.com/rocm/manylinux/
-    <release>/`), gated on a ROCm-capable GPU and a matching python tag;
-    nothing/unsupported → skip; Windows/macOS skip entirely (bundled builds
-    cover them);
+    `onnxruntime-openvino` (PyPI), AMD → `onnxruntime-rocm` from AMD's wheel
+    index, nothing/unsupported → skip; Windows/macOS skip entirely (bundled
+    builds cover them);
+  - **AMD release selection: newest-supported-first** — detect the GPU's gfx
+    architecture (`rocminfo`, or PCI-ID → gfx mapping from sysfs), walk
+    `repo.radeon.com/rocm/manylinux/` releases newest-first, and pick the
+    first whose ROCm version supports that architecture (newer ROCm releases
+    add newer GPUs, e.g. RDNA4 gfx1200+ landed in 6.4.x); also gate on a
+    wheel with the running python tag; fall back to older releases, then
+    bundled CPU;
   - install into a **writable data dir** (`$XDG_DATA_HOME/REAL-Video-
     Enhancer/providers/`, `%APPDATA%` equivalent on Windows) — never into
     the AppImage mount (read-only squashfs);
@@ -166,14 +171,14 @@ until:
 ## Risks / open questions
 
 1. **onnxruntime on Python 3.14** — wheel availability unverified (Phase 0 gate).
-2. **AMD on Linux** — covered by `onnxruntime_rocm` from AMD's index, with
-   caveats: ROCm supports specific GPU architectures (gfx1100+ and similar —
-   older cards fall back to CPU), the wheel needs a matching python tag
-   (cp310/cp312 published), and the ROCm userspace stack (HIP/MIOpen) comes
-   from the same index. Vulkan-only GPUs that ROCm doesn't support have no
-   accelerator. Intel iGPUs are skipped by `detect_gpu_hardware()` (it
-   reports discrete GPUs only), so OpenVINO upgrade for iGPU owners needs a
-   detection extension first.
+2. **AMD on Linux** — covered by `onnxruntime_rocm` from AMD's index with a
+   newest-supported-first release pick. Caveats: ROCm supports specific GPU
+   architectures (very old cards may match no release → bundled CPU), the
+   wheel needs a matching python tag (cp310/cp312 published today), and the
+   ROCm userspace stack (HIP/MIOpen) comes from the same index. Vulkan-only
+   GPUs that ROCm doesn't support have no accelerator. Intel iGPUs are
+   skipped by `detect_gpu_hardware()` (it reports discrete GPUs only), so
+   OpenVINO upgrade for iGPU owners needs a detection extension first.
 3. **Provider upgrade download size** — Linux GPU is ~1 GB+ of nvidia wheels;
    background, cancellable, and CPU keeps working without it. Bundled app
    stays small (CPU + DirectML).
