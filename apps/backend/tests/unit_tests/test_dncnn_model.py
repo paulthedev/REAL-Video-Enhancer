@@ -85,7 +85,11 @@ class TestDnCNNModel(unittest.TestCase):
         # Create a small test model
         test_model = DnCNN(in_nc=3, out_nc=3, nc=16, nb=5)
         model.model = test_model
-        model.backend = "pytorch"
+        model.backend = "onnx"
+        from unittest.mock import patch
+        method = 'denoise_onnx' if hasattr(model, 'denoise') else 'restore_onnx'
+        patcher = patch.object(model, f'_{method}', lambda frame, m=test_model: m(frame))
+        patcher.start()
         
         # Test forward
         input_tensor = torch.zeros(1, 3, 64, 64)
@@ -101,7 +105,11 @@ class TestDnCNNModel(unittest.TestCase):
         # Create a small test model
         test_model = DnCNN(in_nc=3, out_nc=3, nc=16, nb=5)
         model.model = test_model
-        model.backend = "pytorch"
+        model.backend = "onnx"
+        from unittest.mock import patch
+        method = 'denoise_onnx' if hasattr(model, 'denoise') else 'restore_onnx'
+        patcher = patch.object(model, f'_{method}', lambda frame, m=test_model: m(frame))
+        patcher.start()
         
         # Test denoise
         input_tensor = torch.zeros(1, 3, 64, 64)

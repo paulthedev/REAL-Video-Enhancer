@@ -6,23 +6,20 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Optional, Tuple
 
-
 class ModelTask(Enum):
     """Types of model tasks."""
-    INTERPOLATE = "interpolate"
-    UPSCALE = "upscale"
-    RESTORATION = "restoration"
-    DENOISE = "denoise"
-    SCENE_DETECT = "scene_detect"
-
+    INTERPOLATE = 'interpolate'
+    UPSCALE = 'upscale'
+    RESTORATION = 'restoration'
+    DENOISE = 'denoise'
+    SCENE_DETECT = 'scene_detect'
 
 class ModelFormat(Enum):
     """Model file formats."""
-    SAFETENSORS = "safetensors"
-    PT = "pt"
-    ONNX = "onnx"
-    NCNN = "ncnn"
-
+    SAFETENSORS = 'safetensors'
+    PT = 'pt'
+    ONNX = 'onnx'
+    NCNN = 'ncnn'
 
 @dataclass
 class ModelInfo:
@@ -30,16 +27,15 @@ class ModelInfo:
     name: str
     architecture: str
     task: ModelTask
-    scale: Optional[int] = None  # For upscale models
+    scale: Optional[int] = None
     supported_formats: list[ModelFormat] = None
     supported_backends: list[str] = None
-    
+
     def __post_init__(self):
         if self.supported_formats is None:
             self.supported_formats = [ModelFormat.SAFETENSORS, ModelFormat.PT]
         if self.supported_backends is None:
-            self.supported_backends = ["pytorch"]
-
+            self.supported_backends = ['pytorch']
 
 class BaseModel(ABC):
     """
@@ -48,12 +44,12 @@ class BaseModel(ABC):
     Models should be backend-agnostic - they define the architecture
     and weights, but not how they're executed.
     """
-    
+
     def __init__(self, name: str, architecture: str, task: ModelTask):
         self.name = name
         self.architecture = architecture
         self.task = task
-    
+
     @abstractmethod
     def forward(self, *args, **kwargs) -> Any:
         """
@@ -63,39 +59,29 @@ class BaseModel(ABC):
             Model output(s)
         """
         pass
-    
+
     @abstractmethod
     def get_input_shape(self) -> Tuple[int, ...]:
         """Return the expected input shape."""
         pass
-    
+
     @abstractmethod
     def get_output_shape(self, input_shape: Tuple[int, ...]) -> Tuple[int, ...]:
         """Return the output shape for a given input shape."""
         pass
-    
+
     def get_info(self) -> ModelInfo:
         """Return model metadata."""
-        return ModelInfo(
-            name=self.name,
-            architecture=self.architecture,
-            task=self.task,
-        )
-
+        return ModelInfo(name=self.name, architecture=self.architecture, task=self.task)
 
 class BaseInterpolateModel(BaseModel):
     """Base class for interpolation models."""
-    
+
     def __init__(self, name: str, architecture: str):
         super().__init__(name, architecture, ModelTask.INTERPOLATE)
-    
+
     @abstractmethod
-    def interpolate(
-        self,
-        frame1: Any,
-        frame2: Any,
-        timestep: float = 0.5
-    ) -> Any:
+    def interpolate(self, frame1: Any, frame2: Any, timestep: float=0.5) -> Any:
         """
         Interpolate between two frames.
         
@@ -109,14 +95,13 @@ class BaseInterpolateModel(BaseModel):
         """
         pass
 
-
 class BaseUpscaleModel(BaseModel):
     """Base class for upscaling models."""
-    
-    def __init__(self, name: str, architecture: str, scale: int = 2):
+
+    def __init__(self, name: str, architecture: str, scale: int=2):
         self.scale = scale
         super().__init__(name, architecture, ModelTask.UPSCALE)
-    
+
     @abstractmethod
     def upscale(self, frame: Any) -> Any:
         """
@@ -129,25 +114,22 @@ class BaseUpscaleModel(BaseModel):
             Upscaled frame
         """
         pass
-    
+
     def get_output_shape(self, input_shape: Tuple[int, ...]) -> Tuple[int, ...]:
         """Return the output shape for a given input shape."""
         if len(input_shape) == 3:
-            # H, W, C
             return (input_shape[0] * self.scale, input_shape[1] * self.scale, input_shape[2])
         elif len(input_shape) == 4:
-            # N, C, H, W
             return (input_shape[0], input_shape[1], input_shape[2] * self.scale, input_shape[3] * self.scale)
         else:
-            raise ValueError(f"Unsupported input shape: {input_shape}")
-
+            raise ValueError(f'Unsupported input shape: {input_shape}')
 
 class BaseRestorationModel(BaseModel):
     """Base class for restoration models."""
-    
+
     def __init__(self, name: str, architecture: str):
         super().__init__(name, architecture, ModelTask.RESTORATION)
-    
+
     @abstractmethod
     def restore(self, frame: Any) -> Any:
         """
@@ -161,15 +143,14 @@ class BaseRestorationModel(BaseModel):
         """
         pass
 
-
 class BaseSceneDetectModel(BaseModel):
     """Base class for scene detection models."""
-    
+
     def __init__(self, name: str, architecture: str):
         super().__init__(name, architecture, ModelTask.SCENE_DETECT)
-    
+
     @abstractmethod
-    def detect(self, frame: Any, prev_frame: Optional[Any] = None) -> bool:
+    def detect(self, frame: Any, prev_frame: Optional[Any]=None) -> bool:
         """
         Detect scene change.
         

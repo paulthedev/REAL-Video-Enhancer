@@ -4,7 +4,7 @@ import time
 import numpy as np
 
 if __name__ != "__main__":
-    from .utils.Util import log, padFrame, subprocess_popen_without_terminal
+    from ..utils.Util import log, padFrame, subprocess_popen_without_terminal
 else:
     def log(message):
         print(message)

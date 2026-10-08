@@ -454,7 +454,13 @@ class Render:
 
     def setupUpscale(self):
         log("Setting up Upscale")
-        if self.backend == "pytorch" or self.backend == "tensorrt":
+        if self.backend == "onnx":
+            from .onnx.UpscaleONNX import UpscaleONNX
+
+            self.modelScale = UpscaleONNX.getModelScale(self.upscaleModel)
+            self.upscaleOption = self.upscaleONNXObject(modelPath=self.upscaleModel)
+
+        elif self.backend == "pytorch" or self.backend == "tensorrt":
 
             self.upscaleOption = self.upscalePytorchObject(self.upscaleModel)
             self.modelScale = self.upscaleOption.getScale() 
@@ -501,7 +507,20 @@ class Render:
         else:
             log("Scene Detection Disabled")
 
-        if self.backend == "ncnn":
+        if self.backend == "onnx":
+            from .onnx.InterpolateONNX import InterpolateONNX
+
+            self.interpolateOption = InterpolateONNX(
+                modelPath=self.interpolateModel,
+                interpolateFactor=self.ceilInterpolateFactor,
+                width=self.width,
+                height=self.height,
+                deviceID=self.pytorch_gpu_id,
+                precision=self.precision,
+                hdr_mode=self.hdr_mode,
+            )
+
+        elif self.backend == "ncnn":
             from .ncnn.InterpolateNCNN import InterpolateRIFENCNN
 
             self.interpolateOption = InterpolateRIFENCNN(

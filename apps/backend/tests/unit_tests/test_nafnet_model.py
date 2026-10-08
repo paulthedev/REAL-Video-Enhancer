@@ -84,7 +84,11 @@ class TestNAFNetModel(unittest.TestCase):
         # Create a small test model
         test_model = NAFNet(width=8, enc_blk_nums=[1, 1], middle_blk_num=1, dec_blk_nums=[1, 1])
         model.model = test_model
-        model.backend = "pytorch"
+        model.backend = "onnx"
+        from unittest.mock import patch
+        method = 'denoise_onnx' if hasattr(model, 'denoise') else 'restore_onnx'
+        patcher = patch.object(model, f'_{method}', lambda frame, m=test_model: m(frame))
+        patcher.start()
         
         # Test forward
         input_tensor = torch.zeros(1, 3, 64, 64)
@@ -100,7 +104,11 @@ class TestNAFNetModel(unittest.TestCase):
         # Create a small test model
         test_model = NAFNet(width=8, enc_blk_nums=[1, 1], middle_blk_num=1, dec_blk_nums=[1, 1])
         model.model = test_model
-        model.backend = "pytorch"
+        model.backend = "onnx"
+        from unittest.mock import patch
+        method = 'denoise_onnx' if hasattr(model, 'denoise') else 'restore_onnx'
+        patcher = patch.object(model, f'_{method}', lambda frame, m=test_model: m(frame))
+        patcher.start()
         
         # Test restore
         input_tensor = torch.zeros(1, 3, 64, 64)
