@@ -218,6 +218,10 @@ class BuildManager:
             if not os.path.exists(backend_dir):
                 raise FileNotFoundError("Backend failed to copy!")
         else:
+            # apps/ prefix so the frozen interpreter can `import apps.backend`
+            # when it doubles as the backend launcher; flat backend/ kept for
+            # build-appimage.sh's layout check
+            shutil.copytree("apps/backend", f"{PACKAGE_FOLDER}/apps/backend")
             shutil.copytree("apps/backend", f"{PACKAGE_FOLDER}/backend")
 
     @abstractmethod

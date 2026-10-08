@@ -2,8 +2,13 @@
 
 import os
 import stat
+import urllib.request
+
+from apps.gui.version import version
 
 from apps.gui.constants import (
+    HAS_NETWORK_ON_STARTUP,
+    PLATFORM,
     RELEASES_LATEST_API_URL,
     RELEASE_DOWNLOAD_URL_TEMPLATE,
 )

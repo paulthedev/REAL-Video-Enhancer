@@ -98,6 +98,12 @@ VIDEOS_PATH = (
     else os.path.join(HOME_PATH, "Videos")
 )
 BACKEND_PATH = "/app/bin/apps/backend" if IS_FLATPAK else os.path.join(CWD, "apps", "backend")
+if getattr(sys, "frozen", False):
+    # the backend ships inside the bundle next to the executable, not in the
+    # per-user data dir
+    BACKEND_PATH = os.path.join(
+        os.path.dirname(os.path.abspath(sys.executable)), "apps", "backend"
+    )
 TEMP_DOWNLOAD_PATH = os.path.join(CWD, "temp")
 # ffmpeg ships via the imageio-ffmpeg pip package (static per-platform
 # build); RVE_FFMPEG_PATH / --ffmpeg_path override it
@@ -112,6 +118,11 @@ except Exception:
     )
 
 PYTHON_EXECUTABLE_PATH = sys.executable  # the backend runs on our own interpreter
+if getattr(sys, "frozen", False):
+    # the frozen GUI binary doubles as the backend launcher: children spawned
+    # from here re-enter the binary and the entry-point dispatch runs the
+    # bundled backend instead of a second GUI instance
+    os.environ["RVE_RUN_BACKEND"] = "1"
 PYTHON_DIRECTORY = os.path.dirname(sys.executable)
 
 EXE_PATH = os.path.join(

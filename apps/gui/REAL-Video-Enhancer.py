@@ -1,3 +1,37 @@
+import os
+import sys
+
+# Frozen-app backend dispatch: the cx_Freeze binary IS the GUI, but the GUI
+# spawns that same binary to run the bundled backend (the bundle has no
+# standalone python). GUI children carry RVE_RUN_BACKEND=1 (set in
+# constants.py when frozen); when we see it, exec the backend script and
+# never touch the GUI. Must run before any GUI imports.
+if os.environ.get("RVE_RUN_BACKEND") == "1":
+    _exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+    _script = None
+    for _cand in (
+        os.path.join(_exe_dir, "apps", "backend", "rve-backend.py"),
+        os.path.join(_exe_dir, "backend", "rve-backend.py"),
+    ):
+        if os.path.isfile(_cand):
+            _script = _cand
+            _args = [a for a in sys.argv[1:] if a not in ("-W", "ignore")]
+            break
+    if _script is None:
+        # dev / odd layouts: the caller passed the backend script in argv
+        _args = [a for a in sys.argv[1:] if a not in ("-W", "ignore")]
+        for _a in _args:
+            if _a.endswith("rve-backend.py") and os.path.isfile(_a):
+                _script, _args = os.path.abspath(_a), [_x for _x in _args if _x != _a]
+                break
+    if _script is not None:
+        sys.argv = [_script] + _args
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(_script))))
+        import runpy
+
+        runpy.run_path(_script, run_name="__main__")
+        sys.exit(0)
+
 from apps.gui.constants import CUSTOM_MODELS_PATH, IS_STEAM, MODELS_PATH, CWD,  IS_INSTALLED, TEMP_DOWNLOAD_PATH, USE_LOCAL_BACKEND, PLATFORM
 import os
 import platform
@@ -178,38 +212,16 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # A faster onnxruntime build for the detected GPU is auto-upgraded in
         # the background by utils/backends/ProviderUpgrade.py.
 
-        start_time = time.time()
-        self.backends, self.fullOutput = (
-            backendHandler.getAvailableBackends()
-        )
-        end_time = time.time()
-        
+        # Lazy backend check (Studio Polish): the startup splash is gone.
+        # ONNX ships bundled, so assume it's available; the real health check
+        # runs when the first render starts (see startRender).
+        self.backendHandler = backendHandler
+        self.backends, self.fullOutput = ["onnx"], ""
+        self.anyBackendsInstalled = True
+        self._backend_checked = False
 
         # set default home page
         self.stackedWidget.setCurrentIndex(0)
-
-        self.anyBackendsInstalled = len(self.backends) > 0
-        if not self.anyBackendsInstalled:
-            reply = QMessageBox.question(
-            self,
-            "",
-            "Do you want to use simple installation?\n(Recommended for most users)",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,  # type: ignore
-            )
-            automaticInstall = reply == QMessageBox.Yes  # type: ignore
-            if automaticInstall:
-                self.backends, self.fullOutput = (
-                    backendHandler.getAvailableBackends()
-                )
-                self.anyBackendsInstalled = len(self.backends) > 0
-            else:
-                self.processBtn.setEnabled(False) # disable process button if no backends are available
-                self.stackedWidget.setCurrentIndex(4)
-                self.homeBtn.setChecked(False)
-                self.downloadBtn.setChecked(True)
-                self.processBtn.setToolTip("Please install at least one backend to enable processing.")
-                self.processBtn.setToolTipDuration(0)
 
 
 
@@ -709,6 +721,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         if len(renderQueue.queue) == 0:
             NotificationOverlay("Render queue is empty!", self, timeout=1500)
             return
+        if not self._backend_checked:
+            self._backend_checked = True
+            self.backends, self.fullOutput = (
+                self.backendHandler.getAvailableBackends()
+            )
+            if not self.backends:
+                NotificationOverlay(
+                    "No backend available — check the Models page.",
+                    self,
+                    timeout=3000,
+                )
+                return
         # the queue stays live during a render — nothing is disabled here;
         # the action bar (start/pause/stop) carries the running state
         self.processTab.preview_stack.setCurrentIndex(0)
