@@ -8,9 +8,10 @@ Decided (user, 2026-10-08):
    app works offline out of the box. At runtime the app **auto-downloads the
    accelerated build matching the detected GPU vendor** into a writable data
    dir and uses it after a restart. The recommendation is **vendor-aware,
-   never vendor-default**: NVIDIA → CUDA build, Intel → OpenVINO build, AMD →
-   bundled CPU today (no PyPI ROCm build), nothing → bundled CPU. Windows is
-   covered by the bundled DirectML build regardless of vendor.
+   never vendor-default**: NVIDIA → CUDA build (PyPI), Intel → OpenVINO build
+   (PyPI), AMD → ROCm/MIOpen build (AMD's wheel index — not on PyPI),
+   nothing → bundled CPU. Windows is covered by the bundled DirectML build
+   regardless of vendor.
 3. Same for binary downloads: **ffmpeg ships via a pip package**
    (`imageio-ffmpeg` bundles a per-platform static ffmpeg build; RVE never uses
    ffprobe, so its missing ffprobe is not a problem). The BtbN download path
@@ -52,8 +53,11 @@ onnx-backend-plan.md`.
 - **Models still download on demand** from the models repo — ONNX files only.
 - Wheel strategy (decided): **bundled** = CPU everywhere + DirectML on
   Windows; **runtime-upgraded, vendor-aware on Linux** = NVIDIA →
-  `onnxruntime-gpu`, Intel → `onnxruntime-openvino`, AMD → bundled CPU
-  (no PyPI ROCm build). macOS stays on CPU/CoreML (no download).
+  `onnxruntime-gpu` (PyPI), Intel → `onnxruntime-openvino` (PyPI), AMD →
+  `onnxruntime-rocm` (AMD's MIOpen/ROCm build from
+  `repo.radeon.com/rocm/manylinux/<release>/` — verified published, e.g.
+  onnxruntime_rocm-1.21.0 cp310/cp312). macOS stays on CPU/CoreML (no
+  download).
 
 ---
 
@@ -108,10 +112,12 @@ until:
 - [ ] **Provider upgrade manager** (new module, e.g. `utils/backends/
   ProviderUpgrade.py`):
   - vendor-aware recommendation built on the existing torch-free
-    `detect_gpu_hardware()` — NVIDIA → `onnxruntime-gpu`, Intel →
-    `onnxruntime-openvino` (Intel's official PyPI build, OpenVINO EP),
-    AMD → skip (stay on bundled CPU — no PyPI ROCm build), nothing → skip;
-    Windows/macOS skip entirely (bundled builds cover them);
+    `detect_gpu_hardware()` — NVIDIA → `onnxruntime-gpu` (PyPI), Intel →
+    `onnxruntime-openvino` (PyPI), AMD → `onnxruntime-rocm` from AMD's
+    wheel index (`--extra-index-url https://repo.radeon.com/rocm/manylinux/
+    <release>/`), gated on a ROCm-capable GPU and a matching python tag;
+    nothing/unsupported → skip; Windows/macOS skip entirely (bundled builds
+    cover them);
   - install into a **writable data dir** (`$XDG_DATA_HOME/REAL-Video-
     Enhancer/providers/`, `%APPDATA%` equivalent on Windows) — never into
     the AppImage mount (read-only squashfs);
@@ -160,11 +166,14 @@ until:
 ## Risks / open questions
 
 1. **onnxruntime on Python 3.14** — wheel availability unverified (Phase 0 gate).
-2. **GPU coverage loss** — NCNN was the only Vulkan path. Linux AMD falls
-   back to CPU today (onnxruntime-rocm isn't on PyPI; the provider manager
-   could target a custom index later — decision point). Intel iGPUs are
-   skipped by `detect_gpu_hardware()` (it reports discrete GPUs only), so
-   OpenVINO upgrade for iGPU owners needs a detection extension first.
+2. **AMD on Linux** — covered by `onnxruntime_rocm` from AMD's index, with
+   caveats: ROCm supports specific GPU architectures (gfx1100+ and similar —
+   older cards fall back to CPU), the wheel needs a matching python tag
+   (cp310/cp312 published), and the ROCm userspace stack (HIP/MIOpen) comes
+   from the same index. Vulkan-only GPUs that ROCm doesn't support have no
+   accelerator. Intel iGPUs are skipped by `detect_gpu_hardware()` (it
+   reports discrete GPUs only), so OpenVINO upgrade for iGPU owners needs a
+   detection extension first.
 3. **Provider upgrade download size** — Linux GPU is ~1 GB+ of nvidia wheels;
    background, cancellable, and CPU keeps working without it. Bundled app
    stays small (CPU + DirectML).
