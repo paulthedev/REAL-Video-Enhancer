@@ -75,8 +75,9 @@ class PreviewCompare(QWidget):
         self._button_group.setExclusive(True)
 
         toolbar = QHBoxLayout()
-        toolbar.setContentsMargins(0, 6, 0, 0)
+        toolbar.setContentsMargins(0, 10, 0, 0)
         toolbar.setSpacing(6)
+        toolbar.addStretch(1)
         for text, mode_id in (
             ("Enhanced", self.MODE_ENHANCED),
             ("Side by Side", self.MODE_SIDE_BY_SIDE),
@@ -91,7 +92,7 @@ class PreviewCompare(QWidget):
             toolbar.addWidget(btn)
         self._enhanced_button = self._mode_buttons[self.MODE_ENHANCED]
         self._enhanced_button.setChecked(True)
-        toolbar.addStretch(1)
+        toolbar.addStretch(1)  # second stretch -> chips centered
 
         self._root = QVBoxLayout(self)
         self._root.setContentsMargins(0, 0, 0, 0)
@@ -246,11 +247,36 @@ class _PreviewCanvas(QWidget):
     # ---------- paint helpers ----------
 
     def _paint_empty(self, p: QPainter, w, h):
-        p.setPen(QColor("#67717e"))
+        # placeholder art: dashed rounded frame + icon circle + copy
+        p.setPen(QPen(QColor("#313945"), 1, Qt.DashLine))
+        path = QPainterPath()
+        path.addRoundedRect(QRectF(14, 14, w - 28, h - 28), 12, 12)
+        p.drawPath(path)
+
+        cx, cy = w / 2, h / 2 - 26
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor(34, 211, 238, 26))
+        p.drawEllipse(QPointF(cx, cy), 30, 30)
+        p.setBrush(QColor("#22D3EE"))
+        tri = QPainterPath(QPointF(cx - 7, cy - 10))
+        tri.lineTo(cx - 7, cy + 10)
+        tri.lineTo(cx + 12, cy)
+        tri.closeSubpath()
+        p.drawPath(tri)
+
         f = p.font()
-        f.setPointSize(11)
+        f.setPointSize(12)
+        f.setBold(True)
         p.setFont(f)
-        p.drawText(QRectF(0, 0, w, h), Qt.AlignCenter, self._owner._hint)
+        p.setPen(QColor("#e6edf3"))
+        p.drawText(QRectF(0, cy + 44, w, 24), Qt.AlignCenter, "Live Preview")
+        f.setPointSize(9)
+        f.setBold(False)
+        p.setFont(f)
+        p.setPen(QColor("#67717e"))
+        p.drawText(
+            QRectF(0, cy + 68, w, 20), Qt.AlignCenter, self._owner._hint
+        )
 
     def _draw_fitted(self, p: QPainter, pixmap: QPixmap, rect: QRectF, radius, left=None):
         """Draw pixmap aspect-fitted inside rect, clipped to rounded corners.

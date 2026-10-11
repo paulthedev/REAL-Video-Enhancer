@@ -11,7 +11,7 @@ Legacy containers that no longer fit (the old preview container, the
 General and Render Queue tabs) are emptied and hidden, not deleted.
 """
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (
     QFrame,
     QLabel,
@@ -51,11 +51,15 @@ def _card(title: str) -> tuple[QFrame, QVBoxLayout]:
     card = QFrame()
     card.setObjectName("card")
     lay = QVBoxLayout(card)
-    lay.setContentsMargins(12, 10, 12, 12)
-    lay.setSpacing(8)
+    lay.setContentsMargins(14, 12, 14, 14)
+    lay.setSpacing(10)
     header = QLabel(title)
     header.setProperty("cardTitle", True)
     lay.addWidget(header)
+    separator = QFrame()
+    separator.setFrameShape(QFrame.HLine)
+    separator.setObjectName("cardSeparator")
+    lay.addWidget(separator)
     return card, lay
 
 
@@ -72,8 +76,9 @@ def apply_studio_layout(win) -> tuple[PreviewCompare, QueuePanel, QStackedLayout
     preview_compare = PreviewCompare()
     preview_card = QFrame()
     preview_card.setObjectName("card")
+    preview_card.setMinimumHeight(280)
     preview_stack = QStackedLayout(preview_card)
-    preview_stack.setContentsMargins(8, 8, 8, 8)
+    preview_stack.setContentsMargins(10, 10, 10, 10)
     preview_stack.addWidget(preview_compare)
 
     # post-render playback page keeps the existing video widget + controls
@@ -127,28 +132,43 @@ def apply_studio_layout(win) -> tuple[PreviewCompare, QueuePanel, QStackedLayout
     queue_panel = QueuePanel(win.renderQueue)
     queue_lay.addWidget(queue_panel, 1)
 
-    status_row = QHBoxLayout()
-    status_row.setSpacing(12)
+    status_row = QHBoxLayout()  # transport strip (placed under the preview)
+    status_row.setSpacing(8)
     for name in ("STATUS", "ETA", "FPS"):
         label = _steal(getattr(win, name))
         label.setStyleSheet("")  # drop the inline box style from the .ui
+        label.setObjectName("statusPill")
         status_row.addWidget(label)
     status_row.addStretch(1)
-    queue_lay.addLayout(status_row)
 
-    # ---- options row ------------------------------------------------------
-    options_row = QHBoxLayout()
-    options_row.setSpacing(10)
-    options_row.addWidget(source_card, 3)
-    options_row.addWidget(models_scroll, 3)
-    options_row.addWidget(queue_card, 3)
-
+    # ---- body: preview column LEFT, control rail RIGHT (Topaz-style) ------
+    left_col = QVBoxLayout()
+    left_col.setSpacing(8)
+    left_col.addWidget(preview_card, 1)
     # ---- tabs: drop General + Render Queue (content re-homed above) -----
     tabs: QTabWidget = win.processSettingsContainer
     for tab_widget in (win.generalSettings, win.renderQueueTab):
         idx = tabs.indexOf(tab_widget)
         if idx >= 0:
             tabs.removeTab(idx)
+
+    left_col.addLayout(status_row)
+    left_col.addWidget(tabs, 0)
+
+    rail = QVBoxLayout()
+    rail.setContentsMargins(0, 0, 0, 0)
+    rail.setSpacing(10)
+    rail.addWidget(source_card)
+    rail.addWidget(models_scroll, 1)
+    rail.addWidget(queue_card)
+    rail_widget = QWidget()
+    rail_widget.setLayout(rail)
+    rail_widget.setFixedWidth(360)
+
+    body_row = QHBoxLayout()
+    body_row.setSpacing(10)
+    body_row.addLayout(left_col, 1)
+    body_row.addWidget(rail_widget)
 
     # ---- action bar (bottom) ----------------------------------------------
     action_bar = QHBoxLayout()
@@ -157,29 +177,32 @@ def apply_studio_layout(win) -> tuple[PreviewCompare, QueuePanel, QStackedLayout
     start_btn.setProperty("variant", "primary")
     start_btn.setText("Enhance")
     # the .ui caps it at 59x55 icon-only — undo that for the CTA treatment
-    start_btn.setMinimumSize(220, 44)
+    start_btn.setMinimumSize(200, 44)
     start_btn.setMaximumSize(16777215, 16777215)
-    start_btn.setIconSize(start_btn.icon().actualSize(start_btn.iconSize()))
+    start_btn.setIconSize(QSize(20, 20))
     action_bar.addWidget(start_btn)
 
-    render_controls = getattr(win, "onRenderButtonsContiainer")
-    if isinstance(render_controls, QWidget):
-        action_bar.addWidget(_steal(render_controls))
-    else:  # generated as a bare QHBoxLayout (pause/kill button row)
-        _steal_layout(render_controls)
-        action_bar.addLayout(render_controls)
+    # pause/stop: compact square ghost buttons matching the CTA height
+    for name in ("pauseRenderButton", "killRenderButton"):
+        btn = _steal(getattr(win, name))
+        btn.setProperty("variant", "ghostIcon")
+        btn.setFixedSize(44, 44)
+        btn.setIconSize(QSize(20, 20))
+        btn.setText("")
+        action_bar.addWidget(btn)
 
-    progress_row = QVBoxLayout()
-    progress_row.addWidget(_steal(win.progressBar))
-    action_bar.addLayout(progress_row, 1)
+    progress_col = QVBoxLayout()
+    progress_col.setContentsMargins(0, 12, 8, 12)
+    progress = _steal(win.progressBar)
+    progress.setFixedHeight(10)
+    progress_col.addWidget(progress)
+    action_bar.addLayout(progress_col, 1)
 
     # ---- assemble onto the page -------------------------------------------
     content = QVBoxLayout()
-    content.setContentsMargins(12, 12, 12, 12)
-    content.setSpacing(10)
-    content.addWidget(preview_card, 5)
-    content.addLayout(options_row, 4)
-    content.addWidget(tabs, 2)
+    content.setContentsMargins(16, 16, 16, 16)
+    content.setSpacing(12)
+    content.addLayout(body_row, 1)
     content.addLayout(action_bar)
 
     old_grid = proc_page.layout()

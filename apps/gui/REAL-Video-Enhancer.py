@@ -6,7 +6,10 @@ import sys
 # standalone python). GUI children carry RVE_RUN_BACKEND=1 (set in
 # constants.py when frozen); when we see it, exec the backend script and
 # never touch the GUI. Must run before any GUI imports.
-if os.environ.get("RVE_RUN_BACKEND") == "1":
+if (
+    os.environ.get("RVE_RUN_BACKEND") == "1"
+    and "--multiprocessing-fork" not in sys.argv  # mp children: freeze_support handles them
+):
     _exe_dir = os.path.dirname(os.path.abspath(sys.executable))
     _script = None
     for _cand in (

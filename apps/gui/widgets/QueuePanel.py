@@ -11,7 +11,7 @@ import os
 import subprocess
 import sys
 
-from PySide6.QtCore import QSize, Signal
+from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -49,6 +49,10 @@ class QueuePanel(QWidget):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(6)
 
+        self.empty_label = QLabel("Nothing queued\nAdd videos from the Source card")
+        self.empty_label.setProperty("caption", True)
+        self.empty_label.setAlignment(Qt.AlignCenter)
+        lay.addWidget(self.empty_label, 1)
         self.list = QListWidget()
         self.list.setSelectionMode(QListWidget.SingleSelection)
         self.list.setVerticalScrollMode(QListWidget.ScrollPerPixel)
@@ -92,6 +96,10 @@ class QueuePanel(QWidget):
             row.refresh()
 
     def _update_counts(self):
+        empty = len(self._queue.jobs) == 0
+        self.empty_label.setVisible(empty)
+        self.list.setVisible(not empty)
+        self.clear_finished_btn.setVisible(not empty)
         c = self._queue.counts()
         parts = []
         if c.get("rendering"):

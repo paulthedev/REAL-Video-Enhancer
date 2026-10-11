@@ -51,8 +51,8 @@ class QTabNavigation(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 10, 8, 10)
-        layout.setSpacing(4)
+        layout.setContentsMargins(10, 14, 10, 14)
+        layout.setSpacing(6)
 
         # Home button is checked by default so the app lands on the home tab.
         self.buttons = []
@@ -61,7 +61,7 @@ class QTabNavigation(QWidget):
             btn.setCheckable(True)
             btn.setProperty("navButton", True)
             btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-            btn.setMinimumHeight(56)
+            btn.setMinimumHeight(62)
             btn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             btn.setIcon(QIcon(NAV_ICONS[icon_key][0]))
             btn.setIconSize(QSize(22, 22))

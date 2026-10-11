@@ -53,6 +53,10 @@ def styleSheet() -> str:
     return f"""
 * {{
     font-family: {t["font_family"]};
+    font-size: 10pt;
+}}
+QLabel[caption="true"], QLabel[dim="true"] {{
+    font-size: 9pt;
 }}
 
 QMainWindow, #centralwidget {{
@@ -90,7 +94,8 @@ QPushButton {{
     color: {t["text"]};
     border: 1px solid {t["border_subtle"]};
     border-radius: {t["radius_sm"]};
-    padding: 7px 14px;
+    padding: 6px 14px;
+    min-height: 24px;
     text-align: center;
 }}
 QPushButton:hover {{
@@ -116,7 +121,8 @@ QPushButton[variant="primary"], #startRenderButton {{
     color: {t["accent_text"]};
     border: none;
     font-weight: 600;
-    padding: 9px 18px;
+    padding: 10px 22px;
+    min-height: 24px;
 }}
 QPushButton[variant="primary"]:hover, #startRenderButton:hover {{
     background-color: {t["accent_hover"]};
@@ -153,7 +159,8 @@ QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox {{
     color: {t["text"]};
     border: 1px solid {t["border_subtle"]};
     border-radius: {t["radius_sm"]};
-    padding: 6px 10px;
+    padding: 5px 10px;
+    min-height: 22px;
     selection-background-color: {t["accent_dim"]};
     selection-color: {t["text"]};
 }}
@@ -178,7 +185,8 @@ QComboBox {{
     color: {t["text"]};
     border: 1px solid {t["border_subtle"]};
     border-radius: {t["radius_sm"]};
-    padding: 6px 30px 6px 10px;
+    padding: 5px 30px 5px 10px;
+    min-height: 22px;
 }}
 QComboBox:hover {{
     border-color: {t["border"]};
@@ -218,6 +226,7 @@ QTabWidget::pane {{
     border: 1px solid {t["border_subtle"]};
     border-radius: {t["radius_md"]};
     top: -1px;
+    padding: 8px;
 }}
 QTabBar::tab {{
     background: transparent;
@@ -385,6 +394,35 @@ QToolButton[navButton="true"]:disabled {{
     color: {t["text_faint"]};
 }}
 
+/* ---------- square ghost icon buttons (render controls) ---------- */
+QPushButton[variant="ghostIcon"] {{
+    background: transparent;
+    border: 1px solid {t["border"]};
+    border-radius: {t["radius_sm"]};
+    padding: 6px;
+}}
+QPushButton[variant="ghostIcon"]:hover {{
+    background-color: {t["field"]};
+    border-color: {t["accent"]};
+}}
+QPushButton[variant="ghostIcon"]:pressed {{
+    background-color: {t["card"]};
+}}
+QPushButton[variant="ghostIcon"]:disabled {{
+    color: {t["text_faint"]};
+    border-color: {t["border_subtle"]};
+}}
+
+/* ---------- status pills ---------- */
+QLabel#statusPill {{
+    color: {t["text_dim"]};
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid {t["border_subtle"]};
+    border-radius: 11px;
+    padding: 3px 12px;
+    font-size: 9pt;
+}}
+
 /* ---------- preview mode chips (PreviewCompare) ---------- */
 QToolButton[previewMode="true"] {{
     background-color: {t["field"]};
@@ -413,6 +451,10 @@ QFrame#card {{
     background-color: {t["card"]};
     border: 1px solid {t["border_subtle"]};
     border-radius: {t["radius_lg"]};
+}}
+QFrame#cardSeparator {{
+    color: {t["border_subtle"]};
+    max-height: 1px;
 }}
 QLabel[cardTitle="true"] {{
     color: {t["text_dim"]};
