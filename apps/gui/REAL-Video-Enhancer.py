@@ -349,28 +349,28 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     # switch menus
     def switchToHomePage(self):
-        self.animationHandler.fadeOutAnimation(self.stackedWidget)
+        # no fade: opacity effects on the stack caused stale-paint artifacts
+        # in the frozen app (old page content bleeding through)
         self.stackedWidget.setCurrentWidget(self.homePage)
         self.setButtonsUnchecked(self.homeBtn)
-        self.animationHandler.fadeInAnimation(self.stackedWidget)
 
     def switchToProcessingPage(self):
-        self.animationHandler.fadeOutAnimation(self.stackedWidget)
+        # no fade: opacity effects on the stack caused stale-paint artifacts
+        # in the frozen app (old page content bleeding through)
         self.stackedWidget.setCurrentWidget(self.procPage)
         self.setButtonsUnchecked(self.processBtn)
-        self.animationHandler.fadeInAnimation(self.stackedWidget)
 
     def switchToSettingsPage(self):
-        self.animationHandler.fadeOutAnimation(self.stackedWidget)
+        # no fade: opacity effects on the stack caused stale-paint artifacts
+        # in the frozen app (old page content bleeding through)
         self.stackedWidget.setCurrentWidget(self.settingsPage)
         self.setButtonsUnchecked(self.settingsBtn)
-        self.animationHandler.fadeInAnimation(self.stackedWidget)
 
     def switchToDownloadPage(self):
-        self.animationHandler.fadeOutAnimation(self.stackedWidget)
+        # no fade: opacity effects on the stack caused stale-paint artifacts
+        # in the frozen app (old page content bleeding through)
         self.stackedWidget.setCurrentWidget(self.downloadPage)
         self.setButtonsUnchecked(self.downloadBtn)
-        self.animationHandler.fadeInAnimation(self.stackedWidget)
 
     def updateVideoGUIText(self):
         self.settings.readSettings()

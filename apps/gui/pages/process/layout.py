@@ -152,6 +152,10 @@ def apply_studio_layout(win) -> tuple[PreviewCompare, QueuePanel, QStackedLayout
         if idx >= 0:
             tabs.removeTab(idx)
 
+    # Enhancements becomes the first tab of the left column (user request)
+    tabs.insertTab(0, models_scroll, "Enhancements")
+    tabs.setCurrentIndex(0)
+
     left_col.addLayout(status_row)
     left_col.addWidget(tabs, 0)
 
@@ -159,7 +163,6 @@ def apply_studio_layout(win) -> tuple[PreviewCompare, QueuePanel, QStackedLayout
     rail.setContentsMargins(0, 0, 0, 0)
     rail.setSpacing(10)
     rail.addWidget(source_card)
-    rail.addWidget(models_scroll, 1)
     rail.addWidget(queue_card)
     rail_widget = QWidget()
     rail_widget.setLayout(rail)
