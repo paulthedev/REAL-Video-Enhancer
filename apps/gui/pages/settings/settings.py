@@ -33,6 +33,13 @@ class SettingsTab:
         }
         self.settings = Settings()
         log("Settings: " + str(self.settings.settings))
+        # scene detection is pyscenedetect-only now: replace the legacy
+        # combo items baked into the generated .ui
+        method_combo = self.parent.scene_change_detection_method
+        method_combo.blockSignals(True)
+        method_combo.clear()
+        method_combo.addItems(["pyscenedetect", "none"])
+        method_combo.blockSignals(False)
         self.connectSettingText() # has to be in this order, otherwise settings wont stick because they get reset.
         self.connectWriteSettings()
         
@@ -418,7 +425,7 @@ class Settings:
             "subtitle_encoder": "copy_subtitle",
             "audio_bitrate": "192k",
             "preview_enabled": "True",
-            "scene_change_detection_method": "sudo_scene_detect",
+            "scene_change_detection_method": "pyscenedetect",
             "scene_change_detection_enabled": "True",
             "scene_change_detection_threshold": "3.5",
             "discord_rich_presence": "False",
@@ -456,10 +463,8 @@ class Settings:
             "subtitle_encoder": ("copy_subtitle","srt","ass","webvtt"),
             "preview_enabled": ("True", "False"),
             "scene_change_detection_method": (
-                "mean",
-                "mean_segmented",
                 "pyscenedetect",
-                "sudo_scene_detect",
+                "none",
             ),
             "scene_change_detection_enabled": ("True", "False"),
             "scene_change_detection_threshold": [

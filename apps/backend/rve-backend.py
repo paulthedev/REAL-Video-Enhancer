@@ -252,7 +252,7 @@ class HandleApplication:
         )
         parser.add_argument(
             "--scene_detect_method",
-            help="Scene change detection to avoid interpolating transitions. (options=pyscenedetect, mean, mean_diff, mean_segmented, none)\nMean segmented splits up an image, and if an arbitrary number of segments changes are detected within the segments, it will trigger a scene change. (lower sensativity thresholds are not recommended)",
+            help="Scene change detection to avoid interpolating transitions. (options=pyscenedetect, none)\nMean segmented splits up an image, and if an arbitrary number of segments changes are detected within the segments, it will trigger a scene change. (lower sensativity thresholds are not recommended)",
             type=str,
             default="pyscenedetect",
         )
