@@ -12,6 +12,7 @@ General and Render Queue tabs) are emptied and hidden, not deleted.
 """
 
 from PySide6.QtCore import Qt, QSize
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QFrame,
     QLabel,
@@ -80,6 +81,18 @@ def apply_studio_layout(win) -> tuple[PreviewCompare, QueuePanel, QStackedLayout
     preview_stack = QStackedLayout(preview_card)
     preview_stack.setContentsMargins(10, 10, 10, 10)
     preview_stack.addWidget(preview_compare)
+
+    # button affordances (feather icons shipped in resources)
+    def _icon(name):
+        return QIcon(f":/icons/icons/{name}.svg")
+
+    win.inputFileSelectButton.setIcon(_icon("folder"))
+    win.batchSelectButton.setIcon(_icon("layers"))
+    win.outputFileSelectButton.setIcon(_icon("folder"))
+    win.outputFileSelectButton.setText("Output Folder")
+    win.openOutputFolderButton.setIcon(_icon("external-link"))
+    win.openOutputFolderButton.setText("Open Folder")
+    win.addToRenderQueueButton.setIcon(_icon("plus"))
 
     # post-render playback page keeps the existing video widget + controls
     video_preview = _steal(win.VideoPreview)
@@ -153,7 +166,7 @@ def apply_studio_layout(win) -> tuple[PreviewCompare, QueuePanel, QStackedLayout
             tabs.removeTab(idx)
 
     # Enhancements becomes the first tab of the left column (user request)
-    tabs.insertTab(0, models_scroll, "Enhancements")
+    tabs.insertTab(0, models_scroll, QIcon(":/icons/icons/sliders.svg"), "Enhancements")
     tabs.setCurrentIndex(0)
 
     left_col.addLayout(status_row)
@@ -173,12 +186,17 @@ def apply_studio_layout(win) -> tuple[PreviewCompare, QueuePanel, QStackedLayout
     body_row.addLayout(left_col, 1)
     body_row.addWidget(rail_widget)
 
+    tabs.setTabIcon(tabs.indexOf(win.tab_6), QIcon(":/icons/icons/film.svg"))
+    tabs.setTabIcon(tabs.indexOf(win.advancedSettings), QIcon(":/icons/icons/settings.svg"))
+    tabs.setTabIcon(tabs.indexOf(win.tab_5), QIcon(":/icons/icons/file-text.svg"))
+
     # ---- action bar (bottom) ----------------------------------------------
     action_bar = QHBoxLayout()
     action_bar.setSpacing(10)
     start_btn = _steal(win.startRenderButton)
     start_btn.setProperty("variant", "primary")
     start_btn.setText("Enhance")
+    start_btn.setIcon(_icon("zap"))
     # the .ui caps it at 59x55 icon-only — undo that for the CTA treatment
     start_btn.setMinimumSize(200, 44)
     start_btn.setMaximumSize(16777215, 16777215)
@@ -189,6 +207,7 @@ def apply_studio_layout(win) -> tuple[PreviewCompare, QueuePanel, QStackedLayout
     for name in ("pauseRenderButton", "killRenderButton"):
         btn = _steal(getattr(win, name))
         btn.setProperty("variant", "ghostIcon")
+        btn.setIcon(_icon("pause" if "pause" in name else "square"))
         btn.setFixedSize(44, 44)
         btn.setIconSize(QSize(20, 20))
         btn.setText("")

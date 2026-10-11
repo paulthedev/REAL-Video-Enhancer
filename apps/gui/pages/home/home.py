@@ -14,11 +14,13 @@ class HomeTab:
     def _build_hero_cta(self):
         """Primary action: jump straight into the process page."""
         from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget
+        from PySide6.QtGui import QIcon
 
         hero = self.parent.stackedWidget.findChild(QWidget, "homePage")
         if hero is None:
             return
-        cta = QPushButton("Start Enhancing")
+        cta = QPushButton(" Start Enhancing")
+        cta.setIcon(QIcon(":/icons/icons/zap.svg"))
         cta.setProperty("variant", "primary")
         cta.setCursor(__import__("PySide6.QtCore", fromlist=["Qt"]).Qt.PointingHandCursor)
         cta.clicked.connect(self.parent.processBtn.click)

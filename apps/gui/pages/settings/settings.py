@@ -35,6 +35,8 @@ class SettingsTab:
         log("Settings: " + str(self.settings.settings))
         self.connectSettingText() # has to be in this order, otherwise settings wont stick because they get reset.
         self.connectWriteSettings()
+        from PySide6.QtGui import QIcon
+        self.parent.resetSettingsBtn.setIcon(QIcon(":/icons/icons/rotate-ccw.svg"))
         
 
         # disable half option if its not supported
