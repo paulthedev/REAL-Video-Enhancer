@@ -495,7 +495,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         deblur = self.deblurModelComboBox.currentText()
         denoise = self.denoiseModelComboBox.currentText()
         decompress = self.decompressModelComboBox.currentText()
-        scene_detect_method = self.scene_change_detection_method.currentText()
+        scene_detect_method = "pyscenedetect"  # the only scene detector
         input_file = self.inputFileText.text() if input_file is None else input_file
         output_path = self.outputFileText.text() if output_path is None else output_path
         interpolateModelFile = None

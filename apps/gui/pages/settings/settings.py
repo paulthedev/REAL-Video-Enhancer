@@ -33,13 +33,6 @@ class SettingsTab:
         }
         self.settings = Settings()
         log("Settings: " + str(self.settings.settings))
-        # scene detection is pyscenedetect-only now: replace the legacy
-        # combo items baked into the generated .ui
-        method_combo = self.parent.scene_change_detection_method
-        method_combo.blockSignals(True)
-        method_combo.clear()
-        method_combo.addItems(["pyscenedetect", "none"])
-        method_combo.blockSignals(False)
         self.connectSettingText() # has to be in this order, otherwise settings wont stick because they get reset.
         self.connectWriteSettings()
         
@@ -178,12 +171,6 @@ class SettingsTab:
             lambda: self.settings.writeSetting(
                 "discord_rich_presence",
                 "True" if self.parent.discord_rich_presence.isChecked() else "False",
-            )
-        )
-        self.parent.scene_change_detection_method.currentIndexChanged.connect(
-            lambda: self.settings.writeSetting(
-                "scene_change_detection_method",
-                self.parent.scene_change_detection_method.currentText(),
             )
         )
         self.parent.scene_change_detection_threshold.valueChanged.connect(
@@ -340,9 +327,6 @@ class SettingsTab:
         self.parent.scene_change_detection_enabled.setChecked(
             self.settings.settings["scene_change_detection_enabled"] == "True"
         )
-        self.parent.scene_change_detection_method.setCurrentText(
-            self.settings.settings["scene_change_detection_method"]
-        )
         self.parent.scene_change_detection_threshold.setValue(
             float(self.settings.settings["scene_change_detection_threshold"])
         )
@@ -425,7 +409,6 @@ class Settings:
             "subtitle_encoder": "copy_subtitle",
             "audio_bitrate": "192k",
             "preview_enabled": "True",
-            "scene_change_detection_method": "pyscenedetect",
             "scene_change_detection_enabled": "True",
             "scene_change_detection_threshold": "3.5",
             "discord_rich_presence": "False",
@@ -462,10 +445,6 @@ class Settings:
             "audio_bitrate": "ANY",
             "subtitle_encoder": ("copy_subtitle","srt","ass","webvtt"),
             "preview_enabled": ("True", "False"),
-            "scene_change_detection_method": (
-                "pyscenedetect",
-                "none",
-            ),
             "scene_change_detection_enabled": ("True", "False"),
             "scene_change_detection_threshold": [
                 str(num / 10) for num in range(1, 100)

@@ -787,7 +787,7 @@ class ProcessTab:
         else:
             command += [
                 "--scene_detect_method",
-                self.settings.settings["scene_change_detection_method"],
+                "pyscenedetect",
                 "--scene_detect_threshold",
                 self.settings.settings["scene_change_detection_threshold"],
             ]
