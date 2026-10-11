@@ -782,23 +782,22 @@ class ProcessTab:
                 f"{IMAGE_SHARED_MEMORY_ID}",
             ]
 
-        if self.settings.settings["scene_change_detection_enabled"] == "False":
-            command += ["--scene_detect_method", "none"]
-        else:
+        # scene detection is always on: pyscenedetect costs ~1ms/frame and
+        # prevents interpolation artifacts across cuts
+        command += [
+            "--scene_detect_method",
+            "pyscenedetect",
+            "--scene_detect_threshold",
+            self.settings.settings["scene_change_detection_threshold"],
+        ]
+        if renderOptions.sceneChangeModelFile:
             command += [
-                "--scene_detect_method",
-                "pyscenedetect",
-                "--scene_detect_threshold",
-                self.settings.settings["scene_change_detection_threshold"],
+                "--scene_detect_model",
+                os.path.join(
+                    MODELS_PATH,
+                    renderOptions.sceneChangeModelFile,
+                ),
             ]
-            if renderOptions.sceneChangeModelFile:
-                command += [
-                    "--scene_detect_model",
-                    os.path.join(
-                        MODELS_PATH,
-                        renderOptions.sceneChangeModelFile,
-                    ),
-                ]
 
         if renderOptions.benchmarkMode:
             command += ["--benchmark"]

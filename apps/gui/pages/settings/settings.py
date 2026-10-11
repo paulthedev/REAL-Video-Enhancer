@@ -159,14 +159,6 @@ class SettingsTab:
                 "True" if self.parent.preview_enabled.isChecked() else "False",
             )
         )
-        self.parent.scene_change_detection_enabled.stateChanged.connect(
-            lambda: self.settings.writeSetting(
-                "scene_change_detection_enabled",
-                "True"
-                if self.parent.scene_change_detection_enabled.isChecked()
-                else "False",
-            )
-        )
         self.parent.discord_rich_presence.stateChanged.connect(
             lambda: self.settings.writeSetting(
                 "discord_rich_presence",
@@ -324,9 +316,6 @@ class SettingsTab:
         self.parent.discord_rich_presence.setChecked(
             self.settings.settings["discord_rich_presence"] == "True"
         )
-        self.parent.scene_change_detection_enabled.setChecked(
-            self.settings.settings["scene_change_detection_enabled"] == "True"
-        )
         self.parent.scene_change_detection_threshold.setValue(
             float(self.settings.settings["scene_change_detection_threshold"])
         )
@@ -409,7 +398,6 @@ class Settings:
             "subtitle_encoder": "copy_subtitle",
             "audio_bitrate": "192k",
             "preview_enabled": "True",
-            "scene_change_detection_enabled": "True",
             "scene_change_detection_threshold": "3.5",
             "discord_rich_presence": "False",
             "video_quality": "High",
@@ -445,7 +433,6 @@ class Settings:
             "audio_bitrate": "ANY",
             "subtitle_encoder": ("copy_subtitle","srt","ass","webvtt"),
             "preview_enabled": ("True", "False"),
-            "scene_change_detection_enabled": ("True", "False"),
             "scene_change_detection_threshold": [
                 str(num / 10) for num in range(1, 100)
             ],
