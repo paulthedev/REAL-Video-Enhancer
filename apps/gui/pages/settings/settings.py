@@ -43,14 +43,66 @@ class SettingsTab:
         if not halfPrecisionSupport:
             self.parent.precision.removeItem(1)
 
-        # populate the GPU dropdown with the friendly names of the GPUs
-        # reported by the backend info output
-        self._populate_gpu_combo(
-            self.parent.gpu_id,
-            self._gpu_names(backend_output, "pytorch")
-            or self._gpu_names(backend_output, "ncnn"),
-        )
+        # populate the GPU dropdown from system detection (the backend no
+        # longer reports GPU lists — ONNX providers carry no friendly names)
+        self.gpu_names = self.get_gpu_names()
+        self._populate_gpu_combo(self.parent.gpu_id, self.gpu_names)
         self.parent.openRVEFolderBtn.clicked.connect(lambda:open_folder(currentDirectory()))
+
+    @staticmethod
+    def get_gpu_names() -> list:
+        """Friendly names of the discrete GPUs on this system, independent
+        of any backend (ONNX-only RVE has no torch/ncnn GPU listing)."""
+        if PLATFORM == "win32":
+            try:
+                import subprocess
+                output = subprocess.run(
+                    ["powershell", "-NoProfile", "-Command",
+                     "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name"],
+                    capture_output=True, text=True, timeout=30,
+                ).stdout
+                names = [
+                    line.strip() for line in output.splitlines()
+                    if line.strip() and any(
+                        k in line.lower() for k in ("nvidia", "radeon", "amd", "arc")
+                    )
+                ]
+                if names:
+                    return names
+            except Exception:
+                pass
+        elif PLATFORM == "linux":
+            try:
+                import subprocess
+                output = subprocess.run(
+                    ["lspci", "-mm"],
+                    capture_output=True, text=True, timeout=30,
+                ).stdout
+                names = []
+                for line in output.splitlines():
+                    # discrete GPUs show as VGA (0300), 3D (0302 — many
+                    # modern NVIDIA cards) or Display (0380) class
+                    if not re.search(
+                        r'"(VGA compatible controller|3D controller|Display controller)"',
+                        line,
+                    ):
+                        continue
+                    parts = line.split('"')
+                    # lspci -mm: "slot" "class" "vendor" "device name"
+                    if len(parts) >= 8:
+                        name = f"{parts[5].strip()} {parts[7].strip()}"
+                        if name not in names:
+                            names.append(name)
+                if names:
+                    return names
+            except Exception:
+                pass
+        # fallback: vendor-level detection (ProviderUpgrade's detector)
+        try:
+            from apps.gui.utils.backends.BackendDetect import detect_gpu_hardware
+            return [f"{v.upper()} GPU" for v in detect_gpu_hardware()]
+        except Exception:
+            return []
 
     @staticmethod
     def _gpu_names(backend_output: str, gpu_type: str) -> list:

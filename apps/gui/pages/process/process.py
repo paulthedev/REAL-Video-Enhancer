@@ -667,6 +667,11 @@ class ProcessTab:
                         max(int(getattr(opts, "interpolateTimes", 1) or 1), 1),
                     )
 
+    def gpu_device_index(self, name: str) -> int:
+        """'Auto' or an unknown name -> 0; else the GPU's device index."""
+        names = getattr(self, "gpu_names", []) or []
+        return names.index(name) if name in names else 0
+
     def build_command(self, renderOptions: RenderOptions):
         if (
             renderOptions.backend == "pytorch (cuda)"
@@ -696,7 +701,7 @@ class ProcessTab:
             "--pause_shared_memory_id",
             f"{PAUSED_STATE_SHARED_MEMORY_ID}",
             "--gpu_id",
-            f"{Settings.gpu_index(self.parent.fullOutput, 'onnx', self.settings.settings['gpu_id'])}",
+            f"{self.parent.settingsTab.gpu_device_index(self.settings.settings['gpu_id'])}",
             "--cwd",
             f"{CWD}",
             "--ffmpeg_path",
