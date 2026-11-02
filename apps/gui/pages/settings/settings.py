@@ -243,16 +243,6 @@ class SettingsTab:
                 "video_pixel_format", self.parent.video_pixel_format.currentText()
             )
         )
-        self.parent.pytorch_version.currentIndexChanged.connect(
-            lambda: self.settings.writeSetting(
-                "pytorch_version", self.parent.pytorch_version.currentText()
-            )
-        )
-        self.parent.pytorch_backend.currentIndexChanged.connect(
-            lambda: self.settings.writeSetting(
-                "pytorch_backend", self.parent.pytorch_backend.currentText()
-            )
-        )
         
         self.parent.auto_hdr_mode.stateChanged.connect(
             lambda: self.settings.writeSetting(
@@ -361,12 +351,6 @@ class SettingsTab:
         )
         self.parent.video_pixel_format.setCurrentText(
             self.settings.settings["video_pixel_format"]
-        )
-        self.parent.pytorch_version.setCurrentText(
-            self.settings.settings["pytorch_version"]
-        )
-        self.parent.pytorch_backend.setCurrentText(
-            self.settings.settings["pytorch_backend"]
         )
         self.parent.auto_hdr_mode.setChecked(
             self.settings.settings["auto_hdr_mode"] == "True"
