@@ -50,7 +50,7 @@ def checkForWritePermissions(dir):
 
             if (
                 i.lower() in dir.lower()
-                or "io.github.tntwise.real-video-enhancer" in dir.lower()
+                or "io.github.paulthedv.real-video-enhancer" in dir.lower()
                 and ":ro" not in i
             ):
                 return True
@@ -71,7 +71,7 @@ def checkForWritePermissions(dir):
                 )
                 if (
                     i.lower() in dir.lower()
-                    or "io.github.tntwise.real-video-enhancer" in dir.lower()
+                    or "io.github.paulthedv.real-video-enhancer" in dir.lower()
                     and ":ro" not in i
                 ):
                     return True

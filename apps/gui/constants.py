@@ -19,8 +19,8 @@ def networkCheck(hostname="https://pypi.org") -> bool:
 HAS_NETWORK_ON_STARTUP = networkCheck()
 
 # GitHub locations for RVE releases (owner/repo is case-insensitive in the API)
-GITHUB_REPO = "tntwise/real-video-enhancer"
-MODEL_HOSTED_REPO = "TNTwise/real-video-enhancer-models"
+GITHUB_REPO = "paulthedev/REAL-Video-Enhancer"
+MODEL_HOSTED_REPO = "paulthedev/real-video-enhancer-models"
 APP_URL = f"https://github.com/{GITHUB_REPO}"
 MODELS_RELEASE_BASE_URL = (
     f"https://github.com/{MODEL_HOSTED_REPO}/releases/download/models/"
@@ -77,7 +77,7 @@ else:
 if IS_FLATPAK:
     CWD = (
         os.path.join(
-            HOME_PATH, ".var", "app", "io.github.tntwise.REAL-Video-Enhancer"
+            HOME_PATH, ".var", "app", "io.github.paulthedv.REAL-Video-Enhancer"
         )
     )
 elif IS_APPIMAGE:

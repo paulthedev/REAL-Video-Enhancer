@@ -261,7 +261,6 @@ def check_backend_health(backend: str) -> dict:
             "    import ncnn; out['version'] = getattr(ncnn, '__version__', 'unknown')\n"
             "except ImportError:\n"
             "    try:\n"
-            "        import rife_ncnn_vulkan_python_tntwise as m; out['rife_ncnn_version'] = m.__version__\n"
             "    except ImportError:\n"
             "        import upscale_ncnn_py as m; out['upscale_ncnn_version'] = m.__version__\n"
             "print(json.dumps(out))"
@@ -350,8 +349,6 @@ def _check_ncnn_health(result: dict) -> dict:
     except ImportError:
         # Try alternative imports
         try:
-            import rife_ncnn_vulkan_python_tntwise
-            result["details"]["rife_ncnn_version"] = rife_ncnn_vulkan_python_tntwise.__version__
             result["healthy"] = True
         except ImportError:
             try:
@@ -402,6 +399,6 @@ def get_backend_reinstall_info(backend: str, hardware: "Optional[list]" = None) 
         info["pip_packages"] = ["onnxruntime"]
     elif backend == "ncnn":
         info["recommended_backend"] = get_ncnn_backend(hardware)
-        info["pip_packages"] = ["ncnn", "rife-ncnn-vulkan-python-tntwise", "upscale_ncnn_py"]
+        info["pip_packages"] = []
 
     return info

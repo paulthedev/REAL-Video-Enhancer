@@ -46,9 +46,7 @@ class HomeTab:
 
     def QConnect(self):
         self.parent.githubBtn.clicked.connect(lambda: openLink(APP_URL))
-        self.parent.kofiBtn.clicked.connect(
-            lambda: openLink("https://ko-fi.com/tntwise")
-        )
+        self.parent.kofiBtn.setVisible(False)  # upstream's donation link — hidden in this fork
         if networkCheck():
             self.parent.changeLogText.setVisible(True)
             changelog = self.getChangelog()
