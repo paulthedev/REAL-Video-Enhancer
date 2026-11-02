@@ -34,27 +34,6 @@ class DownloadTab:
             self.parent.low_storage_label.setVisible(True)
             self.has_enough_space = False
 
-        # The dependency-install UI is obsolete: ONNX Runtime and ffmpeg are
-        # bundled. Hide every legacy installer widget.
-        for name in (
-            "downloadNCNNBtn", "downloadTorchBtn", "downloadDirectMLBtn",
-            "downloadTensorRTBtn", "downloadRecommendedBtn",
-            "uninstallNCNNBtn", "uninstallTorchBtn",
-            "uninstallDirectMLBtn", "uninstallTensorRTBtn",
-            "selectPytorchCustomModel", "selectNCNNCustomModel",
-            "pytorchBackendInstallerContainer", "pytorchBackendInstallerContainer_2",
-            "pytorchBackendInstallerContainer_4", "directMLBackendInstallerContainer",
-            "backend_type_combo", "backend_variant_combo", "loadBackendBtn",
-            "pytorch_version", "pytorch_backend",
-            # stale text labels from the legacy backends panel
-            "label_4", "label_25", "label_backend_selector", "label_backend_type",
-            "label_64", "label_65", "label_66", "label_53",
-            "encoderLabel_4",          # "Import Custom Upscale Model"
-            "label_backend_variant",   # "Variant:"
-        ):
-            widget = getattr(self.parent, name, None)
-            if widget is not None:
-                widget.setVisible(False)
 
         if IS_FLATPAK or USE_LOCAL_BACKEND:
             self.parent.uninstallAppBtn.setDisabled(True)

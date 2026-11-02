@@ -104,27 +104,6 @@ class SettingsTab:
         except Exception:
             return []
 
-    @staticmethod
-    def _gpu_names(backend_output: str, gpu_type: str) -> list:
-        """The names of the GPUs reported in the backend info output
-        (lines like 'PyTorch GPU 1: NVIDIA GeForce ...')."""
-        names = []
-        for line in backend_output.split("\n"):
-            match = re.match(rf"^{gpu_type} gpu \d+: (.+)$", line.strip(), re.IGNORECASE)
-            if match:
-                names.append(match.group(1).strip())
-        return names
-
-    @staticmethod
-    def gpu_index(backend_output: str, gpu_type: str, name: str) -> int:
-        """The index of a GPU name in the backend info output, 0 when it
-        is not found (e.g. 'Auto' or a GPU that is no longer present)."""
-        names = SettingsTab._gpu_names(backend_output, gpu_type)
-        for i, n in enumerate(names):
-            if n == name:
-                return i
-        return 0
-
     def _populate_gpu_combo(self, combo, gpu_names: list):
         combo.clear()
         combo.addItem("Auto")
