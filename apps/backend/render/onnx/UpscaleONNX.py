@@ -1,15 +1,10 @@
 import onnx
-import onnxruntime as ort
-from onnxruntime import InferenceSession
 import os
 import numpy as np
 import time
 import cv2
 
-try:
-    from onnxconverter_common import float16
-except ImportError:  # fp16 conversion unavailable — fp32 keeps rendering
-    float16 = None
+from .session import create_session, prepare_model, resolve_precision as _resolve_precision
 
 
 def getONNXScale(modelPath: str = "") -> int:
@@ -29,22 +24,7 @@ class UpscaleONNX:
         raise ValueError("Scale not found in model name!")
 
     def handlePrecision(self, precision: str) -> np.dtype:
-        if precision == "float16":
-            if float16 is None:
-                print("[UpscaleONNX] onnxconverter-common not installed; falling back to float32.")
-                return np.float32
-            return np.float16
-        if precision == "float32":
-            return np.float32
-        # auto: fp16 only where a GPU provider can run it efficiently
-        gpu_providers = [
-            p
-            for p in ort.get_available_providers()
-            if not p.startswith(("CPU", "Azure"))
-        ]
-        if gpu_providers and float16 is not None:
-            return np.float16
-        return np.float32
+        return _resolve_precision(precision)
 
     def __init__(
         self,
@@ -74,45 +54,9 @@ class UpscaleONNX:
         self.norm_factor = np.array(1.0/255.0, dtype=self.precision)
 
 
-        # load model
-        model = onnx.load(self.modelPath)
-
-        if self.precision == np.float16:
-            model = float16.convert_float_to_float16(model, check_fp16_ready=False)
-
-        self.model = model
-        session_options = ort.SessionOptions()
-        session_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        # session_options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
-        # session_options.enable_mem_pattern = True
-
-        available_providers = ort.get_available_providers()
-
-        # Preferred GPU provider order; gpu_id maps to a device index for each.
-        preferred_order = [
-            "TensorrtExecutionProvider",
-            "CUDAExecutionProvider",
-            "ROCMExecutionProvider",
-            "OpenVINOExecutionProvider",
-            "DmlExecutionProvider",
-        ]
-        providers = []
-        for name in preferred_order:
-            if name not in available_providers:
-                continue
-            options = {"device_id": 0}
-            if self.precision == np.float16 and name != "DmlExecutionProvider":
-                # fp16 models need the matching kernel type on GPU providers
-                options["do_copy_in_default_stream"] = True
-            providers.append((name, options))
-
-        if not providers:
-            print(f"[UpscaleONNX] No GPU provider available ({available_providers}); falling back to CPUExecutionProvider.")
-            providers = [("CPUExecutionProvider", {})]
-
-        self.inference_session = InferenceSession(
-            self.model.SerializeToString(), session_options, providers=providers
-        )
+        # load model + build session through the shared helper
+        self.model = prepare_model(self.modelPath, self.precision)
+        self.inference_session = create_session(self.model, 0)
 
     
 

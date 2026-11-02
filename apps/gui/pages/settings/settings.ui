@@ -614,6 +614,13 @@ QTabWidget::pane { /* The tab widget frame */
                              </property>
                             </spacer>
                            </item>
+<item>
+                                 <widget class="HelpIconLabel" name="uhdHelp">
+                                                                  <property name="toolTip">
+                                                                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=" font-weight:700;"&gt;Interpolation UHD Mode:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;- Saves VRAM by computing optical flow at a lower resolution on high-res videos.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                                                                  </property>
+                                 </widget>
+                                </item>
                            <item>
                             <widget class="QCheckBox" name="uhd_mode">
                              <property name="text">

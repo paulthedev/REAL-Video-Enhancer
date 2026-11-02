@@ -63,6 +63,7 @@ def tiny_model(tmp_path_factory):
             "output": {0: "batch", 2: "height", 3: "width"},
         },
         opset_version=17,
+        dynamo=False,  # the dynamo exporter mangles scalar/time inputs
     )
     assert model_path.exists()
     return model_path
@@ -180,3 +181,78 @@ def test_onnx_upscale_render_end_to_end(tiny_model, input_video):
     assert max_diff <= 5, (
         f"output differs from nearest-neighbor 2x input (max diff {max_diff})"
     )
+
+
+@pytest.fixture(scope="module")
+def tiny_interp_model(tmp_path_factory):
+    """A minimal 2-input+timestep blender: out = (1-t)*img0 + t*img1.
+
+    At t=0.5 (2x interpolation) the mid frame is the exact 50/50 blend.
+    The filename contains no scale tag — interpolation needs none.
+    """
+    model_dir = tmp_path_factory.mktemp("interp_model")
+    model_path = model_dir / "tiny_blend_interp.onnx"
+
+    class Blend(torch.nn.Module):
+        def forward(self, img0, img1, timestep):
+            t = timestep.view(1, 1, 1, 1)
+            return (1.0 - t) * img0 + t * img1
+
+    dummy = torch.zeros(1, 3, HEIGHT, WIDTH, dtype=torch.float32)
+    torch.onnx.export(
+        Blend(),
+        (dummy, dummy, torch.zeros(1, 1)),
+        str(model_path),
+        input_names=["img0", "img1", "timestep"],
+        output_names=["output"],
+        opset_version=17,
+        dynamo=False,  # the dynamo exporter folds the timestep away
+    )
+    assert model_path.exists()
+    return model_path
+
+
+def test_onnx_interpolate_render_end_to_end(tiny_interp_model, input_video):
+    """2x interpolation through the real CLI: frame count doubles and the
+    in-between frames are the 50/50 blends of their neighbours."""
+    render_dir, video_path, source_frames = input_video
+    output_path = render_dir / "output_interp.mp4"
+
+    result = subprocess.run(
+        [
+            sys.executable, BACKEND_SCRIPT,
+            "-i", str(video_path),
+            "-o", str(output_path),
+            "-b", "onnx",
+            "--interpolate_model", str(tiny_interp_model),
+            "--interpolate_factor", "2",
+            "--scene_detect_method", "none",
+            "--device", "cpu",
+            "--precision", "float32",
+            "--overwrite",
+            "--ffmpeg_path", imageio_ffmpeg.get_ffmpeg_exe(),
+        ],
+        capture_output=True, text=True, timeout=300, cwd=render_dir,
+    )
+    assert result.returncode == 0, (
+        f"backend failed (rc={result.returncode})\n"
+        f"stdout:\n{result.stdout[-2500:]}\nstderr:\n{result.stderr[-2500:]}"
+    )
+
+    ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    # the engine yields the in-betweens; the loop pushes each source frame —
+    # the first input has no in-between, so expect 2*N - 1 frames
+    out_frames = decode_rawvideo(
+        ffmpeg, output_path, WIDTH, HEIGHT, FRAME_COUNT * 2 - 1
+    )
+    # every even output frame is a source frame; odd frames are blends of
+    # their two neighbours (codec slop allowed)
+    sources = out_frames[0::2].astype(int)
+    max_even = int(np.abs(sources - source_frames.astype(int)).max())
+    assert max_even <= 6, f"source frames drifted (max diff {max_even})"
+    blends = out_frames[1::2].astype(int)
+    a = source_frames[:-1].astype(int)
+    b = source_frames[1:].astype(int)
+    expected = (a + b) // 2
+    max_blend = int(np.abs(blends - expected).max())
+    assert max_blend <= 8, f"blends wrong (max diff {max_blend})"

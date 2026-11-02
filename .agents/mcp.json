@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "zvec-grep": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@zvec/zvec-grep",
+        "server",
+        "--stdio",
+        "--mcp-toolset",
+        "full"
+      ],
+      "env": {
+        "ZVEC_GREP_EMBEDDING": "local/potion-code-16m-v2"
+      }
+    }
+  }
+}

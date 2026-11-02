@@ -68,65 +68,6 @@ All documentation files must be placed in the `docs/` folder. This includes:
    - Check if the functionality already exists in `apps/backend/utils/`
    - If not, consider whether it should be added as a reusable utility
 
-### Semantic Code Search
-
-This repository is wired for **[zvec grep](https://github.com/zvec-ai/zvec-grep)**
-(`zg`) — a local-first search tool that unifies ripgrep, BM25, and vector
-search — through a project-scoped MCP server. The index lives in
-`.zvec-grep/` (git-ignored local cache, never commit it). Prefer semantic
-search over reading files blind or grepping through raw dumps when you are
-looking for behavior or concepts.
-
-**Setup — no global install needed.** This repo ships an MCP config at
-`.zcode/mcp.json` that launches the server on demand via npx (requires
-Node 22+):
-
-```json
-{
-  "mcpServers": {
-    "zvec-grep": {
-      "command": "npx",
-      "args": ["-y", "@zvec/zvec-grep", "--server", "--stdio"],
-      "env": { "ZVEC_GREP_MCP_TOOLSET": "search" }
-    }
-  }
-}
-```
-
-Agents connected to this MCP server get a `zvec_grep_search` tool that takes
-a natural-language `query`, optional `fts` keyword terms, `globs`, and
-`fuse: true` to blend semantic + keyword results. The default `search`
-toolset is intentional — agents should not silently create, rebuild, or
-delete the index (see
-[docs/03-mcp.md](https://github.com/zvec-ai/zvec-grep/blob/main/docs/03-mcp.md)
-for the `full` toolset and transport options).
-
-**Indexing** — the search tool needs the `.zvec-grep/` index to exist. Build
-or refresh it (local `potion-code` embedding model — everything stays
-on-machine):
-
-```bash
-npx -y @zvec/zvec-grep index --embedding local/potion-code-16m-v2
-```
-
-Re-run this after large file moves or renames. `ZVEC_GREP_MCP_TOOLSET=full`
-exposes index-management tools to agents instead, but the CLI form above is
-the default workflow.
-
-**CLI equivalent** (same package, no MCP): `npx -y @zvec/zvec-grep query
---human "<query>" --limit 5`, or `npx -y @zvec/zvec-grep --rg -F "symbol" src`
-for exact search. Diagnose index problems with
-`npx -y @zvec/zvec-grep status --mode direct --debug`.
-
-**When to reach for it**:
-- Before writing any new code (find existing utilities that already solve it)
-- When refactoring (find duplicated patterns worth extracting into `apps/backend/utils/`)
-- When tracing behavior that spans backend and GUI (render pipeline, settings, encoders)
-- When onboarding to an unfamiliar subsystem
-
-**When plain grep is still better**: exact symbol names, error strings, file
-paths, or listing every call site of a known function.
-
 ### Dependencies
 - Use `pyproject.toml` for all dependencies
 - Run Python with `uv run python` instead of direct `python`
@@ -183,14 +124,31 @@ paths, or listing every call site of a known function.
 - Run tests with `uv run pytest`
 - Check CI/CD in `.github/workflows/`
 
-## Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Make changes and test
-4. Submit pull request
+## Semantic Search (zvec-grep)
 
-## Links
-- [GitHub Repository](https://github.com/paulthedev/REAL-Video-Enhancer)
-- [Discord Community](https://discord.gg/hwGHXga8ck)
-- [FOLDER_STRUCTURE.md](./docs/FOLDER_STRUCTURE.md) - Detailed folder layout
-- [Steam Page](https://store.steampowered.com/app/4087640/)
+A semantic code search index is available via MCP. Use `zvec_grep_search` for
+**conceptual/meaning-based** queries (e.g. "where do we handle auth token refresh")
+and `zvec_grep_rg` for **exact string/regex** matches.
+
+### When to use which
+
+| Intent | Tool |
+|---|---|
+| "Find code that does X" (fuzzy, semantic) | `zvec_grep_search` |
+| "Find all occurrences of `fooBar`" | `zvec_grep_rg` |
+| "What files implement retry logic?" | `zvec_grep_search` |
+| "Where is `TODO: fix` commented?" | `zvec_grep_rg` |
+
+### Index management
+
+- Embedding model: `local/potion-code-16m-v2`
+- Index location: `.zvec-grep/` (gitignored)
+- Rebuild after large refactors: ask the user to run `zg index --rebuild`
+- **Never** create, rebuild, or drop the index silently — always confirm with the user first
+- Check status with `zvec_grep_index_status` before assuming the index is stale
+
+### Tips
+
+- Prefer `zvec_grep_search` as the **first** lookup when exploring unfamiliar code
+- Combine with `zvec_grep_rg` to narrow results (semantic → exact)
+- If search returns nothing, the index may be stale — suggest a rebuild   

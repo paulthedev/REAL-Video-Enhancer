@@ -346,7 +346,7 @@ class Render:
                     break
 
                 for extraRestoration in self.extraRestorationModels:
-                    frame = extraRestoration(frame)
+                    frame = extraRestoration(self._as_bytes(frame))
 
                 if self.interpolateModel:
                     sceneDetect = self.sceneDetect.detect(frame)
@@ -450,11 +450,12 @@ class Render:
 
     def setupExtraRestoration(self, modelPath):
         log("Setting up Extra Restoration")
+        if self.backend == "onnx":
+            # restoration models are 1x — reuse the upscale engine
+            return self.upscaleONNXObject(scale=1, modelPath=modelPath)
+
         if self.backend == "pytorch" or self.backend == "tensorrt":
             return self.upscalePytorchObject(modelPath)
-        
-        if self.backend == "ncnn":
-            return self.upscaleNCNNObject(scale=1, modelPath=modelPath)
 
     def setupUpscale(self):
         log("Setting up Upscale")

@@ -1,98 +1,74 @@
-import onnx
-import onnxruntime as ort
-from onnxruntime import InferenceSession
-from onnxconverter_common import float16
-import os
+"""ONNX RIFE-style frame interpolation engine.
+
+Consumes and produces raw rgb24 frame bytes (the render loop converts at
+the boundary). Stateless per pair except the cached previous frame.
+
+RIFE ONNX models take img0/img1 (NCHW, 0-1 float) and, on most exports,
+a scalar timestep input; the output is the interpolated frame.
+"""
+
 import numpy as np
-from ...utils.Util import checkForDirectMLHalfPrecisionSupport
+
+from .session import create_session, prepare_model, resolve_precision
 
 
-def getONNXScale(modelPath: str = "") -> int:
-    paramName = os.path.basename(modelPath).lower()
-    for i in range(100):
-        if f"{i}x" in paramName or f"x{i}" in paramName:
-            return i
-
-
-class UpscaleONNX:
+class InterpolateONNX:
     def __init__(
         self,
-        modelPath,
-        deviceID: int = 0,
-        precision: str = "float32",
+        modelPath: str,
+        interpolateFactor: int = 2,
         width: int = 1920,
         height: int = 1080,
+        deviceID: int = 0,
+        precision: str = "auto",
+        hdr_mode: bool = False,
     ):
         self.width = width
         self.height = height
-        self.modelPath = modelPath
-        self.deviceID = deviceID
-        self.i0 = None
-        self.precision = self.handlePrecision(precision)
-        self.model = self.loadModel()
-        self.inferenceSession = self.loadInferenceSession()
+        self.factor = max(int(interpolateFactor), 1)
+        self.hdr_mode = hdr_mode
+        self.precision = resolve_precision(precision)
+        self.model = prepare_model(modelPath, self.precision)
+        self.session = create_session(self.model, deviceID)
 
-    def getScale(self) -> int:
-        self.scale = getONNXScale(self.modelPath)
-        return self.scale
+        inputs = self.session.get_inputs()
+        self.input_names = [i.name for i in inputs]
+        # convention: img0, img1 [, timestep]
+        self.has_timestep = len(self.input_names) > 2
+        self.prev = None  # cached HWC uint8 frame
 
-    def handlePrecision(self, precision):
-        if precision == "auto":
-            return np.float16 if checkForDirectMLHalfPrecisionSupport() else np.float32
-        if precision == "float16":
-            return np.float16
-        if precision == "float32":
-            return np.float32
+    def _to_tensor(self, hwc: np.ndarray) -> np.ndarray:
+        tensor = hwc.astype(np.float32) / 255.0
+        return tensor.transpose(2, 0, 1)[None]
 
-    def bytesToFrame(self, image: bytes) -> tuple:
-        image = np.frombuffer(image, dtype=np.uint8).reshape(1080, 1920, 3)
-        image = np.transpose(image, (2, 0, 1))
-        image = np.expand_dims(image, axis=0)
-        image = image.astype(self.precision)
-        image = image.__mul__(1.0 / 255.0)
-        return np.ascontiguousarray(image)
-
-    def render(
-        self, image0_as_np_array: np.ndarray, image1_as_np_array: np.ndarray, timestep
-    ) -> np.ndarray:
-        timestep_tens = np.full(
-            (1, 1, self.ph, self.pw),
-            timestep,
-            dtype=self.dtype,
-            device=self.device,
-        )
-        input = np.concatenate(
-            (image0_as_np_array, image1_as_np_array, timestep_tens), axis=1
-        )
-        onnx_input = {"x": input}
-        onnx_output = self.inferenceSession.run(None, onnx_input)[0]
-        return self.frameToBytes(onnx_output)
-
-    def frameToBytes(self, image: np.ndarray) -> bytes:
-        image = (
-            image.clip(0, 1)
-            .squeeze()
-            .transpose(1, 2, 0)
-            .__mul__(255.0)
+    def _run(self, img0: np.ndarray, img1: np.ndarray, timestep: float) -> bytes:
+        feed = {
+            self.input_names[0]: self._to_tensor(img0),
+            self.input_names[1]: self._to_tensor(img1),
+        }
+        if self.has_timestep:
+            feed[self.input_names[2]] = np.array([[timestep]], dtype=np.float32)
+        out = self.session.run(None, feed)[0]
+        if out.ndim == 4:
+            out = out[0]
+        frame = (
+            (np.clip(out, 0.0, 1.0).transpose(1, 2, 0) * 255.0)
             .astype(np.uint8)
         )
-        return np.ascontiguousarray(image).tobytes()
+        return np.ascontiguousarray(frame).tobytes()
 
-    def loadModel(self):
-        model = onnx.load(self.modelPath)
-        if self.precision == np.float16:
-            model = float16.convert_float_to_float16(model)
-        return model
-
-    def loadInferenceSession(self) -> InferenceSession:
-        directml_backend = [("DmlExecutionProvider", {"device_id": f"{self.deviceID}"})]
-
-        session_options = ort.SessionOptions()
-        session_options.graph_optimization_level = (
-            ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+    def __call__(self, img1, transition=False):
+        """Yield only the IN-BETWEEN frames for the pair (prev, img1) —
+        the render loop pushes img1 itself afterwards. On a scene change
+        (or the first frame) there is nothing to blend across, so an empty
+        iterator is returned (kept truthy: an empty list would end the
+        render — the old torch engine returned a generator for this)."""
+        fb = img1 if isinstance(img1, bytes) else img1.get_frame_bytes()
+        img = np.frombuffer(fb, dtype=np.uint8).reshape(self.height, self.width, 3)
+        prev = self.prev
+        self.prev = img.copy()
+        if prev is None or transition or self.factor <= 1:
+            return iter(())
+        return iter(
+            self._run(prev, img, i / self.factor) for i in range(1, self.factor)
         )
-        inference_session = InferenceSession(
-            self.model.SerializeToString(), session_options, providers=directml_backend
-        )
-
-        return inference_session
