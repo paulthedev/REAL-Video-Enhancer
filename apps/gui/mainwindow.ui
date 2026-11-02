@@ -294,7 +294,7 @@ QTabWidget::pane { /* The tab widget frame */
             <property name="currentIndex">
              <number>2</number>
             </property>
-            <widget class="QWidget" name="homePage" /><widget class="QWidget" name="morePage" /><widget class="QWidget" name="procPage" /><widget class="QWidget" name="settingsPage" /><widget class="QWidget" name="downloadPage" /></widget>
+            <widget class="QWidget" name="homePage" /><widget class="QWidget" name="procPage" /><widget class="QWidget" name="settingsPage" /><widget class="QWidget" name="downloadPage" /></widget>
           </item>
          </layout>
         </widget>

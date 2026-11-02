@@ -213,12 +213,6 @@ class SettingsTab:
                 "True" if self.parent.preview_enabled.isChecked() else "False",
             )
         )
-        self.parent.discord_rich_presence.stateChanged.connect(
-            lambda: self.settings.writeSetting(
-                "discord_rich_presence",
-                "True" if self.parent.discord_rich_presence.isChecked() else "False",
-            )
-        )
         self.parent.scene_change_detection_threshold.valueChanged.connect(
             lambda: self.settings.writeSetting(
                 "scene_change_detection_threshold",
@@ -361,9 +355,6 @@ class SettingsTab:
         self.parent.preview_enabled.setChecked(
             self.settings.settings["preview_enabled"] == "True"
         )
-        self.parent.discord_rich_presence.setChecked(
-            self.settings.settings["discord_rich_presence"] == "True"
-        )
         self.parent.scene_change_detection_threshold.setValue(
             float(self.settings.settings["scene_change_detection_threshold"])
         )
@@ -444,7 +435,6 @@ class Settings:
             "audio_bitrate": "192k",
             "preview_enabled": "True",
             "scene_change_detection_threshold": "3.5",
-            "discord_rich_presence": "False",
             "video_quality": "High",
             "output_folder_location": output_folder_default,
             "use_same_output_folder_as_input_file_enabled": "False",
@@ -480,7 +470,6 @@ class Settings:
             "scene_change_detection_threshold": [
                 str(num / 10) for num in range(1, 100)
             ],
-            "discord_rich_presence": ("True", "False"),
             "video_quality": ("Low", "Medium", "High", "Very_High", "Ultra", "Lossless"),
             "output_folder_location": "ANY",
             "use_same_output_folder_as_input_file_enabled": ("True", "False"),

@@ -126,7 +126,6 @@ class BuildManager:
     PAGE_UIS = [
         ("apps/gui/mainwindow.ui", "_mainwindow"),
         ("apps/gui/pages/home/home.ui", "home"),
-        ("apps/gui/pages/more/more.ui", "more"),
         ("apps/gui/pages/process/process.ui", "process"),
         ("apps/gui/pages/settings/settings.ui", "settings"),
         ("apps/gui/pages/download/download.ui", "download"),

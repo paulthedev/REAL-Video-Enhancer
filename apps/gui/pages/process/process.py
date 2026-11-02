@@ -46,7 +46,6 @@ from apps.gui.util import (
 )
 from apps.gui.utils.backends import DownloadModel
 from apps.gui.pages.settings.settings import Settings
-from apps.gui.lib.DiscordRPC import DiscordRPC
 from apps.gui.lib.ModelHandler import getModels
 from apps.gui.lib.RenderQueue import RenderOptions
 
@@ -357,7 +356,6 @@ class ProcessTab:
         self.parent.startRenderButton.clicked.disconnect()
         self.parent.startRenderButton.clicked.connect(self.resumeRender)
 
-        self.startDiscordRPC()
         self.settings.readSettings()
 
         self._overwrite_answer = None
@@ -366,14 +364,6 @@ class ProcessTab:
         self.startGUIUpdate()
         self._render_thread = Thread(target=lambda: self.renderToPipeThread(renderQueue))
         self._render_thread.start()
-
-    def startDiscordRPC(self):
-        if self.settings.settings["discord_rich_presence"] == "True":
-            try:
-                self.discordRPC = DiscordRPC()
-                self.discordRPC.start_discordRPC()
-            except Exception:
-                pass
 
     def createPausedSharedMemory(self):
         try:
@@ -579,11 +569,6 @@ class ProcessTab:
         except Exception:
             pass
         # Have to swap the visibility of these here otherwise crash for some reason
-        if (
-            self.settings.settings["discord_rich_presence"] == "True"
-            and getattr(self, "discordRPC", None) is not None
-        ):  # only close if it actually started
-            self.discordRPC.closeRPC()
         try:
             self.workerThread.stop()
             self.workerThread.quit()

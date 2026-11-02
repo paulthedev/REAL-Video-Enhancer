@@ -3,7 +3,7 @@
 ``build.py`` compiles the main window and each page's ``.ui`` file into
 generated ``Ui_*`` classes under the repo-root ``dist/`` (the main window's
 stacked widget contains empty placeholder slots named ``homePage`` /
-``morePage`` / ``procPage`` / ``settingsPage`` / ``downloadPage``).
+``procPage`` / ``settingsPage`` / ``downloadPage``).
 
 This package provides the page widgets:
 
@@ -63,18 +63,6 @@ class Home(_PageBase):
         return Ui_HomePage()
 
 
-class More(_PageBase):
-    """morePage — placeholder slot between home and process."""
-
-    CONTAINER_NAME = "morePage"
-
-    @classmethod
-    def _ui_instance(cls):
-        from more import Ui_MorePage
-
-        return Ui_MorePage()
-
-
 class Process(_PageBase):
     """procPage — preview, render controls and settings tabs."""
 
@@ -112,7 +100,7 @@ class Download(_PageBase):
 
 
 #: Every page, used by :func:`assemble_pages` / ``MainWindow``.
-PAGES = (Home, More, Process, SettingsPage, Download)
+PAGES = (Home, Process, SettingsPage, Download)
 
 
 def assemble_pages(stacked_widget: QWidget, controller: QWidget | None = None) -> None:
@@ -137,4 +125,4 @@ def assemble_pages(stacked_widget: QWidget, controller: QWidget | None = None) -
                     setattr(controller, name, widget)
 
 
-__all__ = ["Home", "More", "Process", "SettingsPage", "Download", "PAGES", "assemble_pages"]
+__all__ = ["Home", "Process", "SettingsPage", "Download", "PAGES", "assemble_pages"]
