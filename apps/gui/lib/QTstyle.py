@@ -466,6 +466,16 @@ QLabel#statusChip {{
     font-size: 8pt;
 }}
 
+QFrame#dropZone {{
+    background-color: {t["card"]};
+    border: 2px dashed {t["border"]};
+    border-radius: {t["radius_lg"]};
+}}
+QFrame#dropZone:hover {{
+    border-color: {t["accent"]};
+    background-color: rgba(34, 211, 238, 0.05);
+}}
+
 /* ---------- misc ---------- */
 QToolTip {{
     background-color: {t["field"]};

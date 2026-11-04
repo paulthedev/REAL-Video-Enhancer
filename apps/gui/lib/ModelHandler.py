@@ -36,16 +36,16 @@ onnxUpscaleModels = {
     ),
 }
 
-# detect custom models (ONNX only)
-createDirectory(CUSTOM_MODELS_PATH)
-customOnnxUpscaleModels = {}
-for model in os.listdir(CUSTOM_MODELS_PATH):
-    if model.endswith(".onnx"):
-        customOnnxUpscaleModels[model] = (model, model, 4, "custom")
-
-onnxUpscaleModels = onnxUpscaleModels | customOnnxUpscaleModels
-
 totalModels = onnxInterpolateModels | onnxUpscaleModels
+
+def _custom_onnx_models() -> dict:
+    """Scan the custom models folder (called fresh on every getModels)."""
+    createDirectory(CUSTOM_MODELS_PATH)
+    models = {}
+    for model in os.listdir(CUSTOM_MODELS_PATH):
+        if model.endswith(".onnx"):
+            models[model] = (model, model, 4, "custom")
+    return models
 
 def getModels():
     """
@@ -54,9 +54,10 @@ def getModels():
 
     ONNX is the only backend; categories without converted models are empty.
     """
+    custom = _custom_onnx_models()
     return (
         onnxInterpolateModels,
-        onnxUpscaleModels,
+        onnxUpscaleModels | custom,
         {},  # deblur
         {},  # denoise
         {},  # decompress
