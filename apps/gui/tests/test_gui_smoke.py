@@ -81,11 +81,6 @@ def gui_entry(tmp_path_factory):
 
     QTcustom.DownloadAndReportToQTThread.run = _fake_run
 
-    # keep the download page's version check offline
-    from apps.gui.lib import Updater
-
-    Updater.ApplicationUpdater.__init__ = lambda self: None
-
     loader = importlib.machinery.SourceFileLoader(module_name, ENTRY)
     spec = importlib.util.spec_from_loader(module_name, loader)
     module = importlib.util.module_from_spec(spec)

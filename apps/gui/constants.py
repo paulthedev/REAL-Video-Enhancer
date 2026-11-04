@@ -25,13 +25,7 @@ APP_URL = f"https://github.com/{GITHUB_REPO}"
 MODELS_RELEASE_BASE_URL = (
     f"https://github.com/{MODEL_HOSTED_REPO}/releases/download/models/"
 )
-RELEASES_LATEST_API_URL = (
-    f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
-)
 RELEASES_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
-RELEASE_DOWNLOAD_URL_TEMPLATE = (
-    "https://github.com/" + GITHUB_REPO + "/releases/download/{tag}/{file_name}"
-)
 
 # Official upstream sources (do not re-host these — see docs/BUG_TRACKER.md,
 # "Sources — runtime download provenance").

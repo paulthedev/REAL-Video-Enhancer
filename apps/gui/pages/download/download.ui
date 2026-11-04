@@ -75,23 +75,7 @@ background-color:white;
                </widget>
               </item>
               <item row="0" column="0">
-               <widget class="QWidget" name="ApplicationUpdateContainer" native="true">
-                <layout class="QVBoxLayout" name="verticalLayout_30">
-                 <property name="leftMargin">
-                  <number>9</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>9</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>9</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>9</number>
-                 </property>
-                </layout>
-               </widget>
-              </item>
+               </item>
               <item row="1" column="0">
                <widget class="QWidget" name="backendSelectContainer" native="true">
                 <property name="styleSheet">

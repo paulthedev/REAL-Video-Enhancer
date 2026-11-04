@@ -1,7 +1,6 @@
 import os
 from PySide6.QtWidgets import QMainWindow, QMessageBox
 from apps.gui.constants import IS_FLATPAK, PLATFORM, CWD, USE_LOCAL_BACKEND
-from apps.gui.lib.Updater import ApplicationUpdater
 from apps.gui.util import FileHandler, log
 
 
@@ -22,7 +21,6 @@ class DownloadTab:
         self.parent = parent
         self.backends = backends or []
         self.skip_info_popup = skip_info_popup
-        self.applicationUpdater = ApplicationUpdater()
 
         self.has_enough_space = True
         if IS_FLATPAK:
@@ -40,7 +38,6 @@ class DownloadTab:
         else:
             self.parent.uninstallAppBtn.clicked.connect(self.uninstallApp)
 
-        self.parent.ApplicationUpdateContainer.setVisible(False)
 
     def uninstallApp(self):
         reply = QMessageBox.question(
