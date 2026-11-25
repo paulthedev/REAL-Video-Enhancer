@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QListWidgetItem,
     QLabel,
     QProgressBar,
+    QSizePolicy,
     QToolButton,
 )
 
@@ -143,6 +144,27 @@ class QueuePanel(QWidget):
             subprocess.Popen(["xdg-open", folder])
 
 
+class _ElidedLabel(QLabel):
+    """A label that middle-elides long file names instead of hard-clipping."""
+
+    def __init__(self, text: str, parent=None):
+        super().__init__(parent)
+        self._full_text = text
+        self.setToolTip(text)
+        self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        self._refresh()
+
+    def _refresh(self):
+        fm = self.fontMetrics()
+        super().setText(
+            fm.elidedText(self._full_text, Qt.ElideMiddle, max(self.width(), 20))
+        )
+
+    def resizeEvent(self, event):
+        self._refresh()
+        super().resizeEvent(event)
+
+
 class _JobRow(QWidget):
     """One queue row: name + summary + status chip, progress bar while
     rendering, hover actions per status."""
@@ -161,7 +183,7 @@ class _JobRow(QWidget):
 
         top = QHBoxLayout()
         top.setSpacing(8)
-        self.title = QLabel(os.path.basename(job.input_file))
+        self.title = _ElidedLabel(os.path.basename(job.input_file))
         self.title.setToolTip(job.input_file)
         top.addWidget(self.title, 1)
 

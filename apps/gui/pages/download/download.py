@@ -175,6 +175,12 @@ class DownloadTab:
         self.drop_zone.filesDropped.connect(self.importModels)
         self.import_status = QLabel("Models are imported into your custom_models folder")
         self.import_status.setProperty("caption", True)
+        self.import_hint = QLabel(
+            "Tip: include the scale in custom upscale filenames "
+            "(for example 2x_mymodel.onnx) so the renderer picks the right output size."
+        )
+        self.import_hint.setProperty("caption", True)
+        self.import_hint.setWordWrap(True)
 
         self.models_label = QLabel("Imported models")
         self.models_list = QListWidget()
@@ -183,16 +189,17 @@ class DownloadTab:
         self.models_list.setSelectionMode(QListWidget.NoSelection)
 
         if isinstance(layout, QGridLayout):
-            # row 0: import target, row 1: status, row 2: list heading,
-            # row 3: imported list, row 4: slack, row 5: danger zone
+            # row 0: import target, 1: status, 2: hint, 3: list heading,
+            # row 4: imported list, row 5: slack, row 6: danger zone
             layout.addWidget(self.drop_zone, 0, 0)
             layout.addWidget(self.import_status, 1, 0)
-            layout.addWidget(self.models_label, 2, 0)
-            layout.addWidget(self.models_list, 3, 0)
+            layout.addWidget(self.import_hint, 2, 0)
+            layout.addWidget(self.models_label, 3, 0)
+            layout.addWidget(self.models_list, 4, 0)
             container = getattr(self.parent, "backendSelectContainer", None)
             if container is not None:
-                layout.addWidget(container, 5, 0)
-            layout.setRowStretch(4, 1)
+                layout.addWidget(container, 6, 0)
+            layout.setRowStretch(5, 1)
         else:
             layout.insertWidget(0, self.drop_zone)
             layout.insertWidget(1, self.import_status)

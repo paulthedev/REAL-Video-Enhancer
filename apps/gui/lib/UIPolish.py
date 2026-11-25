@@ -224,6 +224,33 @@ def _add_advanced_caption(window) -> None:
     window._advanced_caption_added = True
 
 
+def _polish_rve_tab(window) -> None:
+    from apps.gui.constants import CWD
+
+    preview = getattr(window, "previewEnabledContainer", None)
+    if preview is not None and preview.parentWidget() is not None:
+        layout = preview.parentWidget().layout()
+        if layout is not None and not getattr(window, "_rve_caption_added", False):
+            caption = QLabel(
+                "Application preferences. Settings, models and caches live in "
+                "the data folder below."
+            )
+            caption.setProperty("caption", True)
+            caption.setWordWrap(True)
+            layout.insertWidget(0, caption)
+            window._rve_caption_added = True
+
+    button = getattr(window, "openRVEFolderBtn", None)
+    if button is not None and button.parentWidget() is not None:
+        layout = button.parentWidget().layout()
+        if layout is not None and not getattr(window, "_rve_path_added", False):
+            info = QLabel(f"Data folder: {CWD}")
+            info.setProperty("caption", True)
+            info.setWordWrap(True)
+            layout.insertWidget(layout.indexOf(button) + 1, info)
+            window._rve_path_added = True
+
+
 def _hide_idle_render_controls(window) -> None:
     for name in ("pauseRenderButton", "killRenderButton"):
         widget = getattr(window, name, None)
@@ -244,4 +271,5 @@ def apply_polish(window) -> None:
     _fix_encoder_command(window)
     _regroup_settings(window)
     _add_advanced_caption(window)
+    _polish_rve_tab(window)
     _hide_idle_render_controls(window)

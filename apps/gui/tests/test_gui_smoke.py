@@ -120,6 +120,72 @@ def test_ui_polish_hides_dead_controls(gui_entry):
         app.processEvents()
 
 
+def test_queue_rows_track_width_and_status(gui_entry):
+    module, app = gui_entry
+    from apps.gui.lib.RenderQueue import DONE, RenderOptions
+
+    module.QMessageBox.question = staticmethod(
+        lambda *a, **k: module.QMessageBox.StandardButton.Yes
+    )
+    window = module.MainWindow()
+    try:
+        window.show()
+        deadline = time.time() + 0.8
+        while time.time() < deadline:
+            app.processEvents()
+            time.sleep(0.01)
+
+        assert window.settingsTab.gpu_device_index("Auto") == 0
+        assert window.settingsTab.gpu_device_index("not-a-real-gpu") == 0
+
+        window.stackedWidget.setCurrentIndex(1)
+        for _ in range(3):
+            app.processEvents()
+
+        window.renderQueue.add(
+            RenderOptions(
+                inputFile="/tmp/a_very_long_input_name_that_should_elide.mp4",
+                outputPath="/tmp/out.mkv",
+                videoWidth=1920,
+                videoHeight=1080,
+                videoFps=24,
+                tilingEnabled=False,
+                tilesize="0",
+                videoFrameCount=480,
+                backend="onnx",
+                modelScale=4,
+                interpolateTimes=2,
+                benchmarkMode=False,
+                sloMoMode=False,
+                dyanmicScaleOpticalFlow=False,
+                ensemble=False,
+            )
+        )
+        app.processEvents()
+
+        panel = window.processTab.queue_panel
+        item = panel.list.item(0)
+        row = panel.list.itemWidget(item)
+        assert item.sizeHint().width() == panel.list.viewport().width()
+
+        window.renderQueue.update_job(
+            window.renderQueue.jobs[0], status=DONE, return_code=0
+        )
+        app.processEvents()
+        assert row.status_chip.text() == "Done"
+        assert "done" in panel.counts_label.text().lower()
+        assert panel.counts_label.isVisible()
+
+        # rows must reflow when the rail changes width
+        window.resize(1180, 780)
+        for _ in range(3):
+            app.processEvents()
+        assert item.sizeHint().width() == panel.list.viewport().width()
+    finally:
+        window.close()
+        app.processEvents()
+
+
 def test_main_window_boots_offscreen(gui_entry):
     module, app = gui_entry
 

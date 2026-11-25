@@ -3,7 +3,7 @@
 Findings from the full code review of 2026-10-08 (backend review agent + manual verification).
 All P0 items were verified directly (executed the entry point, grepped for symbols, read the code paths).
 The 293 unit tests passed at the time because they exercised dataclasses and mocked inference only — none of the
-integration paths below were covered. (Current suite: 322 passed.)
+integration paths below were covered. (Current suite: 323 passed.)
 
 Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
 
