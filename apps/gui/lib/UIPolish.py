@@ -157,6 +157,15 @@ def _fix_scroll_margins(window) -> None:
         content = area.widget() if area is not None else None
         layout = content.layout() if content is not None else None
         if layout is not None and not getattr(window, "_enhancements_stretch_added", False):
+            # The tab label already says "Enhancements"; drop the duplicate
+            # in-card heading + separator so the rows start at the top.
+            if layout.count() >= 2:
+                heading = layout.itemAt(0).widget()
+                separator = layout.itemAt(1).widget()
+                if heading is not None and getattr(heading, "text", lambda: "")() == "Enhancements":
+                    heading.setVisible(False)
+                if separator is not None and separator.objectName() == "cardSeparator":
+                    separator.setVisible(False)
             layout.addStretch(1)
             window._enhancements_stretch_added = True
 
