@@ -224,6 +224,34 @@ def _add_advanced_caption(window) -> None:
     window._advanced_caption_added = True
 
 
+def _add_settings_captions(window) -> None:
+    def add(layout, text, flag):
+        if layout is None or getattr(window, flag, False):
+            return
+        caption = QLabel(text)
+        caption.setProperty("caption", True)
+        caption.setWordWrap(True)
+        layout.insertWidget(0, caption)
+        setattr(window, flag, True)
+
+    output_area = getattr(window, "scrollArea_3", None)
+    output_content = output_area.widget() if output_area is not None else None
+    if output_content is not None:
+        add(
+            output_content.layout(),
+            "Where rendered files are written by default.",
+            "_output_caption_added",
+        )
+
+    render_container = getattr(window, "renderSettingsContainer", None)
+    if render_container is not None:
+        add(
+            render_container.layout(),
+            "Model precision, HDR handling and the GPU used for inference.",
+            "_render_caption_added",
+        )
+
+
 def _polish_rve_tab(window) -> None:
     from apps.gui.constants import CWD
 
@@ -271,5 +299,6 @@ def apply_polish(window) -> None:
     _fix_encoder_command(window)
     _regroup_settings(window)
     _add_advanced_caption(window)
+    _add_settings_captions(window)
     _polish_rve_tab(window)
     _hide_idle_render_controls(window)
