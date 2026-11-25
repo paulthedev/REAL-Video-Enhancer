@@ -86,6 +86,20 @@ class QueuePanel(QWidget):
             row.openOutputRequested.connect(self._open_output)
             self.list.setItemWidget(item, row)
         self._update_counts()
+        self._update_item_widths()
+
+    def _update_item_widths(self):
+        """Keep row width in sync with the rail (otherwise status/actions
+        are laid out past the right edge and clipped)."""
+        width = max(self.list.viewport().width(), 0)
+        for i in range(self.list.count()):
+            item = self.list.item(i)
+            if item is not None:
+                item.setSizeHint(QSize(width, 58))
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._update_item_widths()
 
     def _refresh_row(self, index: int):
         if not (0 <= index < self.list.count()):
@@ -94,6 +108,7 @@ class QueuePanel(QWidget):
         row = self.list.itemWidget(item)
         if row is not None:
             row.refresh()
+        self._update_counts()
 
     def _update_counts(self):
         empty = len(self._queue.jobs) == 0

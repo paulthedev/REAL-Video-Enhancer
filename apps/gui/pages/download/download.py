@@ -21,7 +21,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from apps.gui.constants import CUSTOM_MODELS_PATH, IS_FLATPAK, USE_LOCAL_BACKEND, CWD
+from apps.gui.constants import CUSTOM_MODELS_PATH, IS_FLATPAK, IS_SOURCE_LAYOUT, USE_LOCAL_BACKEND, CWD
 from apps.gui.util import FileHandler, log
 
 
@@ -149,7 +149,7 @@ class DownloadTab:
             self.parent.low_storage_label.setVisible(True)
             self.has_enough_space = False
 
-        if IS_FLATPAK or USE_LOCAL_BACKEND:
+        if IS_FLATPAK or USE_LOCAL_BACKEND or IS_SOURCE_LAYOUT:
             self.parent.uninstallAppBtn.setDisabled(True)
         else:
             self.parent.uninstallAppBtn.clicked.connect(self.uninstallApp)

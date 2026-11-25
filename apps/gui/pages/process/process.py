@@ -663,11 +663,6 @@ class ProcessTab:
                         max(int(getattr(opts, "interpolateTimes", 1) or 1), 1),
                     )
 
-    def gpu_device_index(self, name: str) -> int:
-        """'Auto' or an unknown name -> 0; else the GPU's device index."""
-        names = getattr(self, "gpu_names", []) or []
-        return names.index(name) if name in names else 0
-
     def build_command(self, renderOptions: RenderOptions):
         command = [
             f"{PYTHON_EXECUTABLE_PATH}",

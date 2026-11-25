@@ -291,7 +291,7 @@ class _PreviewCanvas(QWidget):
         path = QPainterPath()
         path.addRoundedRect(rect, radius, radius)
         p.setClipPath(path)
-        p.drawPixmap(target, pixmap)
+        p.drawPixmap(target.toRect(), pixmap)
         p.restore()
 
     def _draw_split(self, p: QPainter, source: QPixmap, enhanced: QPixmap, x, radius):
@@ -302,9 +302,9 @@ class _PreviewCanvas(QWidget):
         p.setClipPath(path)
         src_rect = self._fitted_rect(source, QRectF(0, 0, w, h))
         enh_rect = self._fitted_rect(enhanced, QRectF(0, 0, w, h))
-        p.drawPixmap(src_rect, source)
+        p.drawPixmap(src_rect.toRect(), source)
         p.setClipRect(QRectF(x, 0, w - x, h))
-        p.drawPixmap(enh_rect, enhanced)
+        p.drawPixmap(enh_rect.toRect(), enhanced)
         p.restore()
 
     def _fitted_rect(self, pixmap: QPixmap, rect: QRectF) -> QRectF:

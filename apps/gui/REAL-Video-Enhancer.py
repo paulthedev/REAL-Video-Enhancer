@@ -900,25 +900,36 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
 
     def closeEvent(self, event):
+        busy = False
+        process_tab = getattr(self, "processTab", None)
+        if process_tab is not None:
+            render_thread = getattr(process_tab, "_render_thread", None)
+            busy = bool(render_thread is not None and render_thread.is_alive())
+        queue = getattr(self, "renderQueue", None)
+        jobs = getattr(queue, "jobs", None) or []
+        if any(getattr(job, "status", None) in ("Queued", "Rendering") for job in jobs):
+            busy = True
 
-        reply = QMessageBox.question(
-            self,
-            "",
-            "Are you sure you want to exit?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No,  # type: ignore
-        )
-        if reply == QMessageBox.Yes:  # type: ignore
-            FileHandler.removeFolder(TEMP_DOWNLOAD_PATH)
-            if hasattr(self, "processTab"):
-                self.processTab.killRenderProcess()
-                reader = getattr(self.processTab, "source_reader", None)
-                if reader is not None:
-                    reader.stop()
-                    reader.wait(1000)
-            event.accept()
-        else:
-            event.ignore()
+        if busy:
+            reply = QMessageBox.question(
+                self,
+                "",
+                "A render or queued job is still active. Exit anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,  # type: ignore
+            )
+            if reply != QMessageBox.Yes:  # type: ignore
+                event.ignore()
+                return
+
+        FileHandler.removeFolder(TEMP_DOWNLOAD_PATH)
+        if process_tab is not None:
+            process_tab.killRenderProcess()
+            reader = getattr(process_tab, "source_reader", None)
+            if reader is not None:
+                reader.stop()
+                reader.wait(1000)
+        event.accept()
 
 
 

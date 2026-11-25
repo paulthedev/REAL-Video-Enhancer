@@ -10,7 +10,6 @@ import html
 
 from PySide6.QtCore import QThread, Signal, QMutex, QMutexLocker
 from PySide6 import QtWidgets, QtCore, QtGui
-from PySide6.QtGui import QIcon
 from PySide6.QtCore import (
     QCoreApplication,
     QDate,
@@ -193,41 +192,71 @@ def ansi_to_html(text: str) -> str:
     return result
 
 class NotificationOverlay(QWidget):
+    """Transient status chip (top-level child of the window, no dimming)."""
+
     def __init__(self, message, parent=None, timeout=3000):
         super().__init__(parent)
-        
-        # Make this widget a child of the main window, covering its area
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
-        self.setStyleSheet("background-color: rgba(0, 0, 0, 80);")
-        
-        # Create layout and label to display the message
-        layout = QVBoxLayout(self)
+        self.setStyleSheet("background: transparent;")
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         self.label = QLabel(message, self)
-        self.label.setStyleSheet("""
+        self.label.setWordWrap(True)
+        self.label.setStyleSheet(
+            """
             QLabel {
-                color: white;
-                padding: 10px;
-                font-size: 14px;
-                background-color: rgba(50, 50, 50, 180);
-                border-radius: 5px;
+                color: #e8eef7;
+                padding: 10px 16px;
+                font-size: 13px;
+                background-color: rgba(28, 33, 40, 235);
+                border: 1px solid #22D3EE;
+                border-radius: 8px;
             }
-        """)
+            """
+        )
         self.label.setAlignment(Qt.AlignCenter)
-        layout.addWidget(self.label, 0, Qt.AlignCenter)
-        
-        # Close (hide) this overlay widget after 'timeout' milliseconds
+        layout.addWidget(self.label)
+
+        # only one toast at a time; a new one replaces the previous
+        previous = getattr(parent, "_rve_active_notification", None)
+        if previous is not None and previous is not self:
+            previous.close()
+        if parent is not None:
+            parent._rve_active_notification = self
+
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
         self._timer.timeout.connect(self.close)
         self._timer.start(timeout)
-        self.resize(parent.size())
+
+        self._reposition()
         self.show()
+        self.raise_()
+
+    def _reposition(self):
+        parent = self.parentWidget()
+        if parent is None:
+            return
+        max_width = max(int(parent.width() * 0.6), 240)
+        self.label.setMaximumWidth(max_width)
+        hint = self.sizeHint()
+        width = min(max(hint.width(), 220), max_width, parent.width() - 48)
+        height = hint.height()
+        self.resize(width, height)
+        x = (parent.width() - width) // 2
+        y = parent.height() - height - 90
+        self.move(max(12, x), max(12, y))
 
     def resizeEvent(self, event):
-        # Match the size of the parent (main window)
-        if self.parent():
-            self.resize(self.parent().size())
+        self._reposition()
         super().resizeEvent(event)
+
+    def closeEvent(self, event):
+        parent = self.parentWidget()
+        if parent is not None and getattr(parent, "_rve_active_notification", None) is self:
+            parent._rve_active_notification = None
+        super().closeEvent(event)
 
 
 class UpdateGUIThread(QThread):

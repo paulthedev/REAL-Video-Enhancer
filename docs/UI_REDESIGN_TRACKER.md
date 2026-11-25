@@ -48,6 +48,12 @@ functional UI issues:
 - Encoder command field is labeled, checkbox rows are fully clickable, and
   the process tabs fit at the 960 px minimum width.
 - Source reader is stopped on close (no more QThread shutdown warning).
+- Notifications are compact status chips instead of a full-window dim.
+- The GUI render flow works from a source checkout (backend path), the live
+  preview paints all three modes without QPainter errors, queue rows reflow
+  with the rail width, and footer counts refresh as jobs finish.
+- Closing the window only asks for confirmation when a render/queued job is
+  active.
 
 Remaining polish (deliberately not changed): the Advanced/RVE settings cards
 are sparse, and the Models page keeps a large empty area below the list.

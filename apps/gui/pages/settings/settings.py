@@ -113,6 +113,10 @@ class SettingsTab:
 
         self.updateFFMpegCommand()
 
+    def gpu_device_index(self, name: str) -> int:
+        """'Auto' or an unknown name -> 0; else the GPU's device index."""
+        return self.gpu_names.index(name) if name in self.gpu_names else 0
+
     def updateFFMpegCommand(self):
         """
         Updates the FFMpegCommand object with the current settings.

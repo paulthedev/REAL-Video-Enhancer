@@ -80,6 +80,14 @@ VIDEOS_PATH = (
     else os.path.join(HOME_PATH, "Videos")
 )
 BACKEND_PATH = "/app/bin/apps/backend" if IS_FLATPAK else os.path.join(CWD, "apps", "backend")
+# Running from a source checkout: the backend lives in the repo, not in the
+# per-user data dir (dev launches must not look for <CWD>/apps/backend).
+_SOURCE_BACKEND = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "apps",
+    "backend",
+)
+IS_SOURCE_LAYOUT = os.path.isdir(_SOURCE_BACKEND)
 if getattr(sys, "frozen", False):
     # the backend ships inside the bundle next to the executable, not in the
     # per-user data dir. cx_Freeze uses apps/backend; PyInstaller uses backend/.
@@ -91,6 +99,8 @@ if getattr(sys, "frozen", False):
         if os.path.isdir(_candidate):
             BACKEND_PATH = _candidate
             break
+elif IS_SOURCE_LAYOUT and not (IS_FLATPAK or IS_APPIMAGE):
+    BACKEND_PATH = _SOURCE_BACKEND
 TEMP_DOWNLOAD_PATH = os.path.join(CWD, "temp")
 # ffmpeg ships via the imageio-ffmpeg pip package (static per-platform
 # build); RVE_FFMPEG_PATH / --ffmpeg_path override it
