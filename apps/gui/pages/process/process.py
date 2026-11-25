@@ -289,6 +289,13 @@ class ProcessTab:
         except AttributeError:
             log("No render process!")
 
+    def _set_pause_stop_visible(self, visible: bool) -> None:
+        """The layout scaffold reparented these out of their old container."""
+        for name in ("pauseRenderButton", "killRenderButton"):
+            button = getattr(self.parent, name, None)
+            if button is not None:
+                button.setVisible(visible)
+
     def pauseRender(self):
         shm = getattr(self, "pausedSharedMemory", None)
         if shm is None:
@@ -296,6 +303,7 @@ class ProcessTab:
         shmbuf = shm.buf
         shmbuf[0] = 1  # 1 = True
         hide_layout_widgets(self.parent.onRenderButtonsContiainer)
+        self._set_pause_stop_visible(False)
         self.parent.startRenderButton.setVisible(True)
         self.parent.startRenderButton.setEnabled(True)
 
@@ -303,6 +311,7 @@ class ProcessTab:
         shmbuf = self.pausedSharedMemory.buf
         shmbuf[0] = 0  # 0 = False
         show_layout_widgets(self.parent.onRenderButtonsContiainer)
+        self._set_pause_stop_visible(True)
         self.parent.onRenderButtonsContiainer.setEnabled(True)
         self.parent.startRenderButton.setVisible(False)
 
@@ -352,6 +361,7 @@ class ProcessTab:
         self.userKilled = False  # reset userkilled
         # gui changes
         show_layout_widgets(self.parent.onRenderButtonsContiainer)
+        self._set_pause_stop_visible(True)
         self.parent.startRenderButton.setVisible(False)
         self.parent.startRenderButton.clicked.disconnect()
         self.parent.startRenderButton.clicked.connect(self.resumeRender)
@@ -517,6 +527,7 @@ class ProcessTab:
             RegularQTPopup("Rendering failed! Please check the logs tab!")
         # Have to swap the visibility of these here otherwise crash for some reason
         hide_layout_widgets(self.parent.onRenderButtonsContiainer)
+        self._set_pause_stop_visible(False)
         self.parent.startRenderButton.setEnabled(True)
         self.parent.outputFileText.setEnabled(True)
         self.parent.inputFileText.setEnabled(True)
@@ -781,11 +792,6 @@ class ProcessTab:
 
         if renderOptions.benchmarkMode:
             command += ["--benchmark"]
-
-        if self.settings.settings["uhd_mode"] == "True":
-            if renderOptions.videoWidth > 1920 or renderOptions.videoHeight > 1080:
-                command += ["--UHD_mode"]
-                log("UHD mode enabled")
 
         if self.isOverwrite:
             command += ["--overwrite"]

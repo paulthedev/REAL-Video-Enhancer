@@ -187,6 +187,7 @@ def apply_studio_layout(win) -> tuple[PreviewCompare, QueuePanel, QStackedLayout
     body_row.addWidget(rail_widget)
 
     tabs.setTabIcon(tabs.indexOf(win.tab_6), QIcon(":/icons/icons/film.svg"))
+    tabs.setTabText(tabs.indexOf(win.tab_6), "Encoder")
     tabs.setTabIcon(tabs.indexOf(win.advancedSettings), QIcon(":/icons/icons/settings.svg"))
     tabs.setTabIcon(tabs.indexOf(win.tab_5), QIcon(":/icons/icons/file-text.svg"))
 

@@ -112,7 +112,9 @@ class QueuePanel(QWidget):
             parts.append(f"{c['failed']} failed")
         if c.get("cancelled"):
             parts.append(f"{c['cancelled']} cancelled")
-        self.counts_label.setText(" · ".join(parts) if parts else "Queue is empty")
+        # don't repeat the empty-state copy in the footer
+        self.counts_label.setText(" · ".join(parts))
+        self.counts_label.setVisible(bool(parts))
 
     def _open_output(self, path: str):
         folder = os.path.dirname(path)

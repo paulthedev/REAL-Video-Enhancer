@@ -15,6 +15,8 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
     QLabel,
+    QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QVBoxLayout,
 )
@@ -72,7 +74,7 @@ class DropZone(QFrame):
 
     filesDropped = Signal(list)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, torch_available=False):
         super().__init__(parent)
         self.setObjectName("dropZone")
         self.setAcceptDrops(True)
@@ -88,10 +90,18 @@ class DropZone(QFrame):
         title.setAlignment(Qt.AlignCenter)
         f = title.font(); f.setPointSize(12); f.setBold(True); title.setFont(f)
         lay.addWidget(title)
-        caption = QLabel(
-            ".onnx imports directly · .pth / .safetensors are converted to ONNX\n"
-            "or click to browse"
-        )
+        if torch_available:
+            caption_text = (
+                ".onnx imports directly · .pth / .safetensors are converted to ONNX\n"
+                "or click to browse"
+            )
+        else:
+            caption_text = (
+                ".onnx imports directly\n"
+                "(.pth / .safetensors conversion needs the optional torch extra)\n"
+                "or click to browse"
+            )
+        caption = QLabel(caption_text)
         caption.setProperty("caption", True)
         caption.setAlignment(Qt.AlignCenter)
         lay.addWidget(caption)
@@ -150,6 +160,8 @@ class DownloadTab:
     # ---------- import UI ----------
 
     def _build_import_ui(self):
+        import importlib.util
+
         from PySide6.QtWidgets import QGridLayout
 
         page = self.parent.downloadPage
@@ -157,20 +169,54 @@ class DownloadTab:
         if layout is None:
             return
 
-        self.drop_zone = DropZone()
+        self.drop_zone = DropZone(
+            torch_available=importlib.util.find_spec("torch") is not None
+        )
         self.drop_zone.filesDropped.connect(self.importModels)
         self.import_status = QLabel("Models are imported into your custom_models folder")
         self.import_status.setProperty("caption", True)
 
+        self.models_label = QLabel("Imported models")
+        self.models_list = QListWidget()
+        self.models_list.setMinimumHeight(120)
+        self.models_list.setMaximumHeight(260)
+        self.models_list.setSelectionMode(QListWidget.NoSelection)
+
         if isinstance(layout, QGridLayout):
-            # shift every existing row (uninstall etc.) down two slots and
-            # claim rows 0/1 for the import UI
-            layout.setRowMinimumHeight(0, 0)
+            # row 0: import target, row 1: status, row 2: list heading,
+            # row 3: imported list, row 4: slack, row 5: danger zone
             layout.addWidget(self.drop_zone, 0, 0)
             layout.addWidget(self.import_status, 1, 0)
+            layout.addWidget(self.models_label, 2, 0)
+            layout.addWidget(self.models_list, 3, 0)
+            container = getattr(self.parent, "backendSelectContainer", None)
+            if container is not None:
+                layout.addWidget(container, 5, 0)
+            layout.setRowStretch(4, 1)
         else:
             layout.insertWidget(0, self.drop_zone)
             layout.insertWidget(1, self.import_status)
+
+        self._refresh_model_list()
+
+        # the legacy download list is empty now — don't reserve space for it
+        legacy_list = getattr(self.parent, "scrollArea_2", None)
+        if legacy_list is not None:
+            legacy_list.setVisible(False)
+
+        uninstall_btn = getattr(self.parent, "uninstallAppBtn", None)
+        if uninstall_btn is not None:
+            uninstall_btn.setProperty("variant", "danger")
+            uninstall_btn.setToolTip("Uninstall REAL Video Enhancer")
+            uninstall_btn.style().unpolish(uninstall_btn)
+            uninstall_btn.style().polish(uninstall_btn)
+
+        low_storage = getattr(self.parent, "low_storage_label", None)
+        if low_storage is not None:
+            low_storage.setText(
+                "Low disk space: free up about 15 GB for model downloads and a "
+                "GPU provider."
+            )
 
     def importModels(self, paths):
         import importlib.util
@@ -188,6 +234,7 @@ class DownloadTab:
                 try:
                     shutil.copy2(path, dest)
                     self._notify(f"Imported {os.path.basename(path)}")
+                    self._refresh_models()
                 except Exception as e:
                     self._notify(f"Import failed: {e}")
             else:
@@ -218,9 +265,35 @@ class DownloadTab:
     def _on_converted(self, out_path):
         self._notify(f"Converted: {os.path.basename(out_path)}")
         # make the new model available without a restart
+        self._refresh_models()
+
+    def _refresh_models(self):
         process_tab = getattr(self.parent, "processTab", None)
         if process_tab is not None and hasattr(process_tab, "populateModels"):
             process_tab.populateModels()
+        self._refresh_model_list()
+
+    def _refresh_model_list(self):
+        if not hasattr(self, "models_list"):
+            return
+        try:
+            files = sorted(
+                f for f in os.listdir(CUSTOM_MODELS_PATH)
+                if f.lower().endswith(".onnx")
+            )
+        except OSError:
+            files = []
+        self.models_list.clear()
+        if files:
+            self.models_label.setText(f"Imported models ({len(files)})")
+            for name in files:
+                self.models_list.addItem(QListWidgetItem(name))
+        else:
+            self.models_label.setText("Imported models")
+            item = QListWidgetItem("No custom models imported yet")
+            item.setTextAlignment(Qt.AlignCenter)
+            item.setFlags(Qt.NoItemFlags)
+            self.models_list.addItem(item)
 
     def _notify(self, text):
         from apps.gui.lib.QTcustom import NotificationOverlay

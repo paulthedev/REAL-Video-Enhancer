@@ -1,8 +1,19 @@
 import json
 import urllib.request
 
+from PySide6.QtCore import QThread, Signal
+
 from apps.gui.constants import APP_URL, RELEASES_API_URL
-from apps.gui.util import openLink, networkCheck
+from apps.gui.util import openLink
+
+
+class _ChangelogThread(QThread):
+    """Fetch the latest release body without blocking the main window."""
+
+    loaded = Signal(str)
+
+    def run(self):
+        self.loaded.emit(HomeTab.fetch_changelog())
 
 
 class HomeTab:
@@ -13,7 +24,7 @@ class HomeTab:
 
     def _build_hero_cta(self):
         """Primary action: jump straight into the process page."""
-        from PySide6.QtWidgets import QPushButton, QVBoxLayout, QWidget
+        from PySide6.QtWidgets import QPushButton, QWidget
         from PySide6.QtGui import QIcon
 
         hero = self.parent.stackedWidget.findChild(QWidget, "homePage")
@@ -29,25 +40,38 @@ class HomeTab:
             layout.addWidget(cta)
             layout.setSpacing(14)
 
-    def getChangelog(self):
-        changeLog = ""
+    @staticmethod
+    def fetch_changelog() -> str:
+        change_log = ""
         try:
             with urllib.request.urlopen(RELEASES_API_URL, timeout=15) as response:
                 releases = json.load(response)
             releases = releases[:1]  # latest release only; full history on GitHub
-            releaseTags = [release["tag_name"] for release in releases]
-            releaseBodies = [release["body"].replace(r"\r\n", "") for release in releases]
-            for releaseTag, releaseBody in zip(releaseTags, releaseBodies):
-                changeLog += "\n# " + releaseTag
-                changeLog += "\n" + releaseBody
+            for release in releases:
+                change_log += "\n# " + release["tag_name"]
+                change_log += "\n" + release["body"].replace("\r\n", "")
         except Exception:
             pass
-        return changeLog
+        return change_log
+
+    def _set_changelog(self, changelog: str):
+        if changelog.strip():
+            self.parent.changeLogText.setMarkdown(changelog)
+        else:
+            self.parent.changeLogText.setPlainText(
+                "Changelog unavailable right now.\n"
+                "Open the GitHub page for the latest release notes."
+            )
 
     def QConnect(self):
         self.parent.githubBtn.clicked.connect(lambda: openLink(APP_URL))
         self.parent.kofiBtn.setVisible(False)  # upstream's donation link — hidden in this fork
-        if networkCheck():
-            self.parent.changeLogText.setVisible(True)
-            changelog = self.getChangelog()
-            self.parent.changeLogText.setMarkdown(changelog)
+        label_13 = getattr(self.parent, "label_13", None)
+        if label_13 is not None:
+            label_13.setVisible(False)  # don't leave "Support Me!" hanging
+
+        self.parent.changeLogText.setPlainText("Loading changelog…")
+        self._changelog_thread = _ChangelogThread(self.parent)
+        self._changelog_thread.loaded.connect(self._set_changelog)
+        self._changelog_thread.finished.connect(self._changelog_thread.deleteLater)
+        self._changelog_thread.start()

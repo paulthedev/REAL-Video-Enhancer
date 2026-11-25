@@ -86,7 +86,7 @@ All documentation files must be placed in the `docs/` folder. This includes:
 - Run with `uv run --extra convert --extra dev pytest` (the `convert` extra
   supplies torch for the model/converter tests; the shipping runtime does not
   need it)
-- 321 tests passing, 5 warnings (CI also runs a torch-free runtime-smoke job)
+- 322 tests passing, 5 warnings (CI also runs a torch-free runtime-smoke job)
 
 ### Logging
 - Runtime logs go to `logs/log.txt`

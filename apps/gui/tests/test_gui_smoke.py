@@ -89,6 +89,37 @@ def gui_entry(tmp_path_factory):
     yield module, app
 
 
+def test_ui_polish_hides_dead_controls(gui_entry):
+    module, app = gui_entry
+    module.QMessageBox.question = staticmethod(
+        lambda *a, **k: module.QMessageBox.StandardButton.Yes
+    )
+    window = module.MainWindow()
+    try:
+        window.show()
+        deadline = time.time() + 1.0
+        while time.time() < deadline:
+            app.processEvents()
+            time.sleep(0.01)
+
+        # dead controls from the retired backend/UHD/torch paths
+        assert not window.backendComboBox.isVisible()
+        assert not window.uhd_mode.isVisible()
+        assert not window.pauseRenderButton.isVisible()
+        assert not window.killRenderButton.isVisible()
+
+        # empty-state affordances
+        assert window.inputFileText.placeholderText()
+        assert window.outputFileText.placeholderText()
+        assert window.renderOutput.placeholderText()
+
+        # preview with no video must not raise or touch the queue
+        window.renderPreview()
+    finally:
+        window.close()
+        app.processEvents()
+
+
 def test_main_window_boots_offscreen(gui_entry):
     module, app = gui_entry
 

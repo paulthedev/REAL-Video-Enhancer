@@ -232,8 +232,9 @@ QTabBar::tab {{
     background: transparent;
     color: {t["text_dim"]};
     border: none;
-    padding: 8px 16px;
+    padding: 6px 7px;
     margin-right: 2px;
+    font-size: 12px;
     border-top-left-radius: {t["radius_sm"]};
     border-top-right-radius: {t["radius_sm"]};
 }}
@@ -257,8 +258,8 @@ QCheckBox:disabled, QRadioButton:disabled {{
     color: {t["text_faint"]};
 }}
 QCheckBox::indicator, QRadioButton::indicator {{
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
     border: 1px solid {t["border"]};
     background-color: {t["field"]};
 }}

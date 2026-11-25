@@ -29,6 +29,29 @@ Scope anchor (from the approved outline):
 | 5 | Dead page cleanup | ✅ Done — blank More page + legacy Backends panel removed; Models page is the custom-model import hub |
 | 6 | Verify loop | ✅ Screenshots verified; GUI smoke + runtime tests green |
 
+## Post-audit fixes (2026-11-26)
+
+An offscreen visual/runtime audit at 1440×900 and 960×620 closed the
+functional UI issues:
+
+- Preview no longer crashes with no video and no longer clears the render
+  queue before validation.
+- Home changelog loads off the GUI thread with an offline fallback; the orphan
+  “Support Me!” caption is gone and the hero title sits beside the logo.
+- Dead controls hidden: the `onnx`-only Backend combo, Interpolation UHD Mode,
+  and the leftover torch.compile help icon.
+- Pause/Stop are hidden while idle and appear only during a render.
+- Models page: imported-model list, status under the drop zone, legacy empty
+  download area hidden, uninstall moved to a danger zone.
+- Source inputs and the Logs tab have empty-state text; the duplicate queue
+  empty-state line is gone; scene-threshold moved to Render Settings.
+- Encoder command field is labeled, checkbox rows are fully clickable, and
+  the process tabs fit at the 960 px minimum width.
+- Source reader is stopped on close (no more QThread shutdown warning).
+
+Remaining polish (deliberately not changed): the Advanced/RVE settings cards
+are sparse, and the Models page keeps a large empty area below the list.
+
 ---
 
 ## 0. Design tokens + global QSS — `apps/gui/lib/QTstyle.py`

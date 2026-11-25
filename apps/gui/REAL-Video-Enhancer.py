@@ -299,6 +299,11 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             halfPrecisionSupport=halfPrecisionSupport,
             backend_output=self.fullOutput,
         )
+        # conservative post-assembly fixes (dead controls, click targets,
+        # compact settings rows, placeholders)
+        from apps.gui.lib.UIPolish import apply_polish
+
+        apply_polish(self)
         # Startup Animation
         self.animationHandler = AnimationHandler()
         self.animationHandler.fadeInAnimation(self)
@@ -345,21 +350,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # connect getting default output file
 
     def renderPreview(self):
-        self.renderQueue.clear()
         renderOptions = self.getCurrentRenderOptions()
+        if renderOptions == 1:
+            return
         renderOptions.outputPath = os.path.join(TEMP_DOWNLOAD_PATH, f"{os.path.basename(renderOptions.inputFile)}_preview.mkv")
         renderOptions.startTime = self.startTimeSpinBox.value()
-        FileHandler().removeFile(renderOptions.outputPath)
         renderOptions.endTime = self.endTimeSpinBox.value()
         if renderOptions.endTime <= renderOptions.startTime:
             NotificationOverlay("End time must be greater than start time!", self, timeout=1500)
             return
 
-
+        # Only clear the queue after validation — a failed preview used to
+        # wipe every queued job.
+        self.renderQueue.clear()
+        FileHandler().removeFile(renderOptions.outputPath)
         renderOptions.isPreview = True
-        if renderOptions:
-            self.renderQueue.add(renderOptions)
-            self.startRender(self.renderQueue)
+        self.renderQueue.add(renderOptions)
+        self.startRender(self.renderQueue)
 
 
     def setButtonsUnchecked(self, buttonToIgnore):
@@ -905,6 +912,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             FileHandler.removeFolder(TEMP_DOWNLOAD_PATH)
             if hasattr(self, "processTab"):
                 self.processTab.killRenderProcess()
+                reader = getattr(self.processTab, "source_reader", None)
+                if reader is not None:
+                    reader.stop()
+                    reader.wait(1000)
             event.accept()
         else:
             event.ignore()
