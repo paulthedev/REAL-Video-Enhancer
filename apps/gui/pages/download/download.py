@@ -14,15 +14,17 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QFileDialog,
     QFrame,
+    QHBoxLayout,
     QLabel,
     QListWidget,
     QListWidgetItem,
     QMessageBox,
+    QPushButton,
     QVBoxLayout,
 )
 
 from apps.gui.constants import CUSTOM_MODELS_PATH, IS_FLATPAK, IS_SOURCE_LAYOUT, USE_LOCAL_BACKEND, CWD
-from apps.gui.util import FileHandler, log
+from apps.gui.util import FileHandler, log, open_folder
 
 
 class ConvertThread(QThread):
@@ -183,10 +185,16 @@ class DownloadTab:
         self.import_hint.setWordWrap(True)
 
         self.models_label = QLabel("Imported models")
+        self.models_button = QPushButton("Open Folder")
+        self.models_button.setProperty("variant", "ghost")
+        self.models_button.clicked.connect(lambda: open_folder(CUSTOM_MODELS_PATH))
         self.models_list = QListWidget()
         self.models_list.setMinimumHeight(120)
         self.models_list.setMaximumHeight(260)
         self.models_list.setSelectionMode(QListWidget.NoSelection)
+        self.models_list.itemDoubleClicked.connect(
+            lambda _item: open_folder(CUSTOM_MODELS_PATH)
+        )
 
         if isinstance(layout, QGridLayout):
             # row 0: import target, 1: status, 2: hint, 3: list heading,
@@ -194,7 +202,11 @@ class DownloadTab:
             layout.addWidget(self.drop_zone, 0, 0)
             layout.addWidget(self.import_status, 1, 0)
             layout.addWidget(self.import_hint, 2, 0)
-            layout.addWidget(self.models_label, 3, 0)
+            header = QHBoxLayout()
+            header.addWidget(self.models_label)
+            header.addStretch(1)
+            header.addWidget(self.models_button)
+            layout.addLayout(header, 3, 0)
             layout.addWidget(self.models_list, 4, 0)
             container = getattr(self.parent, "backendSelectContainer", None)
             if container is not None:

@@ -362,6 +362,20 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         # Only clear the queue after validation — a failed preview used to
         # wipe every queued job.
+        active_jobs = [
+            job for job in self.renderQueue.jobs
+            if job.status in ("Queued", "Rendering")
+        ]
+        if active_jobs:
+            reply = QMessageBox.question(
+                self,
+                "",
+                f"Previewing will clear {len(active_jobs)} queued job(s). Continue?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,  # type: ignore
+            )
+            if reply != QMessageBox.Yes:  # type: ignore
+                return
         self.renderQueue.clear()
         FileHandler().removeFile(renderOptions.outputPath)
         renderOptions.isPreview = True

@@ -178,6 +178,9 @@ class ProcessTab:
         # get default backend
         self.QConnect()
         self.populateModels()
+        self.parent.STATUS.setText("Status: Idle")
+        self.parent.ETA.setText("ETA: --")
+        self.parent.FPS.setText("FPS: --")
 
     def get_current_backend(self) -> str:
         """ONNX is the only backend."""
@@ -536,9 +539,9 @@ class ProcessTab:
         self.parent.startRenderButton.clicked.connect(self.parent.startRender)
         self.parent.enableProcessPage()
         self.parent.startRenderButton.setVisible(True)
-        self.parent.FPS.setText("FPS: ")
-        self.parent.ETA.setText("ETA: ")
-        self.parent.STATUS.setText("Status: ")
+        self.parent.FPS.setText("FPS: --")
+        self.parent.ETA.setText("ETA: --")
+        self.parent.STATUS.setText("Status: Idle")
         # NOTE: no renderQueue.clear() here — the render loop clears the queue
         # on completion, and clearing on the overwrite-declined path would wipe
         # the user's queued items.
