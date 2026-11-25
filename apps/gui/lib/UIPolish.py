@@ -6,6 +6,7 @@ prevent layout stretches from spreading a few rows across a whole card.
 """
 
 from PySide6.QtCore import QEvent, QObject, Qt
+from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QCheckBox, QLabel, QScrollArea, QTabWidget, QWidget
 
 
@@ -293,6 +294,42 @@ def _polish_rve_tab(window) -> None:
             window._rve_path_added = True
 
 
+def _add_shortcuts_and_accessibility(window) -> None:
+    shortcuts = [
+        ("Ctrl+1", window.homeBtn.click),
+        ("Ctrl+2", window.processBtn.click),
+        ("Ctrl+3", window.settingsBtn.click),
+        ("Ctrl+4", window.downloadBtn.click),
+        ("Ctrl+O", window.openInputFile),
+        ("Ctrl+Shift+O", window.openBatchFiles),
+        ("Ctrl+Return", window.addToRenderQueue),
+        ("Ctrl+Shift+Return", window.startRender),
+        ("Ctrl+P", window.renderPreview),
+    ]
+    window._rve_shortcuts = []
+    for key, slot in shortcuts:
+        shortcut = QShortcut(QKeySequence(key), window)
+        shortcut.activated.connect(slot)
+        window._rve_shortcuts.append(shortcut)
+
+    tooltips = {
+        "inputFileSelectButton": "Select input file (Ctrl+O)",
+        "batchSelectButton": "Select an input folder (Ctrl+Shift+O)",
+        "addToRenderQueueButton": "Add the current setup to the render queue (Ctrl+Enter)",
+        "startRenderButton": "Start rendering the queue (Ctrl+Shift+Enter)",
+        "pauseRenderButton": "Pause rendering",
+        "killRenderButton": "Stop rendering",
+        "githubBtn": "Open the GitHub page",
+        "uninstallAppBtn": "Uninstall REAL Video Enhancer",
+    }
+    for name, tooltip in tooltips.items():
+        widget = getattr(window, name, None)
+        if widget is None:
+            continue
+        widget.setToolTip(tooltip)
+        widget.setAccessibleName(tooltip)
+
+
 def _hide_idle_render_controls(window) -> None:
     for name in ("pauseRenderButton", "killRenderButton"):
         widget = getattr(window, name, None)
@@ -315,4 +352,5 @@ def apply_polish(window) -> None:
     _add_advanced_caption(window)
     _add_settings_captions(window)
     _polish_rve_tab(window)
+    _add_shortcuts_and_accessibility(window)
     _hide_idle_render_controls(window)

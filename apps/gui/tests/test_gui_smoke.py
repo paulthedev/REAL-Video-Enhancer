@@ -115,6 +115,21 @@ def test_ui_polish_hides_dead_controls(gui_entry):
 
         # preview with no video must not raise or touch the queue
         window.renderPreview()
+
+        # keyboard shortcuts + accessible names for icon-only controls
+        assert len(window._rve_shortcuts) >= 8
+        assert "Ctrl+O" in window.inputFileSelectButton.toolTip()
+        assert window.pauseRenderButton.accessibleName()
+        assert window.killRenderButton.accessibleName()
+
+        from PySide6.QtCore import Qt
+        from PySide6.QtTest import QTest
+
+        window.activateWindow()
+        app.processEvents()
+        QTest.keyClick(window, Qt.Key_2, Qt.ControlModifier)
+        app.processEvents()
+        assert window.stackedWidget.currentIndex() == 1
     finally:
         window.close()
         app.processEvents()

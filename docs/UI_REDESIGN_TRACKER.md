@@ -56,6 +56,9 @@ functional UI issues:
   active.
 - The hidden Backend row no longer reserves space; Enhancements rows are
   compact at the top, and idle pills show Idle/-- instead of blanks.
+- Keyboard shortcuts: Ctrl+1–4 for navigation, Ctrl+O / Ctrl+Shift+O for
+  input/batch selection, Ctrl+Enter add-to-queue, Ctrl+Shift+Enter render,
+  Ctrl+P preview. Icon-only controls now have tooltips + accessible names.
 
 Remaining polish (deliberately not changed): the Advanced/RVE settings cards
 are sparse, and the Models page keeps a large empty area below the list.
