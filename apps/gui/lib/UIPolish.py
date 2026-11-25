@@ -65,6 +65,9 @@ def _hide_dead_controls(window) -> None:
         widget = getattr(window, name, None)
         if widget is not None:
             widget.setVisible(False)
+    backend_row = getattr(window, "widget_3", None)
+    if backend_row is not None:
+        backend_row.setVisible(False)
 
     # UHD interpolation mode has no ONNX implementation.
     for name in ("uhd_mode", "label_22", "uhdHelp"):
@@ -144,6 +147,17 @@ def _fix_scroll_margins(window) -> None:
             margins.left(), max(margins.top(), 10), margins.right(), margins.bottom()
         )
         layout.addStretch(1)
+
+    # The Enhancements tab's scroll area lost its object name during the
+    # studio re-layout; keep its rows compact too.
+    tabs = getattr(window, "processSettingsContainer", None)
+    if tabs is not None:
+        area = tabs.findChild(QScrollArea)
+        content = area.widget() if area is not None else None
+        layout = content.layout() if content is not None else None
+        if layout is not None and not getattr(window, "_enhancements_stretch_added", False):
+            layout.addStretch(1)
+            window._enhancements_stretch_added = True
 
 
 def _enlarge_checkboxes(window) -> None:

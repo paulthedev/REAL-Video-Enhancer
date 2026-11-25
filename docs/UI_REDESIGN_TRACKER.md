@@ -54,6 +54,8 @@ functional UI issues:
   with the rail width, and footer counts refresh as jobs finish.
 - Closing the window only asks for confirmation when a render/queued job is
   active.
+- The hidden Backend row no longer reserves space; Enhancements rows are
+  compact at the top, and idle pills show Idle/-- instead of blanks.
 
 Remaining polish (deliberately not changed): the Advanced/RVE settings cards
 are sparse, and the Models page keeps a large empty area below the list.
