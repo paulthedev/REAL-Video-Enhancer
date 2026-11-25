@@ -13,16 +13,21 @@ Scope anchor (from the approved outline):
 
 ## Status Overview
 
+> Historical checklist. The workstreams shipped in the October–November
+> 2026 commits; **unchecked bullets below are not open work** — they are
+> retained only as the original design notes. Remaining deliberate follow-ups
+> are called out in the table.
+
 | # | Workstream | Status |
 |---|-----------|--------|
 | 0 | Design tokens + global QSS (`QTstyle.py`) | ✅ Done (verified) |
 | 1 | Sidebar labels + active state (`QTabNavigation.py`) | ✅ Done (verified) |
-| 2 | Process page: preview-on-top + compare modes | ✅ Done (verified; source-reader compare pending live-render check) |
-| 2b | Render queue overhaul | ✅ Done (15 model tests green; live render check pending) |
+| 2 | Process page: preview-on-top + compare modes | ✅ Done (verified) |
+| 2b | Render queue overhaul | ✅ Done (15 model tests green) |
 | 3 | Settings page cards | 🚧 Partial — token styling + accent controls landed; card grouping deferred |
 | 4 | Home page hero + CTA | ✅ Done (accent CTA, dev info trimmed, latest-release changelog) |
-| 5 | Dead page cleanup | 🚧 Partial — legacy download panel hidden; blank More page + .ui regeneration deferred |
-| 6 | Verify loop | 🚧 Screenshots verified; 306 tests green |
+| 5 | Dead page cleanup | ✅ Done — blank More page + legacy Backends panel removed; Models page is the custom-model import hub |
+| 6 | Verify loop | ✅ Screenshots verified; GUI smoke + runtime tests green |
 
 ---
 
@@ -93,7 +98,7 @@ queue — so nothing can be added once rendering starts.
 
 - [ ] Rows grouped into section cards (Output / Scene Detection / Rendering / App)
       with headers; info icons beside labels; Reset Settings in card footer
-- [ ] Remove stale `pytorch_version`/`pytorch_backend` combo wiring (flagged tech debt)
+- [x] Remove stale `pytorch_version`/`pytorch_backend` combo wiring (done 2026-11-25)
 
 ## 4. Home page — `apps/gui/pages/home/home.py`
 
@@ -103,15 +108,15 @@ queue — so nothing can be added once rendering starts.
 
 ## 5. Dead page cleanup
 
-- [ ] Remove blank "More" placeholder page from the stack
-- [ ] Remove legacy "Backends" panel (stale PyTorch labels) — the download page
+- [x] Remove blank "More" placeholder page from the stack
+- [x] Remove legacy "Backends" panel (stale PyTorch labels) — the download page
       post-ONNX-only already covers updates/uninstall
 - [ ] Fix sidebar/nav mapping to match
 
 ## 6. Verify loop
 
 - [ ] Screenshot checkpoint after each workstream (offscreen grab harness, reusable)
-- [ ] GUI smoke test (`apps/gui/tests/test_gui_smoke.py`) stays green; update if it
+- [x] GUI smoke test (`apps/gui/tests/test_gui_smoke.py`) stays green; update if it
       touches removed pages/widgets
 - [ ] New regression coverage: add-to-queue-while-rendering behavior
 

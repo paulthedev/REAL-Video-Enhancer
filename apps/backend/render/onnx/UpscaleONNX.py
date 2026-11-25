@@ -44,6 +44,7 @@ class UpscaleONNX:
         self.scale = scale
         self.modelPath = modelPath
         self.device = device
+        self.gpu_id = gpu_id
         self.i0 = None
         self.precision = self.handlePrecision(precision)
 
@@ -56,7 +57,12 @@ class UpscaleONNX:
 
         # load model + build session through the shared helper
         self.model = prepare_model(self.modelPath, self.precision)
-        self.inference_session = create_session(self.model, 0)
+        self.inference_session = create_session(
+            self.model,
+            self.gpu_id,
+            fp16=self.precision == np.float16,
+            use_gpu=self.device != "cpu",
+        )
 
     
 

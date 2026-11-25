@@ -1,10 +1,9 @@
 # REAL Video Enhancer
-![Visitors](https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2FTNTwise%2FREAL-Video-enhancer%2F&countColor=%23263759)
-[![pypresence](https://img.shields.io/badge/using-pypresence-00bb88.svg?style=for-the-badge&logo=discord&logoWidth=20)](https://github.com/qwertyquerty/pypresence)
+![Visitors](https://api.visitorbadge.io/api/visitors?path=https%3A%2F%2Fgithub.com%2Fpaulthedev%2FREAL-Video-enhancer%2F&countColor=%23263759)
 
-![license](https://img.shields.io/github/license/tntwise/real-video-enhancer)
+![license](https://img.shields.io/github/license/paulthedev/real-video-enhancer)
 ![Version](https://img.shields.io/badge/Version-2.4.2-blue)
-![downloads_total](https://img.shields.io/github/downloads/tntwise/REAL-Video-Enhancer/total.svg?label=downloads%40total)
+![downloads_total](https://img.shields.io/github/downloads/paulthedev/REAL-Video-Enhancer/total.svg?label=downloads%40total)
 <a href="https://discord.gg/hwGHXga8ck">
       <img src="https://img.shields.io/discord/1041502781808328704?label=Discord" alt="Discord Shield"/></a>
 <br/>
@@ -35,7 +34,7 @@
   * [General App Usage](#general-application-usage) 
   * [TensorRT](#tensorrt-related-questions)
   * [ROCm](#rocm-related-questions)
-  * [NCNN](#ncnn-related-questions)
+  * [CPU / iGPU](#cpu--igpu-related-questions)
 * **[Cloning](#cloning)**
 * **[Building](#building)**
 * **[Colab Notebook](#colab-notebook)**
@@ -55,20 +54,19 @@
   <li> Windows support. <strong>!!! NOTICE !!!</strong> The bin can be detected as a trojan. This is a false positive caused by pyinstaller.</li>
   <li> Ubuntu 22.04+ support on Executable and Flatpak. (20.04 can work but is now legacy) </li>
   <li> MacOS 15+ arm/x86 support </li>
-  <li> Discord RPC support for Discord system package and Discord flatpak. </li>
   <li> Scene change detection to preserve sharp transitions. </li>
   <li> Preview that shows latest frame that has been rendered. </li>
-  <li> TensorRT and NCNN for efficient inference across many GPUs. </li>
+  <li> ONNX Runtime inference with automatic GPU acceleration (CUDA/TensorRT, OpenVINO, ROCm, DirectML). </li>
 </ul>
 
 # Hardware/Software Requirements
 |  | Minimum | Recommended | 
  |--|--|--|
 | CPU | Dual Core x64 bit | Quad Core x64 bit
-| GPU | Vulkan 1.3 capable device | Nvidia RTX GPU (20 series and up)
-| VRAM | 4 GB - NCNN | 8 GB - TensorRT (Nvidia, why keep making 8gb cards?)
+| GPU | Any DX12/Vulkan-capable device (CPU fallback works) | Nvidia RTX GPU (20 series and up)
+| VRAM | 4 GB | 8 GB+ (TensorRT)
 | RAM | 16 GB | 32 GB
-| Storage | 1 GB free - NCNN | 16 GB free - TensorRT
+| Storage | 1 GB free | 16 GB free (TensorRT engine cache)
 | Operating System | Windows 10/11 64bit / MacOS 14+ | Any modern Linux distro (Ubuntu 22.04+)
 
 # Models:
@@ -101,34 +99,40 @@
 | DnCNN | czsn | [DnCNN](https://github.com/cszn/DPIR)
 
 # Backends
-  | Backend | Hardware | 
+  ONNX Runtime is the only inference backend. A CPU build ships with the app;
+  the GUI offers a one-click, hardware-matched upgrade (applied after restart):
+
+  | Provider | Hardware |
   |--|--|
-  | TensorRT | NVIDIA RTX GPUs
-  | PyTorch  | CUDA 12.6 and ROCm 6.2 capable GPUs
-  | NCNN | Vulkan 1.3 capable GPUs
+  | TensorRT + CUDA | NVIDIA GPUs (compute capability 7.5+) |
+  | CUDA | Older NVIDIA GPUs |
+  | OpenVINO | Intel GPUs |
+  | ROCm / MIOpen | Supported AMD GPUs on Linux |
+  | DirectML | Windows, any DX12 GPU (bundled) |
+  | CPU | Always available fallback |
  
 # FAQ
 ### General Application Usage
   | Question | Answer | 
   |--|--|
   | What does this program attempt to accomplish? | Fast, efficient and easily accessable video interpolation (Ex: 24->48FPS) and video upscaling (Ex: 1920->3840)
-  | Why is it failing to recognize installed backends? | REAL Video Enhancer uses PIP and portable python for inference, this can sometimes have issues installing. Please attempt reinstalling the app before creating an issue.
+  | Why is it failing to recognize installed backends? | ONNX Runtime is bundled, so this normally only happens when the app bundle is incomplete or the optional GPU provider failed to install. Try restarting, then reinstall the app; the bundled CPU build always remains available.
 
 ### TensorRT related questions
   |||
   |--|--|
   | Why does it take so long to begin inference? | TensorRT uses advanced optimization at the beginning of inference based on your device, this is only done once per resolution of video inputed.
-  | Why does the optimization and inference fail? | The most common way an optimization can fail is **Limited VRAM** There is no fix to this except using CUDA or NCNN instead.
+  | Why does the optimization and inference fail? | The most common way an optimization can fail is **Limited VRAM**. Lower the tile size, use a smaller upscale model, or fall back to the CUDA/CPU provider.
  
 ### ROCm related questions
   |||
   |--|--|
   | Why am I getting (Insert Error here)? | ROCM is buggy, please take a look at <a href="https://github.com/TNTwise/REAL-Video-Enhancer/wiki/ROCm-Help">ROCm Help</a>.
 
-### NCNN related questions
+### CPU / iGPU related questions
   |||
   |--|--|
-  | Why am I getting (Insert Vulkan Error here)? | This usually is an OOM (Out Of Memory) error, this can indicate a weak iGPU or very old GPU, I recommeding trying out the <a href="https://github.com/TNTwise/REAL-Video-Enhancer-Colab">Colab Notebook</a>  instead.
+  | Why is rendering slow? | The bundled build runs on CPU until a GPU provider is installed. Accept the startup prompt (or check the settings page) to install the hardware-matched ONNX Runtime build, then restart.
 
 
 # Repository Structure
@@ -136,39 +140,38 @@
 REAL-Video-Enhancer/
 ├── apps/
 │   ├── gui/              # Main GUI application
-│   │   ├── ui/           # UI components
-│   │   ├── Backendhandler.py
-│   │   ├── ModelHandler.py
+│   │   ├── pages/        # Home / Process / Settings / Models pages
+│   │   ├── lib/          # Window logic, widgets, provider upgrade UI
+│   │   ├── utils/        # Video info + backend helpers
 │   │   └── ...
 │   └── backend/          # Backend processing library
-│       ├── models/       # Backend-agnostic model definitions
-│       ├── backends/     # PyTorch, ONNX, NCNN backends
-│       ├── converters/   # Model format converters
-│       ├── pytorch/      # PyTorch utilities and architectures
+│       ├── render/       # Shipping ONNX render path
+│       ├── models/       # Model definitions (converter tooling)
+│       ├── backends/     # Loader/runner abstractions (tooling)
+│       ├── converters/   # torch_to_onnx.py (dev tooling)
+│       ├── pytorch/      # PyTorch reference implementations (dev tooling)
 │       └── utils/        # Shared utilities
-├── config/               # Configuration files
-├── scripts/              # CLI tools
-└── docs/                 # Documentation
+├── docs/                 # Documentation
+└── installers/           # Installer scripts and assets
 ```
 
 # Cloning:
 ```
 # Nightly
-git clone --recurse-submodules https://github.com/TNTwise/REAL-Video-Enhancer 
+git clone --recurse-submodules https://github.com/paulthedev/REAL-Video-Enhancer
 
 # Stable
-git clone --recurse-submodules https://github.com/TNTwise/REAL-Video-Enhancer --branch 2.4.2
+git clone --recurse-submodules https://github.com/paulthedev/REAL-Video-Enhancer--branch 2.4.2
 ```
 # Building:
 
-<p>3 supported build methods: </p>
+<p>2 supported build methods: </p>
 <p> - pyinstaller (recommended for Win/Mac) <br/>
-    - cx_freeze (recommended for Linux) <br/>
-    - nuitka (experimental)
+    - cx_freeze (recommended for Linux, also builds the AppImage) <br/>
 </p>
-<p>supported python versions: </p>
-<p> - 3.10 3.11, 3.12 <br/>
-</p>
+<p>Supported python versions: 3.12+ (the build venv/frozen target uses 3.14).</p>
+<p>Requires <a href="https://docs.astral.sh/uv/">uv</a>; dependencies come from
+`pyproject.toml`, so there is no requirements.txt.</p>
 
 ```
 python3 build.py --build BUILD_OPTION --copy_backend
@@ -191,25 +194,21 @@ python3 build.py --build BUILD_OPTION --copy_backend
 |--|--|--|
 | FFmpeg | Multimedia framework for handling video, audio, and other media files | https://ffmpeg.org/ 
 | QT | GUI framework | https://qt.io/
-| FFMpeg Builds | Pre-compiled builds of FFMpeg. | Windows/Linux:  https://github.com/BtbN/FFmpeg-Builds, MacOS: https://github.com/eko5624/mpv-mac
-| PyTorch | Neural Network Inference (CUDA/ROCm/TensorRT) | https://pytorch.org/ 
-| NCNN | Neural Network Inference (Vulkan) | https://github.com/tencent/ncnn 
-| RIFE | Real-Time Intermediate Flow Estimation for Video Frame Interpolation | https://github.com/hzwer/Practical-RIFE 
-| rife-ncnn-vulkan | Video frame interpolation implementation using NCNN and Vulkan | https://github.com/nihui/rife-ncnn-vulkan 
-| rife ncnn vulkan python | Python bindings for RIFE NCNN Vulkan implementation | https://github.com/media2x/rife-ncnn-vulkan-python 
+| FFMpeg Builds | Static per-platform ffmpeg bundled via `imageio-ffmpeg` | https://github.com/imageio/imageio-ffmpeg
+| ONNX Runtime | Neural Network Inference (CPU baseline; CUDA/TensorRT/OpenVINO/ROCm/DirectML providers) | https://onnxruntime.ai/
+| PyTorch | Model definitions/conversion tooling only (not shipped) | https://pytorch.org/
+| RIFE | Real-Time Intermediate Flow Estimation for Video Frame Interpolation | https://github.com/hzwer/Practical-RIFE
 | GMFSS | GMFlow based Anime VFI | https://github.com/98mxr/GMFSS_Fortuna
-| GIMM | Motion Modeling Realistic VFI | https://github.com/GSeanCDAT/GIMM-VFI 
-| ncnn python | Python bindings for NCNN Vulkan framework | https://pypi.org/project/ncnn 
-| Real-ESRGAN | Upscaling | https://github.com/xinntao/Real-ESRGAN 
-| SPAN | Upscaling | https://github.com/hongyuanyu/SPAN 
-| Spandrel | CUDA upscaling model architecture support | https://github.com/chaiNNer-org/spandrel 
+| GIMM | Motion Modeling Realistic VFI | https://github.com/GSeanCDAT/GIMM-VFI
+| Real-ESRGAN | Upscaling | https://github.com/xinntao/Real-ESRGAN
+| SPAN | Upscaling | https://github.com/hongyuanyu/SPAN
+| Spandrel | Model architecture support | https://github.com/chaiNNer-org/spandrel
 | ChaiNNer | Model Scale Detection | https://github.com/chaiNNer-org/chainner
-| cx_Freeze | Tool for creating standalone executables from Python scripts (Linux build) | https://github.com/marcelotduarte/cx_Freeze 
+| cx_Freeze | Tool for creating standalone executables from Python scripts (Linux build) | https://github.com/marcelotduarte/cx_Freeze
 | PyInstaller | Tool for creating standalone executables from Python scripts (Windows/Mac builds) | https://github.com/pyinstaller/pyinstaller
-| Feather Icons | Open source icons library | https://github.com/feathericons/feather 
+| Feather Icons | Open source icons library | https://github.com/feathericons/feather
 | PySceneDetect | Transition detection library for python | https://github.com/Breakthrough/PySceneDetect/
-| Python Standalone Builds | Backend inference using portable python, helps when porting to different platforms. | https://github.com/indygreg/python-build-standalone |
 
 
 # Star History
-[![Star History Chart](https://api.star-history.com/svg?repos=tntwise/real-video-enhancer&type=Date)](https://star-history.com/#tntwise/real-video-enhancer&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=paulthedev/real-video-enhancer&type=Date)](https://star-history.com/#paulthedev/real-video-enhancer&Date)

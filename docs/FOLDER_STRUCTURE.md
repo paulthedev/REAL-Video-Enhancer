@@ -31,91 +31,68 @@ REAL-Video-Enhancer/
 
 ```
 apps/backend/
-├── README.md
-├── requirements.txt
-├── rve-backend.py
-├── src/
-│   ├── constants.py
+├── rve-backend.py          # Backend CLI entry point (spawned by the GUI)
+├── constants.py            # platform info + provider-dir activation
+├── version.py
+├── backends/               # backend-agnostic loader/runner abstractions
+│   ├── base.py
+│   └── onnx/               # loader.py + runner.py (used by tests/tooling)
+├── render/                 # the shipping render path
+│   ├── RenderVideo.py      # render loop (ONNX only)
 │   ├── FFmpeg.py
 │   ├── FFmpegBuffers.py
-│   ├── RenderVideo.py
-│   ├── version.py
-│   ├── ncnn/              # NCNN backend
-│   │   ├── __init__.py
-│   │   ├── InterpolateNCNN.py
-│   │   ├── NCNNEfficientNetSC.py
-│   │   └── UpscaleNCNN.py
-│   ├── onnx/              # ONNX backend
-│   │   ├── __init__.py
-│   │   ├── InterpolateONNX.py
-│   │   └── UpscaleONNX.py
-│   ├── pytorch/           # PyTorch backend
-│   │   ├── __init__.py
-│   │   ├── BaseInterpolate.py
-│   │   ├── InterpolateGIMM.py
-│   │   ├── InterpolateGMFSS.py
-│   │   ├── InterpolateIFRNET.py
-│   │   ├── InterpolateRIFE.py
-│   │   ├── InterpolateTorch.py
-│   │   ├── TensorRTHandler.py
-│   │   ├── TorchUtils.py
-│   │   ├── tuning.py
-│   │   ├── UpscaleModelWrapper.py
-│   │   ├── UpscaleTorch.py
-│   │   ├── DRBA/
-│   │   ├── InterpolateArchs/
-│   │   ├── scenechangedetect/
-│   │   ├── spandrel/
-│   │   └── VSRArchs/
-│   └── utils/             # Utility functions
-│       ├── __init__.py
-│       ├── BackendDetect.py
-│       ├── BorderDetect.py
-│       ├── Colors.py
-│       ├── Encoders.py
-│       ├── FileHandler.py
-│       ├── Frame.py
-│       ├── GetFFMpeg.py
-│       ├── PySceneDetectUtils.py
-│       ├── SceneDetect.py
-│       ├── SSIM.py
-│       ├── Util.py
-│       └── VideoInfo.py
+│   └── onnx/               # InterpolateONNX.py, UpscaleONNX.py, session.py
+├── models/                 # model definitions + registry (converter tooling)
+│   ├── base.py
+│   ├── registry.py
+│   ├── interpolate/        # rife, gimm, gmfss, ifrnet
+│   ├── upscale/            # span, tspan, animesr
+│   ├── restoration/        # fbcnn, nafnet
+│   ├── denoise/            # dncnn
+│   └── scene_detect/       # onnx + maxvit
+├── pytorch/                # PyTorch reference implementations (dev/convert only)
+├── converters/             # torch_to_onnx.py (dev tooling)
+├── utils/
+│   ├── BorderDetect.py
+│   ├── Colors.py
+│   ├── Encoders.py
+│   ├── FileHandler.py
+│   ├── Frame.py
+│   ├── GetFFMpeg.py        # imageio-ffmpeg fallback (no downloads)
+│   ├── OnnxLoader.py
+│   ├── PySceneDetectUtils.py
+│   ├── SceneDetect.py
+│   ├── Util.py
+│   └── VideoInfo.py
 └── tests/
-    ├── benchmarks/
-    │   ├── bench_torch_interpolate.py
-    │   └── bench_torch_upscale.py
-    └── unit_tests/
-        ├── test_frame.py
-        └── test_pytorch_optimizations.py
+    ├── benchmarks/          # ONNX + torch conversion benchmarks
+    ├── integration_tests/   # ONNX e2e render, ffmpeg round-trip, conversion
+    └── unit_tests/          # runtime, registry, provider-upgrade, CLI tests
 ```
+
+`apps/backend/pytorch/` and the model loaders in `apps/backend/models/` are
+**dev/conversion tooling** only: the shipped render path is
+`render/onnx/*` + `render/RenderVideo.py` and never imports torch or ncnn.
 
 ### GUI (`apps/gui/`)
 
 ```
 apps/gui/
-├── Backendhandler.py
-├── BuiltInTorchVersions.py
+├── REAL-Video-Enhancer.py  # Main entry point (also dispatches `-m pip`)
 ├── constants.py
-├── DiscordRPC.py
-├── DownloadDeps.py
-├── DownloadModels.py
-├── GenerateFFMpegCommand.py
-├── GpuHardware.py
-├── ModelHandler.py
-├── Util.py
 ├── version.py
-├── VideoInfo.py
-├── REAL-Video-Enhancer.py  # Main entry point
-├── icons/                  # Application icons (290+ SVG files)
-│   ├── logo-v2.svg
-│   ├── activity.svg
-│   ├── airplay.svg
-│   └── ...
-└── ui/                     # UI source files
-    ├── testRVEInterface.ui
-    ├── resources.qrc
-    └── colors.txt
+├── mainwindow.ui
+├── resources.qrc
+├── icons/                  # Application icons
+├── lib/                    # BackendHandler, ModelHandler, QTcustom,
+│                           # QTstyle, ProviderUpgradeUI, RenderQueue, ...
+├── pages/                  # home / process / settings / download pages
+│   └── */                  # each with its .ui source
+├── util/                   # shared GUI helpers
+├── utils/                  # VideoInfo, backend helpers
+│   └── backends/           # BackendDetect, ProviderUpgrade, model downloads
+├── widgets/                # QTabNavigation, PreviewCompare, ...
+└── tests/                  # offscreen smoke + render-queue tests
 ```
 
 ## Installers (`installers/`)
@@ -144,10 +121,12 @@ installers/
 
 ```
 dist/
-├── mainwindow.py          # Compiled from testRVEInterface.ui
-├── resources_rc.py        # Compiled from resources.qrc
-└── REAL-Video-Enhancer    # Windows executable (if built)
+├── mainwindow.py          # Compiled from apps/gui/mainwindow.ui
+├── resources_rc.py        # Compiled from apps/gui/resources.qrc
+└── pages/                 # Compiled page UIs (home/process/settings/download)
 ```
+
+Packaged bundles and installers go to `packages/` (also git ignored).
 
 ## Logs (`logs/`) - Git Ignored
 
@@ -156,47 +135,51 @@ logs/
 └── log.txt                # Runtime application logs
 ```
 
-## Tests (`tests/`)
+## Tests (`apps/backend/tests/` and `apps/gui/tests/`)
 
 ```
-tests/
-├── benchmarks/
-│   ├── bench_torch_interpolate.py
-│   └── bench_torch_upscale.py
-└── unit_tests/
-    ├── test_frame.py
-    └── test_pytorch_optimizations.py
+apps/backend/tests/
+├── benchmarks/            # ONNX + torch-conversion benchmarks
+├── integration_tests/     # ONNX e2e render, ffmpeg round-trip, conversion
+└── unit_tests/            # runtime, provider upgrade, registry, CLI tests
+apps/gui/tests/            # offscreen smoke + render-queue tests
 ```
 
 ## Documentation (`docs/`)
 
 ```
 docs/
-└── pytorch-optimizations.md
+├── onnx-only-migration-plan.md
+├── TRACKER.md
+├── BUG_TRACKER.md
+├── UI_REDESIGN_TRACKER.md
+├── FOLDER_STRUCTURE.md
+└── archived/              # completed plans and migration notes
 ```
 
-## GitHub (` .github/`)
+## GitHub (`.github/`)
 
 ```
 .github/
 ├── ISSUE_TEMPLATE/
 │   └── bug_report.md
 └── workflows/
+    ├── tests.yml          # dev suite + torch-free runtime smoke
     └── prerelease.yml
 ```
 
 ## Key Points
 
 - **Single source of truth**: `pyproject.toml` for dependencies
-- **Build output**: All artifacts go to `dist/` (git ignored)
-- **Logs**: Runtime logs in `logs/` (git ignored)
-- **UI source**: `.ui` and `.qrc` files in `apps/gui/ui/`
+- **Dev UI output**: compiled modules in `dist/` (git ignored); packages in `packages/`
+- **Logs**: runtime logs in `logs/` (git ignored)
+- **UI source**: `apps/gui/mainwindow.ui` + `apps/gui/pages/*/*.ui`; resources in `apps/gui/resources.qrc`
 - **Icons**: SVG icons in `apps/gui/icons/`
-- **Installers**: All installer scripts in `installers/`
-- **Backend**: Processing code in `apps/backend/`
-- **GUI**: Application code in `apps/gui/`
+- **Installers**: all installer scripts in `installers/`
+- **Backend**: ONNX runtime + processing in `apps/backend/` (`render/onnx/` is the shipping path)
+- **GUI**: application code in `apps/gui/`
 
 ## Links
 
-- [AGENTS.md](./AGENTS.md) - Agent guidelines and rules
-- [README.md](./README.md) - Project documentation
+- [AGENTS.md](../AGENTS.md) - Agent guidelines and rules
+- [README.md](../README.md) - Project documentation

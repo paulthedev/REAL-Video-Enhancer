@@ -17,10 +17,9 @@ from PySide6.QtWidgets import (
     QLabel,
     QMessageBox,
     QVBoxLayout,
-    QWidget,
 )
 
-from apps.gui.constants import CUSTOM_MODELS_PATH, IS_FLATPAK, PLATFORM, USE_LOCAL_BACKEND, CWD
+from apps.gui.constants import CUSTOM_MODELS_PATH, IS_FLATPAK, USE_LOCAL_BACKEND, CWD
 from apps.gui.util import FileHandler, log
 
 
@@ -47,7 +46,7 @@ class ConvertThread(QThread):
             in_ch = getattr(descriptor, "input_channels", 3) or 3
 
             stem = os.path.splitext(os.path.basename(self.source_path))[0]
-            out = os.path.join(CUSTOM_MODELS_PATH, f"{scale}x_{stem}.onnx")
+            out = os.path.join(self.output_path, f"{scale}x_{stem}.onnx")
 
             torch.onnx.export(
                 model,
@@ -107,7 +106,7 @@ class DropZone(QFrame):
             self.filesDropped.emit(paths)
 
     def mousePressEvent(self, event):
-        files, _ = QFileDialog.getOpenFileNameNames(
+        files, _ = QFileDialog.getOpenFileNames(
             self, "Select model files", os.path.expanduser("~"),
             "Model files (*.onnx *.pth *.safetensors)",
         )
@@ -151,8 +150,6 @@ class DownloadTab:
     # ---------- import UI ----------
 
     def _build_import_ui(self):
-        from apps.gui.constants import HOME_PATH
-
         from PySide6.QtWidgets import QGridLayout
 
         page = self.parent.downloadPage
@@ -176,7 +173,8 @@ class DownloadTab:
             layout.insertWidget(1, self.import_status)
 
     def importModels(self, paths):
-        from apps.gui.constants import HOME_PATH
+        import importlib.util
+
         FileHandler.createDirectory(CUSTOM_MODELS_PATH)
 
         to_convert = []
@@ -194,6 +192,14 @@ class DownloadTab:
                     self._notify(f"Import failed: {e}")
             else:
                 to_convert.append(path)
+
+        if to_convert and importlib.util.find_spec("torch") is None:
+            # torch is dev/conversion-only tooling, not part of the bundle
+            self._notify(
+                "PyTorch checkpoint conversion needs the optional torch extra; "
+                "import an ONNX file instead."
+            )
+            return
 
         for path in to_convert:
             self._notify(f"Converting {os.path.basename(path)}… (this can take a minute)")

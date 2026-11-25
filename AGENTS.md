@@ -2,7 +2,7 @@
 
 ## Repository Overview
 
-REAL-Video-Enhancer is a cross-platform video enhancement application that provides frame interpolation and upscaling using various AI models. It supports multiple backends (PyTorch, ONNX, NCNN) and runs on Windows, macOS, and Linux.
+REAL-Video-Enhancer is a cross-platform video enhancement application that provides frame interpolation and upscaling using various AI models. ONNX Runtime is the only inference backend; it runs on Windows, macOS, and Linux.
 
 ## Project Structure
 
@@ -19,7 +19,9 @@ All documentation files must be placed in the `docs/` folder. This includes:
 
 ### Backend (`apps/backend/`)
 - Core video processing logic
-- Model inference (PyTorch, ONNX, NCNN)
+- Model inference (ONNX Runtime only; `apps/backend/render/onnx/`)
+- PyTorch sources under `apps/backend/pytorch/` + `apps/backend/models/` are
+  dev-only tooling for producing new ONNX models (`converters/torch_to_onnx.py`)
 - FFmpeg integration
 - Utility functions
 
@@ -81,8 +83,10 @@ All documentation files must be placed in the `docs/` folder. This includes:
 
 ### Testing
 - Tests in `apps/backend/tests/` directory
-- Run with `uv run pytest`
-- 293 tests passing, 5 skipped
+- Run with `uv run --extra convert --extra dev pytest` (the `convert` extra
+  supplies torch for the model/converter tests; the shipping runtime does not
+  need it)
+- 321 tests passing, 5 warnings (CI also runs a torch-free runtime-smoke job)
 
 ### Logging
 - Runtime logs go to `logs/log.txt`
@@ -91,7 +95,8 @@ All documentation files must be placed in the `docs/` folder. This includes:
 
 ### Git Workflow
 - Commit often with descriptive messages
-- Push to `update_dependencies` branch for development
+- Push the current working branch (`main` for releases; feature branches for
+  larger changes)
 - Use conventional commit messages
 
 ## Key Technologies
@@ -108,16 +113,20 @@ All documentation files must be placed in the `docs/` folder. This includes:
 ## Common Tasks
 
 ### Adding a New Model
-1. Add model files to `apps/backend/models/`
-2. Update model registry in backend
-3. Add UI options in `apps/gui/`
+1. Produce an ONNX model (see `apps/backend/converters/torch_to_onnx.py` for
+   the dev-only conversion path)
+2. Add it to the models repo (or import it through the Models page, which also
+   converts `.pth`/`.safetensors` when the optional torch extra is installed)
+3. For a built-in option: add the ONNX entry to
+   `apps/gui/lib/ModelHandler.py` (file name + scale) and the download table
 4. Update documentation
 
 ### Building for Release
-1. Run `python build.py`
-2. Test generated artifacts in `dist/`
-3. Build installers if needed
-4. Update version in `version.py`
+1. Run `python build.py` (dev UI modules → `dist/`)
+2. Run `python build.py --build cx_freeze --copy_backend` (Linux) or
+   `--build pyinstaller --copy_backend` (Windows/macOS) → `packages/`
+3. Test the generated bundle/installers
+4. Update `version` in `pyproject.toml` / `apps/gui/version.py`
 
 ### Debugging
 - Check `logs/log.txt` for runtime errors

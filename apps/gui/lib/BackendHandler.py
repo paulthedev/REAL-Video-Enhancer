@@ -1,12 +1,7 @@
 import ast
 import os
 
-from apps.gui.constants import BACKEND_PATH, PYTHON_EXECUTABLE_PATH, PYTHON_DIRECTORY, PLATFORM, IS_INSTALLED, IS_FLATPAK, HAS_NETWORK_ON_STARTUP, CWD
-from apps.gui.util import (
-    FileHandler
-)
-from PySide6.QtWidgets import QMessageBox
-from apps.gui.version import version
+from apps.gui.constants import BACKEND_PATH, PYTHON_EXECUTABLE_PATH
 
 
 class BackendHandler:
@@ -29,8 +24,10 @@ class BackendHandler:
         return_code = str(output.getReturnCode()).strip()
         output: str = output.getOutput()
         if "ERROR" in output or "TRACEBACK" in output or return_code == "1":
-            TextOutputPopup(f"ERROR DETECTED IN BACKEND SETUP!\n{output}", title="FATAL ERROR")
-            exit(1)
+            # never kill the GUI from here — report it and let the caller
+            # show the "no backend available" state
+            TextOutputPopup(f"ERROR DETECTED IN BACKEND SETUP!\n{output}", title="Backend Error")
+            return [], output
         
         output = output.split(" ")
         # hack to filter out bad find

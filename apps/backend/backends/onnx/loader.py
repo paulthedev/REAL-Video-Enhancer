@@ -138,6 +138,9 @@ class ONNXBackendLoader(BaseBackend):
         
         # Create session options with optimization enabled
         session_options = ort.SessionOptions()
+        session_options.graph_optimization_level = (
+            ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        )
         session_options.enable_cpu_mem_arena = True
         session_options.enable_mem_pattern = True
         session_options.enable_mem_reuse = True

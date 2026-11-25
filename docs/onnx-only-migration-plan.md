@@ -1,7 +1,7 @@
 # ONNX-Only Migration Plan
 
-Status: **planned — not started**. Render verification happens **after**
-the refactor completes (Phase 5), not as a pre-gate.
+Status: **Phases 0-4 complete (2026-11-25); Phase 5 verification in progress**.
+Render verification happens **after** the refactor completes (Phase 5).
 Decided (user, 2026-10-08):
 
 1. ONNX Runtime becomes the **only** inference backend. PyTorch and NCNN go away.
@@ -25,9 +25,8 @@ Decided (user, 2026-10-08):
    ffprobe, so its missing ffprobe is not a problem). The BtbN download path
    and the standalone-CPython download both disappear.
 
-Related: `docs/BUG_TRACKER.md` (S1/S2/S3 superseded by this plan for ffmpeg/
-CPython provenance; D1/D2/D3/D4 download wiring mostly deleted), `docs/archived/
-onnx-backend-plan.md`.
+Related: `docs/BUG_TRACKER.md` (S1/S2/D1-D4 and G21 resolved/superseded by
+this plan), `docs/archived/onnx-backend-plan.md`.
 
 ---
 
@@ -125,7 +124,7 @@ proven in **Phase 5** after the refactor, per decision (2026-10-08).
   PyTorch Version/Backend rows and the restack logic that manages them;
   remove `installRecommended`/`load_backend`/`download("torch"/"ncnn")` paths.
 - [x] `ModelHandler.getModels`: collapse to the ONNX model sets only.
-- [ ] `lib/ModelHandler.py` model tables: keep `.onnx` entries only.
+- [x] `lib/ModelHandler.py` model tables: keep `.onnx` entries only.
 - [x] Process page: fixed backend ("ONNX"); `get_current_backend` returns
   "onnx" unconditionally; `build_command` drops `-b` variants.
 - [x] Remove `TorchVersions`, torch-consistency/reinstall flows
@@ -151,38 +150,35 @@ proven in **Phase 5** after the refactor, per decision (2026-10-08).
 - [x] `DownloadDependencies` shrinks to **model downloads** +
   **provider upgrade** (`BackendsModels.py`); `downloadPythonDeps` and the
   generic `pip()` are deleted.
-- [ ] **Provider upgrade manager** (new module, e.g. `utils/backends/
-  ProviderUpgrade.py`):
+- [x] **Provider upgrade manager** (`apps/gui/utils/backends/ProviderUpgrade.py`):
   - vendor-aware recommendation built on the existing torch-free
     `detect_gpu_hardware()` — NVIDIA → `onnxruntime-gpu` (PyPI), Intel →
     `onnxruntime-openvino` (PyPI), AMD → `onnxruntime-rocm` from AMD's wheel
     index, nothing/unsupported → skip; Windows/macOS skip entirely (bundled
     builds cover them);
   - **NVIDIA TensorRT tier (default on SM ≥ 7.5)** — after the CUDA install,
-    additionally install the `tensorrt` pip libs version-matched to the
-    chosen `onnxruntime-gpu` release; ORT engine cache directory lives in
-    the app data dir; register providers `[TensorRT, CUDA, CPU]` so engine
-    failures fall back automatically; SM < 7.5 → CUDA EP only;
-  - **AMD release selection: newest-supported-first** — detect the GPU's gfx
-    architecture (`rocminfo`, or PCI-ID → gfx mapping from sysfs), walk
-    `repo.radeon.com/rocm/manylinux/` releases newest-first, and pick the
-    first whose ROCm version supports that architecture (newer ROCm releases
-    add newer GPUs, e.g. RDNA4 gfx1200+ landed in 6.4.x); also gate on a
-    wheel with the running python tag; fall back to older releases, then
-    bundled CPU;
+    additionally install the `tensorrt` pip libs (`tensorrt>=10,<11`,
+    version-matched to the onnxruntime-gpu generation); ORT engine cache
+    lives in the app data dir (`providers/trt_cache`); providers registered
+    as `[TensorRT, CUDA, ..., CPU]` so engine failures fall back
+    automatically; SM < 7.5 → CUDA EP only;
+  - **AMD release selection: newest-supported-first** — `rocminfo` supplies
+    the gfx architecture, a small `gfx → minimum ROCm` table filters
+    releases (unknown gfx falls back to the newest wheel with a matching
+    python tag, logged);
   - install into a **writable data dir** (`$XDG_DATA_HOME/REAL-Video-
     Enhancer/providers/`, `%APPDATA%` equivalent on Windows) — never into
     the AppImage mount (read-only squashfs);
-  - mechanism: bootstrap pip via stdlib `ensurepip` and
-    `pip install --target <providers dir> onnxruntime-gpu` (resolves the
-    nvidia dep closure automatically) — alternative is a minimal wheel
-    resolver over the PyPI JSON API (no pip, ~100 lines, but manual closure);
-  - non-blocking background download with progress/cancel (no modal-kill —
-    the G24/G25 lessons); bundled CPU remains the fallback on any failure;
+  - mechanism: pip is a bundled dependency; frozen builds dispatch
+    `RVE -m pip …` to the bundled pip in a child process (no standalone
+    Python required). Wheels only (`--only-binary=:all:`);
+  - non-blocking background download with progress/cancel (opt-in prompt on
+    startup, `ProviderUpgradeUI`; no modal-kill);
   - activation by sys.path precedence (`providers/` before frozen libs) +
-    one restart; a marker file records the active provider and version;
-  - updater flow mirrors the app updater: check → recommend → apply on
-    restart.
+    one restart; a marker file records the active package, TensorRT flag,
+    compute capability and python tag;
+  - updater flow mirrors the removed app updater: check → recommend → apply
+    on restart.
 - [x] cx_Freeze build: include onnxruntime/cv2/imageio_ffmpeg; verify the
   freeze on all three OSes; update `packages/` layout notes.
 
@@ -197,47 +193,60 @@ proven in **Phase 5** after the refactor, per decision (2026-10-08).
   `models/*/pytorch|ncnn` loader branches (registry models become
   ONNX-only), `models/scene_detect` NCNN path, `TorchVersions`,
   `converters/onnx_to_ncnn.py`.
-- [ ] Keep `render/onnx/` wrappers and `backends/onnx/` (loader/runner) as the
-  only inference path; keep `converters/torch_to_onnx.py` as dev tooling for
-  producing new ONNX models (move to `scripts/` if desired).
-- [ ] GUI spawns backend without `--pause_shared_memory_id`-adjacent backend
+- [x] Keep `render/onnx/` wrappers + `render/RenderVideo.py` as the only
+  inference path; `backends/onnx/` loader/runner remains test/tooling-only.
+  `models/` + `apps/backend/pytorch/` are converter tooling and are never
+  imported by the shipping render path (guarded by
+  `tests/unit_tests/test_runtime_torch_free.py`). `converters/torch_to_onnx.py`
+  stays as dev tooling for producing new ONNX models.
+- [x] GUI spawns backend without `--pause_shared_memory_id`-adjacent backend
   flags that referenced other backends; settings page drops precision/backend
-  options that were pytorch-specific.
+  options that were pytorch-specific (`pytorch_version`/`pytorch_backend`
+  removed, dead `pytorch (cuda|rocm|xpu|mps)` remap removed).
 
 ## Phase 4 — Tests, docs, CI
 
-- [ ] Tests: delete pytorch/ncnn model+backend tests, keep ONNX loader/runner,
-  registry, utils tests; add the Phase 0 render as an integration smoke test.
-- [ ] CI (`.github/workflows/prerelease.yml`): drop torch install steps;
-  wheel variant per OS as decided above.
-- [ ] Docs: AGENTS.md (key technologies), FOLDER_STRUCTURE.md, TRACKER.md —
-  new "ONNX-only (2026-10)" completed section; archive superseded plans.
-- [ ] BUG_TRACKER: mark S1/S2/D1/D2/D3 superseded-by-this-plan; G21 stays
-  until the Phase 5 render verification.
+- [x] Tests: pytorch/ncnn benchmark entry points removed; ONNX loader/runner,
+  registry, utils tests kept; synthetic-model ONNX render e2e
+  (`test_onnx_render_e2e.py`) added; torch-free runtime smoke test added.
+- [x] CI (`.github/workflows/tests.yml`): `ncnn` extra removed, torch comes
+  from the dev-only `convert` extra, and a separate `runtime-smoke` job runs
+  with **no torch installed** to guard the shipping path.
+- [x] Docs: AGENTS.md (key technologies), FOLDER_STRUCTURE.md, TRACKER.md —
+  ONNX-only notes added; superseded plans archived.
+- [x] BUG_TRACKER: S1/S2/D1/D2/D3 marked superseded-by-this-plan; G21 resolved
+  by deleting the NCNN path (ONNX 0-1 convention is the only one left).
 
 ## Phase 5 — Post-refactor verification (user decision 2026-10-08)
 
 The render test runs here, once the refactor is complete:
 
-- [ ] Real ONNX render end-to-end: download one ONNX model from the models
-  repo (e.g. `tspan.onnx`) and render a short clip through
-  `rve-backend.py -b onnx` — verify output frames are sane (also settles
-  G21's scaling questions with real output).
-- [ ] Provider upgrade flow: simulate NVIDIA/AMD/Intel hardware paths —
-  download, sys.path activation, restart, fallback to bundled CPU on failure.
+- [~] Real ONNX render end-to-end: **synthetic-model e2e is automated**
+  (`tests/integration_tests/test_onnx_render_e2e.py`: upscale + interpolation
+  through the real CLI, output decoded and compared). A real downloaded model
+  (e.g. `tspan.onnx`) is still a manual spot-check.
+- [x] Frozen-bundle smoke (2026-11-25): cx_Freeze build completes;
+  `RVE -m pip --version` works from the bundle; `--list_backends` reports the
+  bundled ONNX Runtime; a marker-activated providers dir shadows it; a
+  synthetic interpolation render succeeds through the frozen binary.
+- [~] Provider upgrade flow: the install/activation mechanics are verified
+  (frozen `pip --target`, marker activation, fallback), but real
+  NVIDIA/AMD/Intel downloads still need hardware.
 - [ ] TRT tier on capable hardware: engine build, cache reuse on second run.
-- [ ] imageio-ffmpeg path: render through the bundled ffmpeg binary.
+- [x] imageio-ffmpeg path: render through the bundled ffmpeg binary (covered by
+  the e2e render + ffmpeg round-trip tests).
 - [ ] Performance spot-checks against the pre-refactor app (fp16 on/off).
 
 ## Risks / open questions
 
-1. **onnxruntime on Python 3.14** — wheel availability unverified (Phase 0 gate).
-2. **NVIDIA TensorRT coupling** — each `onnxruntime-gpu` release is built
-   against a specific TensorRT major; the manager must pin `tensorrt` to the
-   matching version and re-pin on ORT upgrades. First render after install
-   spends minutes building engines (cached to disk afterwards, extra
-   VRAM/disk); acceptable under the performance-first principle and
-   mitigated by the `[TensorRT, CUDA, CPU]` fallback order.
+1. **onnxruntime on Python 3.14** — resolved: cp314 wheels confirmed in
+   Phase 0; the build venv and cx_Freeze target stay on 3.14 while the
+   project floor is 3.12.
+2. **NVIDIA TensorRT coupling** — the manager pins `tensorrt>=10,<11` to the
+   `onnxruntime-gpu` 1.20+ generation and re-pins here on ORT upgrades.
+   First render after install spends minutes building engines (cached to
+   disk afterwards, extra VRAM/disk) — mitigated by the
+   `[TensorRT, CUDA, …, CPU]` fallback order.
 2b. **AMD on Linux** — covered by `onnxruntime_rocm` from AMD's index with a
    newest-supported-first release pick. Caveats: ROCm supports specific GPU
    architectures (very old cards may match no release → bundled CPU), the

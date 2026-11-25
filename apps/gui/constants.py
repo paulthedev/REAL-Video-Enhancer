@@ -27,18 +27,6 @@ MODELS_RELEASE_BASE_URL = (
 )
 RELEASES_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
-# Official upstream sources (do not re-host these — see docs/BUG_TRACKER.md,
-# "Sources — runtime download provenance").
-FFMPEG_BTBN_RELEASE_URL = (
-    "https://github.com/BtbN/FFmpeg-Builds/releases/latest/download"
-)
-FFMPEG_EVERMEET_RELEASE_URL = "https://evermeet.cx/ffmpeg/getrelease/zip"
-PYTHON_BUILD_STANDALONE_TAG = "20250317"
-PYTHON_BUILD_STANDALONE_URL = (
-    "https://github.com/astral-sh/python-build-standalone/releases/download/"
-    f"{PYTHON_BUILD_STANDALONE_TAG}"
-)
-
 LOCKFILE = QDir.tempPath() + "/REAL-Video-Enhancer.lock"
 
 
@@ -94,10 +82,15 @@ VIDEOS_PATH = (
 BACKEND_PATH = "/app/bin/apps/backend" if IS_FLATPAK else os.path.join(CWD, "apps", "backend")
 if getattr(sys, "frozen", False):
     # the backend ships inside the bundle next to the executable, not in the
-    # per-user data dir
-    BACKEND_PATH = os.path.join(
-        os.path.dirname(os.path.abspath(sys.executable)), "apps", "backend"
-    )
+    # per-user data dir. cx_Freeze uses apps/backend; PyInstaller uses backend/.
+    _exe_root = os.path.dirname(os.path.abspath(sys.executable))
+    for _candidate in (
+        os.path.join(_exe_root, "apps", "backend"),
+        os.path.join(_exe_root, "backend"),
+    ):
+        if os.path.isdir(_candidate):
+            BACKEND_PATH = _candidate
+            break
 TEMP_DOWNLOAD_PATH = os.path.join(CWD, "temp")
 # ffmpeg ships via the imageio-ffmpeg pip package (static per-platform
 # build); RVE_FFMPEG_PATH / --ffmpeg_path override it

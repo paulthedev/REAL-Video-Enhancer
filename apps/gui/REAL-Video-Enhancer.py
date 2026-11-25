@@ -1,6 +1,16 @@
 import os
 import sys
 
+# Provider installs run `RVE -m pip ...` so they work in frozen builds (the
+# bundle has no standalone python). This must happen before the backend
+# dispatch below: pip is bundled, and the child process just executes it.
+if len(sys.argv) >= 3 and sys.argv[1] == "-m" and sys.argv[2] == "pip":
+    import runpy
+
+    sys.argv = ["pip", *sys.argv[3:]]
+    runpy.run_module("pip", run_name="__main__", alter_sys=True)
+    raise SystemExit(0)
+
 # Frozen-app backend dispatch: the cx_Freeze binary IS the GUI, but the GUI
 # spawns that same binary to run the bundled backend (the bundle has no
 # standalone python). GUI children carry RVE_RUN_BACKEND=1 (set in
@@ -35,9 +45,8 @@ if (
         runpy.run_path(_script, run_name="__main__")
         sys.exit(0)
 
-from apps.gui.constants import CUSTOM_MODELS_PATH, IS_STEAM, MODELS_PATH, CWD,  IS_INSTALLED, TEMP_DOWNLOAD_PATH, USE_LOCAL_BACKEND, PLATFORM
+from apps.gui.constants import CWD, TEMP_DOWNLOAD_PATH
 import os
-import platform
 try:
     os.makedirs(CWD) if not os.path.exists(CWD) else None
     # os.chdir(CWD) # need to actually chdir into the directory to have everything run correctly
@@ -258,17 +267,25 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             + "\n"
             + "\nSoftware Information:\n"
             + f"REAL Video Enhancer Version: {version}\n"
-            + f"Backend: ONNX Runtime\n"
+            + "Backend: ONNX Runtime\n"
             + self.fullOutput
         )
         self.systemInfoText.setText(printOut)
         log(printOut)
 
-        # process the output
+        # ONNX Runtime runs on our own interpreter, so the GUI can check
+        # fp16 capability directly instead of waiting for the first render.
         halfPrecisionSupport = False
-        for line in self.fullOutput.lower().split("\n"):
-            if "half precision support:" in line:
-                halfPrecisionSupport = "true" in line
+        try:
+            import onnxruntime as _ort
+            from onnxconverter_common import float16 as _fp16  # noqa: F401
+
+            providers = _ort.get_available_providers()
+            halfPrecisionSupport = _fp16 is not None and any(
+                not p.startswith(("CPU", "Azure")) for p in providers
+            )
+        except Exception:
+            pass
 
         if self.anyBackendsInstalled:
             self.processTab = ProcessTab(
@@ -286,12 +303,23 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.animationHandler = AnimationHandler()
         self.animationHandler.fadeInAnimation(self)
 
+        # Offer the hardware-matched onnxruntime build once the window is up
+        # (off the GUI thread; no-op offline / in smoke tests).
+        from PySide6.QtCore import QTimer
+
+        from apps.gui.lib.ProviderUpgradeUI import maybe_prompt_provider_upgrade
+
+        QTimer.singleShot(2500, lambda: maybe_prompt_provider_upgrade(self))
+
         if not self.anyBackendsInstalled:
             RegularQTPopup("Welcome to REAL Video Enhancer!\nPlease install at least one backend to get started.")
 
         # these additions are not ready for stable rve just yet.
         #self.denoiseContainer.setVisible(False)
         self.deblurContainer.setVisible(False)
+        # ONNX interpolation has no dynamic-scaled-optical-flow mode
+        # (ensemble is implemented); don't offer a no-op control.
+        self.dynamicScaledOpticalFlowCheckBox.setVisible(False)
         #self.denoiseCheckBoxContainer.setVisible(False)
         self.deblurCheckBoxContainer.setVisible(False)
 
@@ -846,90 +874,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         )
         self.loadVideo(inputFolder, multi_file=True)
 
-    def importCustomModel(self, format: str):
-        """
-        *args
-        format: str
-            The format of the model to import (pytorch, ncnn)
-        """
-
-        if format == "pytorch":
-            fileFilter = "PyTorch Model (*.pth *.safetensors)"
-
-            modelFile, _ = QFileDialog.getOpenFileName(
-                parent=self,
-                caption="Select PyTorch Model",
-                dir=self.homeDir,
-                filter=fileFilter,
-            )
-               
-            if modelFile == "":
-                RegularQTPopup("Please select a model file!")
-                return
-            
-            outputModelPath = os.path.join(
-                CUSTOM_MODELS_PATH, os.path.basename(modelFile)
-            )
-            FileHandler.copyFile(modelFile, CUSTOM_MODELS_PATH)
-
-            if os.path.isfile(outputModelPath):
-                NotificationOverlay(
-                    "Model imported successfully!\nPlease restart the app for the changes to take effect.",
-                    self,
-                    timeout=1500,
-                )
-            else:
-                NotificationOverlay(
-                    "Failed to import model!\nPlease try again.", self, timeout=1500
-                )
-
-        elif format == "ncnn":
-            binFileFilter = "NCNN Bin (*.bin)"
-            modelBinFile, _ = QFileDialog.getOpenFileName(
-                parent=self,
-                caption="Select NCNN Bin",
-                dir=self.homeDir,
-                filter=binFileFilter,
-            )
-            if modelBinFile == "":
-                RegularQTPopup("Please select a bin file!")
-                return
-            modelParamFile, _ = QFileDialog.getOpenFileName(
-                parent=self,
-                caption="Select NCNN Param",
-                dir=os.path.dirname(modelBinFile),
-                filter=os.path.basename(modelBinFile).replace(".bin", ".param"),
-            )
-            if modelParamFile == "":
-                RegularQTPopup("Please select a param file!")
-                return
-            outputModelFolder = os.path.join(
-                CUSTOM_MODELS_PATH,
-                os.path.basename(modelBinFile).replace(".bin", ""),
-            )
-            FileHandler.createDirectory(outputModelFolder)
-            outputBinPath = os.path.join(
-                outputModelFolder, os.path.basename(modelBinFile)
-            )
-            FileHandler.copyFile(modelBinFile, outputModelFolder)
-            outputParamPath = os.path.join(
-                outputModelFolder, os.path.basename(modelParamFile)
-            )
-            FileHandler.copyFile(modelParamFile, outputModelFolder)
-
-            if os.path.isfile(outputBinPath) and os.path.isfile(outputParamPath):
-                NotificationOverlay(
-                    "Model imported successfully!\nPlease restart the app for the changes to take effect.",
-                    self,
-                    timeout=1500,
-                )
-
-            else:
-                NotificationOverlay(
-                    "Failed to import model!\nPlease try again.", self, timeout=1500
-                )
-
-       
     # output file button
     def openOutputFolder(self):
         """

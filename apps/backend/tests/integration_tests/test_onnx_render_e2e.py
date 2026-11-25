@@ -212,6 +212,31 @@ def tiny_interp_model(tmp_path_factory):
     return model_path
 
 
+def test_onnx_interpolate_ensemble_matches_blend(tiny_interp_model):
+    """The ensemble path averages forward + reversed estimates."""
+    import numpy as np
+
+    from apps.backend.render.onnx.InterpolateONNX import InterpolateONNX
+
+    engine = InterpolateONNX(
+        str(tiny_interp_model),
+        interpolateFactor=2,
+        width=WIDTH,
+        height=HEIGHT,
+        precision="float32",
+        device="cpu",
+        ensemble=True,
+    )
+    first = np.zeros((HEIGHT, WIDTH, 3), dtype=np.uint8)
+    second = np.full((HEIGHT, WIDTH, 3), 200, dtype=np.uint8)
+
+    assert list(engine(first.tobytes())) == []  # first frame: nothing to blend
+    frames = list(engine(second.tobytes()))
+    assert len(frames) == 1
+    frame = np.frombuffer(frames[0], dtype=np.uint8).reshape(HEIGHT, WIDTH, 3)
+    assert abs(int(frame.mean()) - 100) <= 2
+
+
 def test_onnx_interpolate_render_end_to_end(tiny_interp_model, input_video):
     """2x interpolation through the real CLI: frame count doubles and the
     in-between frames are the 50/50 blends of their neighbours."""

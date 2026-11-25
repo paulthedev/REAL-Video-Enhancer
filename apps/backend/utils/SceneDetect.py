@@ -71,7 +71,7 @@ class SceneDetect:
         width: int = 1920,
         height: int = 1080,
         model_path: str = None,
-        model_backend: str = "pytorch",
+        model_backend: str = "onnx",
         model_dtype: str = "float32",
         model_device: str = "cpu",
         model_gpu_id: int = 0,

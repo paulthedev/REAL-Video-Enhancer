@@ -20,8 +20,33 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libdbus-1-3 libfontconfig1
       - name: Run backend tests (unit + CLI + ffmpeg round-trip + synthetic-model render e2e)
-        run: uv run --extra pytorch --extra onnx --extra dev pytest apps/backend/tests -q
+        # `convert` carries torch/onnx for the model + converter tests only
+        run: uv run --extra convert --extra dev pytest apps/backend/tests -q
       - name: Build dev UI modules
-        run: uv run --extra pytorch --extra onnx --extra dev python build.py
+        run: uv run --extra convert --extra dev python build.py
       - name: Run GUI smoke test (offscreen)
-        run: uv run --extra pytorch --extra onnx --extra dev pytest apps/gui/tests -q
+        run: uv run --extra convert --extra dev pytest apps/gui/tests -q
+
+  runtime-smoke:
+    # Guards the shipping runtime: no torch/ncnn installed, so an accidental
+    # dependency in the ONNX render path fails here instead of in a release.
+    runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - name: Install Qt offscreen runtime libs
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libdbus-1-3 libfontconfig1
+      - name: Run torch-free runtime tests
+        run: |
+          uv run --extra dev pytest -q \
+            apps/backend/tests/unit_tests/test_runtime_torch_free.py \
+            apps/backend/tests/unit_tests/test_provider_upgrade.py \
+            apps/backend/tests/unit_tests/test_onnx_loader.py \
+            apps/backend/tests/unit_tests/test_cli_interface.py \
+            apps/gui/tests

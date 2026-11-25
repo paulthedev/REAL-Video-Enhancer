@@ -6,20 +6,7 @@ remains is model downloads (see BackendsModels.DownloadModel) and the
 hardware-aware onnxruntime provider upgrade (see ProviderUpgrade).
 """
 
-import re
-
-from apps.gui.constants import (
-    PLATFORM,
-    TEMP_DOWNLOAD_PATH,
-)
-from apps.gui.lib.QTcustom import DisplayCommandOutputPopup
-from apps.gui.util import log
-
-from .BackendDetect import (
-    check_backend_health,
-    detect_gpu_hardware,
-    get_backend_reinstall_info,
-)
+from .BackendDetect import check_backend_health
 from .ProviderUpgrade import (
     get_recommended_provider,
     install_recommended_provider,
@@ -30,14 +17,10 @@ from .ProviderUpgrade import (
 class DownloadDependencies:
     """Thin facade over the provider upgrade + health checks.
 
-    Kept as a class because MainWindow/process code holds an instance.
+    Kept as a class because MainWindow/process code held an instance.
     """
 
-    def __init__(self, use_torch_nightly: bool = False):
-        # torch nightly support died with the torch backend
-        pass
-
-    def check_backend_health(self, backend: str) -> dict:
+    def check_backend_health(self, backend: str = "onnx") -> dict:
         return check_backend_health(backend)
 
     def recommend_provider(self) -> dict:

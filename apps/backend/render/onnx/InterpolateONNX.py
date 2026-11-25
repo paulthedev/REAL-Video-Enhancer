@@ -22,14 +22,22 @@ class InterpolateONNX:
         deviceID: int = 0,
         precision: str = "auto",
         hdr_mode: bool = False,
+        device: str = "default",
+        ensemble: bool = False,
     ):
         self.width = width
         self.height = height
         self.factor = max(int(interpolateFactor), 1)
         self.hdr_mode = hdr_mode
+        self.ensemble = ensemble
         self.precision = resolve_precision(precision)
         self.model = prepare_model(modelPath, self.precision)
-        self.session = create_session(self.model, deviceID)
+        self.session = create_session(
+            self.model,
+            deviceID,
+            fp16=self.precision == np.float16,
+            use_gpu=device != "cpu",
+        )
 
         inputs = self.session.get_inputs()
         self.input_names = [i.name for i in inputs]
@@ -38,17 +46,15 @@ class InterpolateONNX:
         self.prev = None  # cached HWC uint8 frame
 
     def _to_tensor(self, hwc: np.ndarray) -> np.ndarray:
-        tensor = hwc.astype(np.float32) / 255.0
+        tensor = hwc.astype(self.precision) / self.precision(255.0)
         return tensor.transpose(2, 0, 1)[None]
 
     def _run(self, img0: np.ndarray, img1: np.ndarray, timestep: float) -> bytes:
-        feed = {
-            self.input_names[0]: self._to_tensor(img0),
-            self.input_names[1]: self._to_tensor(img1),
-        }
-        if self.has_timestep:
-            feed[self.input_names[2]] = np.array([[timestep]], dtype=np.float32)
-        out = self.session.run(None, feed)[0]
+        out = self._session_run(img0, img1, timestep)
+        if self.ensemble:
+            # classic RIFE ensemble: also run the reversed pair at 1-t and
+            # average both estimates for the same intermediate frame
+            out = (out + self._session_run(img1, img0, 1.0 - timestep)) / 2.0
         if out.ndim == 4:
             out = out[0]
         frame = (
@@ -56,6 +62,17 @@ class InterpolateONNX:
             .astype(np.uint8)
         )
         return np.ascontiguousarray(frame).tobytes()
+
+    def _session_run(self, img0: np.ndarray, img1: np.ndarray, timestep: float):
+        feed = {
+            self.input_names[0]: self._to_tensor(img0),
+            self.input_names[1]: self._to_tensor(img1),
+        }
+        if self.has_timestep:
+            feed[self.input_names[2]] = np.array(
+                [[timestep]], dtype=self.precision
+            )
+        return self.session.run(None, feed)[0]
 
     def __call__(self, img1, transition=False):
         """Yield only the IN-BETWEEN frames for the pair (prev, img1) —

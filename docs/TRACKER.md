@@ -1,36 +1,43 @@
 # Project Tracker
 
+> Historical project record. The current architecture is **ONNX Runtime only**;
+> see [onnx-only-migration-plan.md](onnx-only-migration-plan.md) for the
+> authoritative status. Sections below that mention PyTorch/NCNN describe work
+> that has since been retired or moved to dev-only conversion tooling.
+
 ## Status Overview
 
 | Category | Status | Progress |
 |----------|--------|----------|
 | Backend Architecture Migration | ✅ Complete | 81/81 tasks |
 | Repository Cleanup | ✅ Complete | 100% |
-| PyTorch Optimizations | 🚧 In Progress | 3/4 tasks |
+| PyTorch Optimizations | 🗄️ Superseded | ONNX-only migration retired the torch backend |
 | ONNX Backend | ✅ Complete | Core implementation done |
 | Model Conversions | ✅ Complete | 2/2 tasks |
 | Spandrel Half-Precision | ✅ Complete | 18/18 architectures |
 | Code Quality | ✅ Complete | All TODO/FIXME addressed |
 | Documentation | ✅ Complete | Architecture clarified |
-| Backend-Agnostic Hardware Detection | ✅ Complete | GPUDetect.py extended |
+| Backend-Agnostic Hardware Detection | ✅ Complete | `utils/backends/BackendDetect.py` |
 | GUI Organization | ✅ Complete | REAL-Video-Enhancer.py moved to apps/gui/ |
-| Unified Backend Selection UI | ✅ Complete | Wired through 2026-10-08 (see GUI Refactor Wiring Fix) |
-| Benchmark Tests | ✅ Complete | PyTorch, ONNX, NCNN benchmarks |
-| VSR Model Support | ✅ Complete | AnimeSR, TSPAN with 3 backends |
-| Code Review Fixes (2026-10-08) | 🚧 In Progress | 74/78 — see [BUG_TRACKER.md](BUG_TRACKER.md) |
-| ONNX-Only Migration | 🚧 In Progress | Phases 0-3 done, Phase 5 render verification pending — [onnx-only-migration-plan.md](onnx-only-migration-plan.md) |
-| UI Redesign "Studio Polish" | 🚧 In Progress | Tracker created 2026-10-08 — [UI_REDESIGN_TRACKER.md](UI_REDESIGN_TRACKER.md) |
+| Unified Backend Selection UI | 🗄️ Superseded | ONNX-only UI (see ONNX-Only Migration) |
+| Benchmark Tests | ✅ Complete | ONNX + torch-conversion benchmarks |
+| VSR Model Support | ✅ Complete | AnimeSR, TSPAN (ONNX runtime) |
+| Code Review Fixes (2026-10-08) | ✅ Done | 75/78 fixed; S5 open, C13/C14 by design — see [BUG_TRACKER.md](BUG_TRACKER.md) |
+| ONNX-Only Migration | ✅ Phases 0-4 done | Phase 5 hardware/TRT verification pending — [onnx-only-migration-plan.md](onnx-only-migration-plan.md) |
+| UI Redesign "Studio Polish" | ✅ Done | Workstreams shipped; checklist retained as history — [UI_REDESIGN_TRACKER.md](UI_REDESIGN_TRACKER.md) |
 
 ---
 
 ## Completed Work
 
-### ONNX-Only Migration, Phases 0-3 (2026-10-08)
+### ONNX-Only Migration, Phases 0-4 (2026-10-08 → 2026-11-25)
 - [x] Phase 0: cp314 wheels confirmed (onnxruntime/-directml/-gpu, imageio-ffmpeg); imageio-ffmpeg rawvideo piping verified
 - [x] Phase 1: GUI ONNX-only — ModelHandler rebuilt (ONNX tables), DownloadTab slimmed to updates/uninstall, backend fixed to 'onnx'
 - [x] Phase 2: bundled runtime — ffmpeg via imageio-ffmpeg, backend runs on the app interpreter, download-the-backend machinery deleted, vendor-aware ProviderUpgrade manager (NVIDIA/Intel/AMD)
-- [x] Phase 3: rve-backend onnx-only args + listBackends; backends/pytorch, backends/ncnn, render/ncnn, onnx_to_ncnn converter removed
-- [ ] Phase 5 (pending): real ONNX render, provider upgrade flow, TRT tier, perf spot-checks
+- [x] Phase 2b: provider manager actually wired (opt-in startup prompt), frozen-safe `RVE -m pip` dispatch, TensorRT tier + engine cache, AMD gfx-aware release pick
+- [x] Phase 3: rve-backend onnx-only args + listBackends; backends/pytorch, backends/ncnn, render/ncnn, onnx_to_ncnn converter removed; RenderVideo torch/ncnn branches removed
+- [x] Phase 4: CI split into dev (convert extra) + torch-free runtime-smoke; docs reconciled
+- [~] Phase 5 (in progress): frozen cx_Freeze bundle + pip dispatch + provider activation + synthetic render verified; real-model/provider-hardware/TRT/perf checks pending
 
 ### Backend Architecture Migration (100%)
 - [x] Phase 1: Foundation (Base Classes & Structure) - 10/10
@@ -42,34 +49,27 @@
 - [x] Phase 7: Release - 5/5
 - [x] Phase 8: Final Cleanup - 7/7
 
-### Backend Strategy (2026-09-29)
-- [x] ONNX Runtime designated as primary backend
-- [x] PyTorch retained as fallback for complex models
-- [x] NCNN retained as tertiary backend (mobile/embedded/Vulkan)
-- [x] Execution providers auto-selected based on hardware (user sees only 3 backends)
-- [x] UI simplified to 3 backend options: ONNX, PyTorch, NCNN
-- [x] Provider priority: TensorRT > CUDA > MIGraphX > OpenVINO > QNN > DirectML > CoreML > WebGPU > CPU
-- [x] Added Intel OpenVINO support (CPU/iGPU/NPU)
-- [x] Added Qualcomm QNN support (Snapdragon HTP/NPU)
+### Backend Strategy (2026-09-29) — superseded 2026-10-08
+Historical decision; the ONNX-only migration replaced it.
+- ONNX Runtime was designated the primary backend, with PyTorch and NCNN as
+  fallbacks.
+- PyTorch (`apps/backend/pytorch/`, model loaders) and NCNN support were later
+  removed from the shipping path; they survive only as dev-only conversion
+  tooling.
+- Current provider priority lives in
+  `apps/backend/render/onnx/session.py`: TensorRT > CUDA > MIGraphX/ROCm >
+  OpenVINO > DirectML > CPU.
 
-### Backend-Agnostic Hardware Detection (2026-09-29)
-- [x] Extended GPUDetect.py (`apps/gui/lib/GPUDetect.py`, originally GpuHardware.py) with backend-agnostic detection
-- [x] Added BACKEND_HARDWARE_COMPATIBILITY mapping (pytorch, onnx, ncnn)
-- [x] Added ONNX_PROVIDER_HARDWARE mapping
-- [x] Added NCNN_BACKEND_HARDWARE mapping
-- [x] Added get_compatible_backends() function
-- [x] Added get_preferred_backend() function
-- [x] Added get_torch_backend_family() function
+### Backend-Agnostic Hardware Detection (2026-09-29) — historical
+- [x] Extended GPU detection (`apps/gui/lib/GPUDetect.py` at the time, now
+  `apps/gui/utils/backends/BackendDetect.py`) with vendor detection
+- [x] Added ONNX_PROVIDER_HARDWARE mapping (PyTorch/NCNN tables later removed)
+- [x] Added get_compatible_backends() / get_preferred_backend() (now ONNX-only)
 - [x] Added get_onnx_providers() function
-- [x] Added get_ncnn_backend() function
 - [x] Added check_backend_health() function
 - [x] Added get_backend_reinstall_info() function
-- [x] Integrated with DownloadDependencies.py (`apps/gui/utils/backends/`, originally DownloadDeps.py)
-- [x] Added check_backend_health() method
-- [x] Added check_backend_hardware_change() method
-- [x] Added reinstall_backend() method
-- [x] Added get_backend_recommendation() method
-- [x] All 293 tests passing (5 skipped)
+- [x] Integrated with DownloadDependencies (`apps/gui/utils/backends/`)
+- [x] All 293 tests passing at the time (current suite: 321)
 
 ### GUI Refactor Wiring Fix (2026-10-08)
 - [x] `assemble_pages` re-points every page widget onto MainWindow (flat namespace preserved) — ~140 broken references fixed
@@ -88,37 +88,24 @@
 - [x] Platform-aware variant options (Linux: CUDA/ROCm/XPU, Windows: CUDA, macOS: MPS)
 - [x] Integrated with ProcessTab for unified backend selection during processing
 - [x] Updated REAL-Video-Enhancer.py to use unified backend selector
-- [x] All 293 tests passing (5 skipped)
+- [x] All 293 tests passing at the time (current suite: 321)
 - Note (2026-10-08): the selector widgets were unreachable from MainWindow until the
   GUI Refactor Wiring Fix above — the `backend_type_combo` / `backend_variant_combo`
   accesses were `hasattr`-guarded and always False.
 
-### Benchmark Tests (2026-09-29)
-- [x] PyTorch interpolation benchmark (bench_torch_interpolate.py)
-- [x] PyTorch upscale benchmark (bench_torch_upscale.py)
-- [x] ONNX interpolation benchmark (bench_onnx_interpolate.py)
-- [x] ONNX upscale benchmark (bench_onnx_upscale.py)
-- [x] NCNN interpolation benchmark (bench_ncnn_interpolate.py)
-- [x] NCNN upscale benchmark (bench_ncnn_upscale.py)
-- [x] Provider comparison support (TensorRT, CUDA, CPU for ONNX)
-- [x] Backend comparison support (Vulkan, OpenGL, CPU for NCNN)
+### Benchmark Tests
+- [x] ONNX interpolation benchmark (`bench_onnx_interpolate.py`)
+- [x] ONNX upscale benchmark (`bench_onnx_upscale.py`)
+- [x] PyTorch conversion benchmarks (`bench_torch_*`, dev tooling only)
+- [x] Provider comparison support (TensorRT, CUDA, CPU) for ONNX
+- [x] NCNN benchmarks retired with the ONNX-only migration
 
-### Benchmark Tests (2026-09-29)
-- [x] PyTorch interpolation benchmark (bench_torch_interpolate.py)
-- [x] PyTorch upscale benchmark (bench_torch_upscale.py)
-- [x] ONNX interpolation benchmark (bench_onnx_interpolate.py)
-- [x] ONNX upscale benchmark (bench_onnx_upscale.py)
-- [x] NCNN interpolation benchmark (bench_ncnn_interpolate.py)
-- [x] NCNN upscale benchmark (bench_ncnn_upscale.py)
-- [x] Provider comparison support (TensorRT, CUDA, CPU for ONNX)
-- [x] Backend comparison support (Vulkan, OpenGL, CPU for NCNN)
-
-### VSR Model Support (2026-09-29)
-- [x] AnimeSR model with PyTorch, ONNX, NCNN backends
-- [x] TSPAN (TemporalSPAN) model with PyTorch, ONNX, NCNN backends
-- [x] Added TSPAN to GUI model selection (all 3 backends)
-- [x] Added AnimeSR to GUI model selection (all 3 backends)
-- [x] VSR models registered in model registry
+### VSR Model Support (2026-09-29) — historical (now ONNX runtime)
+- [x] AnimeSR ONNX model (PyTorch/NCNN paths retired)
+- [x] TSPAN ONNX model (PyTorch/NCNN paths retired)
+- [x] Added TSPAN to the GUI model selection
+- [x] Added AnimeSR to the GUI model selection
+- [x] VSR models registered in the model registry (converter tooling)
 - [x] Temporal frame caching for video consistency
 
 ### Repository Cleanup (100%)
@@ -132,14 +119,15 @@
 - [x] Move logs to `logs/` folder
 - [x] Create AGENTS.md and FOLDER_STRUCTURE.md
 
-### PyTorch Optimizations (75%)
+### PyTorch Optimizations (historical — superseded)
 - [x] Correctness fixes for GPU inference
 - [x] Persistent tuning cache
 - [x] Benchmark tooling
 - [x] TensorRT pin
 - [x] torch.compile integration
 - [x] Pinned memory for frame upload
-- [ ] Real end-to-end render verification
+- [~] Real end-to-end render verification — moot after the torch backend was
+  removed; ONNX render verification is tracked in Phase 5 of the migration plan
 
 ---
 
@@ -163,41 +151,41 @@
 - [x] Enable operator fusion (Conv+BatchNorm+ReLU)
 - [x] Enable ONNX Runtime memory optimization
 
-#### 2. Model ONNX Conversion (In Progress)
+#### 2. Model ONNX Conversion (complete — converter tooling)
 - [x] Add ONNX support for SPAN upscale model
   - Location: `apps/backend/models/upscale/span.py`
-  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+  - Status: Complete — ONNX model; PyTorch source is conversion tooling only
 - [x] Add ONNX support for FBCNN restoration model
   - Location: `apps/backend/models/restoration/fbcnn.py`
-  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+  - Status: Complete — ONNX model; PyTorch source is conversion tooling only
 - [x] Add ONNX support for DnCNN denoise model
   - Location: `apps/backend/models/denoise/dncnn.py`
-  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+  - Status: Complete — ONNX model; PyTorch source is conversion tooling only
 - [x] Add ONNX support for IFRNet interpolation model
   - Location: `apps/backend/models/interpolate/ifrnet.py`
-  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+  - Status: Complete — ONNX model; PyTorch source is conversion tooling only
 - [x] Add ONNX support for GIMM interpolation model
   - Location: `apps/backend/models/interpolate/gimm.py`
-  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+  - Status: Complete — ONNX model; PyTorch source is conversion tooling only
 - [x] Add ONNX support for NAFNet restoration model
   - Location: `apps/backend/models/restoration/nafnet.py`
-  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+  - Status: Complete — ONNX model; PyTorch source is conversion tooling only
 - [x] Add ONNX support for ANIMEsr upscale model
   - Location: `apps/backend/models/upscale/animesr.py`
-  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+  - Status: Complete — ONNX model; PyTorch source is conversion tooling only
 - [x] Add ONNX support for TSPAN upscale model
   - Location: `apps/backend/models/upscale/tspan.py`
-  - Status: Complete - PyTorch, ONNX, NCNN backends implemented
+  - Status: Complete — ONNX model; PyTorch source is conversion tooling only
 
 #### 2. Model Conversion ✅
 - [x] Implement SPAN conversion to ONNX
   - Location: `apps/backend/converters/torch_to_onnx.py:174`
-- [x] Test full conversion pipeline: PyTorch → ONNX → NCNN
+- [x] Test full conversion pipeline: PyTorch → ONNX (the NCNN step is retired)
 
 #### 3. Documentation Cleanup
-- [ ] Remove stale content from IMPLEMENTATION_TRACKER.md
-- [ ] Update MIGRATION_GUIDE.md future work section
-- [ ] Consolidate tracking into this file
+- [x] Remove stale content from IMPLEMENTATION_TRACKER.md (archived)
+- [x] Update MIGRATION_GUIDE.md future work section (archived)
+- [x] Consolidate tracking into this file + ONNX migration plan
 
 ### Medium Priority
 
@@ -242,9 +230,10 @@ Verify `supports_half` flags for these architectures:
 - [x] Create integration tests
 - [x] Add more unit tests
 - [x] Add tests for GMFSS and MaxViT models
-- [ ] Add benchmarks for ONNX backend
-- [x] UI integration (DownloadTab, backend selector) - Backend selector exists, but ONNX download button not yet added
-- [ ] End-to-end testing with real models
+- [x] Add benchmarks for ONNX backend
+- [x] UI integration (Models page: custom ONNX import + conversion hub)
+- [x] End-to-end testing with synthetic ONNX models (upscale + interpolation)
+- [ ] End-to-end testing with real downloaded models (Phase 5 spot-check)
 
 ### GUI Organization (2026-09-29)
 - [x] Move REAL-Video-Enhancer.py to apps/gui/ folder
@@ -272,9 +261,10 @@ Verify `supports_half` flags for these architectures:
 - Created `apps/backend/utils/OnnxLoader.py` for reusable ONNX model loading
 - Refactored RIFE and scene detection models to use shared loader
 
-### PyTorch Limitations
-- Pinned staging buffers are per-process (no cross-process sharing) - **Expected behavior**
-- torch.compile warmup can be slow on first run (~125s on 9070 XT) - **Expected behavior**
+### PyTorch Limitations (historical — backend removed)
+- Pinned staging buffers are per-process (no cross-process sharing)
+- torch.compile warmup can be slow on first run — these paths exist only in
+  the dev-only conversion tooling now.
 ### Code Quality Issues
 - ~~`GRL/__arch/grl.py:502`~~ - Fixed: Changed `except BaseException` to `except Exception`
 - ~~`sudo_SPANPlus/__init__.py:68-70`~~ - Fixed: Removed TODO comments, values are intentional
@@ -288,7 +278,9 @@ Verify `supports_half` flags for these architectures:
 
 - [AGENTS.md](../AGENTS.md) - Repository guidelines
 - [FOLDER_STRUCTURE.md](FOLDER_STRUCTURE.md) - Folder layout
-- [pytorch-optimizations.md](pytorch-optimizations.md) - Performance details
+- [onnx-only-migration-plan.md](onnx-only-migration-plan.md) - Current architecture and migration status
+- [UI_REDESIGN_TRACKER.md](UI_REDESIGN_TRACKER.md) - UI redesign history
+- [pytorch-optimizations.md](pytorch-optimizations.md) - Historical PyTorch performance notes (superseded)
 - [BUG_TRACKER.md](BUG_TRACKER.md) - Open issues from code review (2026-10-08)
 
 Archived (completed work):
@@ -298,19 +290,25 @@ Archived (completed work):
 
 ---
 
-## Recent Changes (2026-09-29)
+## Recent Changes (2026-11-25)
 
-### Backend-Agnostic Hardware Detection
-- Extended `apps/gui/lib/GPUDetect.py` (then GpuHardware.py) to work with all backends (PyTorch, ONNX, NCNN)
-- Added health checking and repair logic to `apps/gui/utils/backends/DownloadDependencies.py` (then DownloadDeps.py)
-- System now detects hardware and recommends appropriate backend automatically
+### ONNX-only gap closure
+- Provider upgrade wired (opt-in prompt), TensorRT tier + engine cache, AMD
+  gfx gating, frozen-safe `RVE -m pip` dispatch
+- Removed torch/ncnn branches from the render path and GUI
+- CPU baseline bundled on Linux; GPU builds runtime-installed
+- CI split into dev + torch-free runtime-smoke; frozen build verified
+
+### Backend-Agnostic Hardware Detection (historical)
+- Detection now lives in `apps/gui/utils/backends/BackendDetect.py` and is
+  ONNX-only (PyTorch/NCNN helpers removed)
 
 ### GUI Organization
 - Moved `REAL-Video-Enhancer.py` to `apps/gui/REAL-Video-Enhancer.py`
 - Updated build.py references
 
 ### Test Results
-- 293 tests passing, 5 skipped
+- 321 tests passing, 5 warnings
 
 ## Last Updated
-2026-09-29
+2026-11-25

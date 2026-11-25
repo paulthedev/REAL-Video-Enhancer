@@ -407,8 +407,6 @@ class Settings:
             "auto_border_cropping": "False",
             "video_container": "mkv",
             "video_pixel_format": "yuv420p",
-            "pytorch_version": "2.14.0",
-            "pytorch_backend": "CUDA",
             "auto_hdr_mode": "True",
         }
         self.allowedSettings = {
@@ -442,8 +440,6 @@ class Settings:
             "auto_border_cropping": ("True", "False"),
             "video_container": ("mkv", "mp4", "mov", "webm", "avi"),
             "video_pixel_format": "ANY",
-            "pytorch_version": ("2.15.0.dev", "2.14.0"),
-            "pytorch_backend": "ANY",
             "auto_hdr_mode": ("True", "False"),
         }
         self.settings = self.defaultSettings.copy()
@@ -465,7 +461,8 @@ class Settings:
             try:
                 for line in file:
                     key, value = line.strip().split(",")
-                    self.settings[key] = value
+                    if key in self.defaultSettings:
+                        self.settings[key] = value
             except (
                 ValueError
             ):  # writes and reads again if the settings file is corrupted

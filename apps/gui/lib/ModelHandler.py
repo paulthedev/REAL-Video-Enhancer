@@ -1,7 +1,6 @@
 import os
-import re
 
-from apps.gui.util import createDirectory, log
+from apps.gui.util import createDirectory
 from apps.gui.constants import CUSTOM_MODELS_PATH
 
 """

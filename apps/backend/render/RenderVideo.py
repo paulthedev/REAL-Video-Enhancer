@@ -1,7 +1,7 @@
 from threading import Thread
 import os
 import math
-from time import sleep, time
+from time import sleep
 from typing import Optional
 import sys
 from multiprocessing import shared_memory
@@ -42,7 +42,7 @@ class Render:
     interpolateOptions:
     interpolationMethod
     upscaleModel
-    backend (pytorch,ncnn,tensorrt)
+    backend (onnx only)
     device (cpu,cuda)
     precision (float16,float32)
 
@@ -59,9 +59,9 @@ class Render:
         inputFile: str,
         outputFile: str,
         # backend settings
-        backend="pytorch",
+        backend="onnx",
         device="default",
-        precision="float16",
+        precision="auto",
         gpu_id: int = 0,
         cwd: str = os.getcwd(),
         # model settings
@@ -71,7 +71,6 @@ class Render:
         extraRestorationModels=None,
         sceneDetectModel: str = None,
         tile_size=None,
-        drba=False,
         # ffmpeg settings
         ffmpeg_path: str = "./bin/ffmpeg",
         start_time=None,
@@ -93,15 +92,10 @@ class Render:
         sceneDetectMethod: str = "pyscenedetect",
         sceneDetectSensitivity: float = 3.0,
         sharedMemoryID: Optional[str] = None,
-        trt_optimization_level: int = 3,
-        trt_dynamic_shapes: bool = False,
         override_upscale_scale: int | None = None,
-        UHD_mode: bool = False,
         slomo_mode: bool = False,
-        dynamic_scaled_optical_flow: bool = False,
         ensemble: bool = False,
         output_to_mpv: bool = False,
-        torch_compile: bool = True,
     ):
         self.inputFile = inputFile
         self.backend = backend
@@ -111,33 +105,22 @@ class Render:
         self.device = device
         self.precision = precision
         self.interpolateFactor = interpolateFactor
-        # max timestep is a hack to make sure ncnn cache frames too early, and ncnn breaks if i modify the code at all so ig this is what we are doing
-        # also used to help with performace and caching
-        self.maxTimestep = (interpolateFactor - 1) / interpolateFactor
         self.ceilInterpolateFactor = math.ceil(self.interpolateFactor)
-        
-        # self.setupRender = self.returnFrame  # set it to not convert the bytes to array by default, and just pass chunk through
         self.setupFrame0 = None
         self.interpolateOption = None
         self.upscaleOption = None
         self.isPaused = False
-        self.drba = drba
         self.sceneDetectModelPath = sceneDetectModel
         self.sceneDetectMethod = sceneDetectMethod
         self.sceneDetectSensitivty = sceneDetectSensitivity
         self.sharedMemoryID = sharedMemoryID
-        self.trt_optimization_level = trt_optimization_level
         self.uncacheNextFrame = False
-        self.UHD_mode = UHD_mode
-        self.dynamic_scaled_optical_flow = dynamic_scaled_optical_flow
-        self.ensemble = ensemble
         self.gpu_id = gpu_id
         self.outputFrameChunkSize = None
         self.hdr_mode = hdr_mode
+        self.ensemble = ensemble
         self.override_upscale_scale = override_upscale_scale
-        self.trt_dynamic_shapes = trt_dynamic_shapes
         self.extraRestorationModels = []
-        self.torch_compile = torch_compile
         
         if cwd:
             log("Working Directory: " + cwd)
@@ -294,7 +277,7 @@ class Render:
         )
         
 
-        self.renderThread = Thread(target=self.render)
+        self.renderThread = Thread(target=self._render_thread_main)
         self.ffmpegReadThread = Thread(target=self.readBuffer.read_frames_into_queue)
         self.ffmpegWriteThread = Thread(target=self.writeBuffer.write_out_frames)
         self.sharedMemoryThread = Thread(
@@ -310,6 +293,25 @@ class Render:
             MPVOut = MPVOutput(self.writeBuffer, width=self.width*self.upscaleTimes, height=self.height*self.upscaleTimes,fps=self.fps*self.interpolateFactor, outputFrameChunkSize=self.outputFrameChunkSize)
             MPVoutThread = Thread(target=MPVOut.write_out_frames)
             MPVoutThread.start()
+
+    def _render_thread_main(self):
+        """Run the render loop; never leave the process half-alive on error.
+
+        The reader/writer threads block on queues, so an exception in this
+        thread used to keep the backend running forever (the GUI waited for
+        output that would never come). Exit non-zero instead.
+        """
+        try:
+            self.render()
+        except Exception:
+            import traceback
+
+            log("Render thread crashed:\n" + traceback.format_exc())
+            try:
+                sys.stderr.flush()
+            except Exception:
+                pass
+            os._exit(1)
 
     def write_bytes_to_cv2_frame_debug(self, frame):
         # Convert the byte array to a numpy array
@@ -405,40 +407,11 @@ class Render:
         print(profiler.output_text(unicode=True, color=True))
         """
     
-    def upscalePytorchObject(self, modelPath=None):
-        from ..pytorch.UpscaleTorch import UpscalePytorch
-        return UpscalePytorch(
-            modelPath,
-            device=self.device,
-            precision=self.precision,
-            width=self.width,
-            height=self.height,
-            backend=self.backend,
-            tilesize=self.tilesize,
-            gpu_id=self.gpu_id,
-            trt_optimization_level=self.trt_optimization_level,
-            hdr_mode=self.hdr_mode,
-            trt_static_shape= not self.trt_dynamic_shapes,
-            torch_compile=self.torch_compile,
-        )
-    
-    def upscaleNCNNObject(self, scale=None, modelPath=None):
-        from .ncnn.UpscaleNCNN import UpscaleNCNN
-        path, last_folder = os.path.split(modelPath)
-        modelPath = os.path.join(path, last_folder, last_folder)
-        return UpscaleNCNN(
-            modelPath=modelPath,
-            num_threads=1,
-            scale=self.upscaleTimes if scale is None else scale,
-            gpuid=self.gpu_id,  # might have this be a setting
-            width=self.width,
-            height=self.height,
-            tilesize=self.tilesize,
-        )
     def upscaleONNXObject(self, scale=None, modelPath=None):
         from .onnx.UpscaleONNX import UpscaleONNX
         return UpscaleONNX(
             modelPath=modelPath,
+            device=self.device,
             gpu_id=self.gpu_id,
             precision=self.precision,
             width=self.width,
@@ -447,51 +420,24 @@ class Render:
             hdr_mode=self.hdr_mode,
         )
 
-
     def setupExtraRestoration(self, modelPath):
         log("Setting up Extra Restoration")
-        if self.backend == "onnx":
-            # restoration models are 1x — reuse the upscale engine
-            return self.upscaleONNXObject(scale=1, modelPath=modelPath)
-
-        if self.backend == "pytorch" or self.backend == "tensorrt":
-            return self.upscalePytorchObject(modelPath)
+        # restoration models are 1x — reuse the upscale engine
+        return self.upscaleONNXObject(scale=1, modelPath=modelPath)
 
     def setupUpscale(self):
         log("Setting up Upscale")
-        if self.backend == "onnx":
-            from .onnx.UpscaleONNX import UpscaleONNX
+        from .onnx.UpscaleONNX import UpscaleONNX
 
-            self.modelScale = UpscaleONNX.getModelScale(self.upscaleModel)
-            self.upscaleOption = self.upscaleONNXObject(scale=self.modelScale, modelPath=self.upscaleModel)
-
-        elif self.backend == "pytorch" or self.backend == "tensorrt":
-
-            self.upscaleOption = self.upscalePytorchObject(self.upscaleModel)
-            self.modelScale = self.upscaleOption.getScale() 
-            
-
-        if self.backend == "ncnn":
-            from .ncnn.UpscaleNCNN import getNCNNScale
-
-            self.modelScale = getNCNNScale(modelPath=self.upscaleModel)
-            
-            self.upscaleOption = self.upscaleNCNNObject(scale=self.modelScale, modelPath=self.upscaleModel)
-
-        if self.backend == "directml":  # i dont want to work with this shit
-            from .onnx.UpscaleONNX import UpscaleONNX
-            self.modelScale = UpscaleONNX.getModelScale(self.upscaleModel)
-            
-            self.upscaleOption = UpscaleONNX(
-                modelPath=self.upscaleModel,
-                precision=self.precision,
-                width=self.width,
-                height=self.height,
-                scale=self.modelScale
-            )
-        self.upscaleTimes = self.modelScale if not self.override_upscale_scale else self.override_upscale_scale
-        
-
+        self.modelScale = UpscaleONNX.getModelScale(self.upscaleModel)
+        self.upscaleOption = self.upscaleONNXObject(
+            scale=self.modelScale, modelPath=self.upscaleModel
+        )
+        self.upscaleTimes = (
+            self.modelScale
+            if not self.override_upscale_scale
+            else self.override_upscale_scale
+        )
 
     def setupInterpolate(self):
         log("Setting up Interpolation")
@@ -508,58 +454,19 @@ class Render:
         )
         if self.sceneDetectMethod != "none":
             log("Scene Detection Enabled")
-
         else:
             log("Scene Detection Disabled")
 
-        if self.backend == "onnx":
-            from .onnx.InterpolateONNX import InterpolateONNX
+        from .onnx.InterpolateONNX import InterpolateONNX
 
-            self.interpolateOption = InterpolateONNX(
-                modelPath=self.interpolateModel,
-                interpolateFactor=self.ceilInterpolateFactor,
-                width=self.width,
-                height=self.height,
-                deviceID=self.gpu_id,
-                precision=self.precision,
-                hdr_mode=self.hdr_mode,
-            )
-
-        elif self.backend == "ncnn":
-            from .ncnn.InterpolateNCNN import InterpolateRIFENCNN
-
-            self.interpolateOption = InterpolateRIFENCNN(
-                interpolateModelPath=self.interpolateModel,
-                width=self.width,
-                height=self.height,
-                gpuid=self.gpu_id,
-                max_timestep=self.maxTimestep,
-                interpolateFactor=self.ceilInterpolateFactor,
-                hdr_mode=self.hdr_mode,
-            )
-
-        if self.backend == "pytorch" or self.backend == "tensorrt":
-            from ..pytorch.InterpolateTorch import InterpolateFactory
-
-            self.interpolateOption = InterpolateFactory.build_interpolation_method(
-                self.interpolateModel,
-                self.backend,
-                self.drba,
-            )(
-                modelPath=self.interpolateModel,
-                ceilInterpolateFactor=self.ceilInterpolateFactor,
-                width=self.width,
-                height=self.height,
-                device=self.device,
-                dtype=self.precision,
-                backend=self.backend,
-                gpu_id=self.gpu_id,
-                UHDMode=self.UHD_mode,
-                drba=self.drba,
-                trt_optimization_level=self.trt_optimization_level,
-                ensemble=self.ensemble,
-                dynamicScaledOpticalFlow=self.dynamic_scaled_optical_flow,
-                max_timestep=self.maxTimestep,
-                hdr_mode=self.hdr_mode,
-                trt_static_shape= not self.trt_dynamic_shapes,  # if dynamic shapes are enabled, we have to set the static shape to false (default is true in the model
-            )
+        self.interpolateOption = InterpolateONNX(
+            modelPath=self.interpolateModel,
+            interpolateFactor=self.ceilInterpolateFactor,
+            width=self.width,
+            height=self.height,
+            deviceID=self.gpu_id,
+            precision=self.precision,
+            hdr_mode=self.hdr_mode,
+            device=self.device,
+            ensemble=self.ensemble,
+        )

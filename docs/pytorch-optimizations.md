@@ -1,5 +1,11 @@
 # PyTorch Optimization Tracker
 
+> **Historical — superseded (2026-10).** The PyTorch backend was removed by the
+> ONNX-only migration. This document is kept for reference; paths such as
+> `backend/src/pytorch` no longer exist in the shipping runtime (see
+> [onnx-only-migration-plan.md](onnx-only-migration-plan.md)). PyTorch sources
+> remain only as dev-only conversion tooling under `apps/backend/pytorch/`.
+
 Status of GPU performance work on the `update_dependencies` branch.
 Benchmarks below were measured on an RX 9070 XT (gfx1201) with ROCm, using
 4x-UltraSharpV2.pth at 512×512 in fp16 unless noted otherwise.

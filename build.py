@@ -208,10 +208,25 @@ class BuildManager:
     
     def copy_backend(self):
         print("Copying backend")
+
+        def ignore_dev_tooling(directory, names):
+            """Ship only the runtime backend: no torch sources, converters,
+            tests or the tooling-only loader abstractions."""
+            rel = os.path.relpath(directory, "apps/backend")
+            ignored = {n for n in names if n in ("__pycache__", ".pytest_cache")}
+            if rel == ".":
+                ignored |= {"pytorch", "converters", "tests", "backends"}
+            elif rel == "models":
+                # the runtime needs base/registry + scene_detect/onnx only
+                ignored |= {"interpolate", "upscale", "restoration", "denoise"}
+            return ignored
+
         if "pyinstaller" in self.__str__().lower():
             backend_dir = os.path.join(f"{PACKAGE_FOLDER}/REAL-Video-Enhancer/backend")
             try:
-                shutil.copytree("apps/backend", backend_dir)
+                shutil.copytree(
+                    "apps/backend", backend_dir, ignore=ignore_dev_tooling
+                )
             except Exception:
                 raise FileNotFoundError("Backend failed to copy!")
             if not os.path.exists(backend_dir):
@@ -220,8 +235,16 @@ class BuildManager:
             # apps/ prefix so the frozen interpreter can `import apps.backend`
             # when it doubles as the backend launcher; flat backend/ kept for
             # build-appimage.sh's layout check
-            shutil.copytree("apps/backend", f"{PACKAGE_FOLDER}/apps/backend")
-            shutil.copytree("apps/backend", f"{PACKAGE_FOLDER}/backend")
+            shutil.copytree(
+                "apps/backend",
+                f"{PACKAGE_FOLDER}/apps/backend",
+                ignore=ignore_dev_tooling,
+            )
+            shutil.copytree(
+                "apps/backend",
+                f"{PACKAGE_FOLDER}/backend",
+                ignore=ignore_dev_tooling,
+            )
 
     @abstractmethod
     def patch_for_xcbcursor(self):
@@ -243,7 +266,9 @@ class PyInstaller(BuildManager):
             + " --icon=icons/logo-v2.ico"
             + " --noconfirm"
             + " --noupx"
-            + " --noconsole" # i think this fixes weird macos dir shit
+            + " --noconsole"
+            # `RVE -m pip` provider installs need pip's modules in the bundle
+            + " --collect-all pip"
             + " --distpath"
             + f" {PACKAGE_FOLDER}"
             )
@@ -288,6 +313,9 @@ class CxFreeze(BuildManager):
             # these, but nothing the freeze scanner traces does — include them
             # explicitly or the frozen app dies on first import
             + " --packages apps.gui.widgets"
+            # runtime GPU provider installs shell out to `RVE -m pip`; the
+            # frozen app must carry pip's modules (see ProviderUpgrade.py)
+            + " --packages pip"
             )
         )
 

@@ -32,9 +32,13 @@ class TestOnnxModelLoader(unittest.TestCase):
         self.assertIn("CPUExecutionProvider", loader.PROVIDER_PRIORITY)
     
     def test_provider_selection_explicit(self):
-        """Test explicit provider selection."""
+        """Explicit providers fall back to the best available one."""
         loader = OnnxModelLoader(provider="CUDAExecutionProvider")
-        self.assertEqual(loader.provider, "CUDAExecutionProvider")
+        if "CUDAExecutionProvider" in loader.available_providers:
+            self.assertEqual(loader.provider, "CUDAExecutionProvider")
+        else:
+            # bundled CPU baseline: an unavailable request must not crash
+            self.assertIn(loader.provider, loader.available_providers)
     
     def test_session_options_configured(self):
         """Test that session options are properly configured."""

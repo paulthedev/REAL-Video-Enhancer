@@ -2,8 +2,8 @@
 
 Findings from the full code review of 2026-10-08 (backend review agent + manual verification).
 All P0 items were verified directly (executed the entry point, grepped for symbols, read the code paths).
-The 293 unit tests pass because they exercise dataclasses and mocked inference only — none of the
-integration paths below are covered.
+The 293 unit tests passed at the time because they exercised dataclasses and mocked inference only — none of the
+integration paths below were covered. (Current suite: 321 passed.)
 
 Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
 
@@ -14,10 +14,10 @@ Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
 | Priority | Count | Fixed |
 |----------|-------|-------|
 | P0 — nothing runs end-to-end | 11 | 11 |
-| P1 — GUI crashes / wrong output | 25 | 24 (G21 open, needs real models) |
+| P1 — GUI crashes / wrong output | 25 | 25 (G21 resolved by ONNX-only) |
 | Wiring — GUI refactor breakage (found + fixed 2026-10-08) | 4 | 4 |
-| Download — backend download/install wiring (found 2026-10-08) | 4 | 4 |
-| Sources — runtime download provenance (found 2026-10-08) | 5 | 4 (S5 open) |
+| Download — backend download/install wiring | 4 | 4 (machinery later deleted by ONNX-only) |
+| Sources — runtime download provenance | 5 | 4 (S1/S2 superseded by ONNX-only; S5 open) |
 | P2 — robustness | 15 | 15 |
 | P3 — cleanup | 14 | 12 (C13/C14 by design) |
 
@@ -150,9 +150,9 @@ Status legend: `[ ]` open · `[x]` fixed · `[~]` won't fix / by design
   TypeError; `--ffmpeg_path`/`--cwd` not inherited into each re-parse. `--overlap`
   (233-238) parsed but never used. `fullModelPathandName` (515-516) references
   `self.args.modelPath/modelName` which don't exist.
-- [ ] **G21. NCNN vs ONNX scaling convention inconsistent.** e.g. `fbcnn` NCNN path multiplies
-  by 255 but ONNX path feeds 0-1 floats for the same model — one convention is wrong per model
-  (washed-out or clipped output). Pick one convention per export and document in `models/base.py`.
+- [x] **G21. NCNN vs ONNX scaling convention inconsistent.** Resolved by the
+  ONNX-only migration: the NCNN path is deleted, so the 0-1 float convention in
+  `render/onnx/*` is the only one left.
 - [x] **G22. `RestorationBackend`/`SceneDetectBackend` don't map `run()`.**
   `backends/base.py:136-162`: only Upscale/Interpolate override `run()`; `backend.run(...)`
   on restore/scene-detect hits `BaseBackend.run` → `NotImplementedError`.
@@ -207,6 +207,10 @@ items below are fixed and verified by an offscreen `MainWindow()` smoke test
 
 ## Download — backend download/install wiring (found 2026-10-08)
 
+> **Superseded:** the standalone-CPython/backend-bundle download machinery was
+> deleted by the ONNX-only migration. The backend now runs on the app's own
+> interpreter and ships inside the bundle. Entries kept as audit history.
+
 Trace of the download page's install paths against the restructured backend
 (`download.py` → `DownloadDependencies.py` → `rve-backend.py`). PyTorch and
 NCNN install paths are wired correctly (pip targets `PYTHON_EXECUTABLE_PATH`,
@@ -244,6 +248,12 @@ same env every launch path uses). ONNX is broken at both ends.
 
 ## Sources — runtime download provenance (found 2026-10-08)
 
+> **Superseded by the ONNX-only migration (2026-10/11):** runtime binary
+> downloads were removed. ffmpeg and ONNX Runtime ship with the app; the only
+> runtime install is the optional GPU provider wheel (PyPI or AMD's index).
+> S1/S2 describe an intermediate fix that no longer exists; S5 (model-tag
+> pinning) is still open.
+
 Audit of every runtime download URL. Already standard: pytorch wheels
 (`download.pytorch.org`), pip packages (`pypi.org`), VC++ redist (`aka.ms`),
 appimagetool (AppImage org, build-time). Intentionally self-hosted: backend
@@ -251,25 +261,13 @@ bundle, app self-update, changelog (`tntwise/real-video-enhancer` releases),
 and the curated AI models (models repo). The items below should move to
 standard upstream sources.
 
-- [x] **S1. FFmpeg is downloaded from three different tntwise URLs.**
-  ~~`FFMpeg.py:27` (models repo release), `GetFFMpeg.py:7` (hardcoded models-repo
-  URL, backend fallback), `QTcustom.py:818` (an ffmpeg binary parked in the
-  **`TNTwise/Rife-Vulkan-Models`** repo — the RIFE models repo).~~
-  **Fixed 2026-10-08**: all three now use official builds — BtbN
-  (`ffmpeg-master-latest-{linux64,linuxarm64,win64,winarm64}-gpl`) for
-  Windows/Linux, evermeet.cx for macOS (x86_64; arm64 via Rosetta). Upstream
-  ships archives, so both installers now download → extract (`bin/ffmpeg`) →
-  install (GUI: `FFMpeg.extract_ffmpeg_binary`; backend: `_extract_ffmpeg_binary`).
-  Verified end-to-end on linux x86_64: real download + `ffmpeg -version` runs.
-  Follow-up (optional): checksum pinning — BtbN "latest" is rolling (can't pin
-  a hash); python-build-standalone publishes `.sha256` sidecars (see S2) if
-  verification is wanted there.
+- [x] **S1. FFmpeg is downloaded from three different tntwise URLs.** ~~…~~
+  **Superseded**: ffmpeg is now bundled via `imageio-ffmpeg`; no runtime
+  download path remains. (Historical fix used BtbN/evermeet builds.)
 - [x] **S2. CPython standalone interpreter is re-hosted in the models repo.**
-  ~~`Python.py:33` builds `CPYTHON_RELEASE_BASE_URL` ...~~ **Fixed 2026-10-08**:
-  `Python.get_download_link()` now points at
-  `https://github.com/astral-sh/python-build-standalone/releases/download/20250317`
-  (`PYTHON_BUILD_STANDALONE_URL`/`_TAG` in constants) — identical asset names,
-  all five platform targets verified 200 upstream.
+  **Superseded**: the standalone-CPython machinery was deleted; the backend
+  runs on the app's own interpreter. (Historical fix pointed at
+  python-build-standalone.)
 - [x] **S3. Model/backend repo constants are inconsistent and partly hardcoded.**
   ~~Three spellings in play...~~ **Fixed 2026-10-08**: `MODELS_REPO` /
   `CPYTHON_RELEASE_BASE_URL` removed; every remote URL now lives in
@@ -375,7 +373,7 @@ standard upstream sources.
 
 ## Verification notes
 
-- `uv run pytest apps/backend/tests -x -q` → 293 passed, 5 skipped (pre-fix baseline).
+- `uv run pytest apps/backend/tests -x -q` → 293 passed, 5 skipped (pre-fix baseline, 2026-10-08).
 - `python apps/backend/rve-backend.py --version` → `ModuleNotFoundError: No module named 'apps'` (B2 verified).
 - Static import check (AST walk over all relative imports) → 0 unresolved — the breakage is
   runtime/behavioral, not import resolution.

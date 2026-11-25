@@ -16,18 +16,10 @@ from .BackendDetect import (
     detect_gpu_hardware,
     get_backend_reinstall_info,
     get_compatible_backends,
-    get_ncnn_backend,
     get_onnx_providers,
     get_preferred_backend,
-    get_torch_backend_family,
 )
-from .BackendsTables import (
-    BACKEND_HARDWARE_COMPATIBILITY,
-    FAMILY_HARDWARE,
-    HARDWARE_FAMILIES,
-    NCNN_BACKEND_HARDWARE,
-    ONNX_PROVIDER_HARDWARE,
-)
+from .BackendsTables import ONNX_PROVIDER_HARDWARE
 from .DownloadDependencies import DownloadDependencies
 from .ProviderUpgrade import (
     get_recommended_provider,
@@ -36,23 +28,17 @@ from .ProviderUpgrade import (
 )
 
 __all__ = [
-    "BACKEND_HARDWARE_COMPATIBILITY",
     "BackendsTables",
     "DownloadDependencies",
     "DownloadModel",
-    "FAMILY_HARDWARE",
-    "HARDWARE_FAMILIES",
-    "NCNN_BACKEND_HARDWARE",
     "ONNX_PROVIDER_HARDWARE",
     "ProviderUpgrade",
     "check_backend_health",
     "detect_gpu_hardware",
     "get_backend_reinstall_info",
     "get_compatible_backends",
-    "get_ncnn_backend",
     "get_onnx_providers",
     "get_preferred_backend",
-    "get_torch_backend_family",
     "get_recommended_provider",
     "install_recommended_provider",
     "provider_upgrade_status",

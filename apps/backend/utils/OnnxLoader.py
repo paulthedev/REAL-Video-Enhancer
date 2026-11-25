@@ -68,7 +68,10 @@ class OnnxModelLoader:
         self.provider: str = self._select_provider(provider)
         self.provider_options: Dict[str, Any] = provider_options or {}
         # Configure session options with optimization enabled
-        self.session_options: ort.SessionOptions = session_options or ort.SessionOptions()
+        self.session_options = session_options or ort.SessionOptions()
+        self.session_options.graph_optimization_level = (
+            ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        )
         self.session_options.enable_cpu_mem_arena = True
         self.session_options.enable_mem_pattern = True
         self.session_options.enable_mem_reuse = True

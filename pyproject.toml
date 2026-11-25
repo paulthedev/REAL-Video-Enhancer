@@ -5,10 +5,14 @@ description = "Real-time video enhancement and upscaling application"
 requires-python = ">=3.12"
 dependencies = [
     "imageio-ffmpeg>=0.6.0",
-    "onnxruntime>=1.20.0; sys_platform == 'darwin'",
+    # bundled so the provider upgrade manager can install GPU wheels even
+    # from a frozen build (see ProviderUpgrade.py / the -m pip entry dispatch)
+    "pip>=24.0",
+    # bundled baseline: CPU everywhere, DirectML on Windows. Linux GPU
+    # builds (CUDA/ROCm/OpenVINO) are installed at runtime by
+    # ProviderUpgrade.py into the writable data dir.
+    "onnxruntime>=1.20.0; sys_platform != 'win32'",
     "onnxruntime-directml>=1.20.0; sys_platform == 'win32'",
-    "onnxruntime-gpu>=1.20.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
-    "onnxruntime>=1.20.0; sys_platform == 'linux' and platform_machine != 'x86_64'",
     "onnxconverter-common>=1.14.0",
     "opencv-python>=4.0.0",
     "PySide6-essentials>=6.11.2",
@@ -26,26 +30,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-pytorch = [
+# dev-only tooling for producing new ONNX models from the PyTorch sources
+# under apps/backend/pytorch and apps/backend/models. Not required at runtime.
+convert = [
     "torch>=2.0.0",
     "torchvision>=0.15.0",
-]
-onnx = [
-    "onnxruntime>=1.15.0",
     "onnx>=1.14.0",
     "onnxsim>=0.4.0",
     "onnxscript>=0.1.0",
-]
-ncnn = [
-    "ncnn>=1.0.20240101",
-    "pnnx>=20240101",
-]
-all = [
-    "torch>=2.0.0",
-    "torchvision>=0.15.0",
-    "onnxruntime>=1.15.0",
-    "onnx>=1.14.0",
-    "onnxsim>=0.4.0",
 ]
 dev = [
     "pytest>=7.0.0",

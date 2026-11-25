@@ -112,10 +112,17 @@ class HandleApplication:
             ]
             if not gpu_providers:
                 printMSG += "No GPU execution provider available — running on CPU.\n"
+            try:
+                from onnxconverter_common import float16 as _fp16
+
+                half_supported = bool(gpu_providers) and _fp16 is not None
+            except Exception:
+                half_supported = False
+            printMSG += f"Half precision support: {half_supported}\n"
         else:
             printMSG += "ERROR: onnxruntime is not installed in the backend environment\n"
+            printMSG += "Half precision support: False\n"
 
-        printMSG += "Half precision support: False\n"
         printMSG += "Available Backends: " + str(availableBackends)
         self.printMSG = printMSG
         print(printMSG)
@@ -163,10 +170,7 @@ class HandleApplication:
             sceneDetectSensitivity=self.args.scene_detect_threshold,
             sharedMemoryID=self.args.preview_shared_memory_id,
             override_upscale_scale=self.args.override_upscale_scale,
-            UHD_mode=self.args.UHD_mode,
-            drba=False,
             slomo_mode=self.args.slomo_mode,
-            dynamic_scaled_optical_flow=self.args.dynamic_scaled_optical_flow,
             ensemble=self.args.ensemble,
             output_to_mpv=self.args.output_to_mpv,
         )
@@ -222,6 +226,7 @@ class HandleApplication:
             "--backend",
             help="backend used to upscale image (only 'onnx' is available)",
             default="onnx",
+            choices=["onnx"],
             type=str,
         )
         parser.add_argument(
@@ -249,6 +254,7 @@ class HandleApplication:
             "--precision",
             help="sets precision for model, (auto/float16/float32, default=auto)",
             default="auto",
+            choices=["auto", "float16", "float32"],
         )
         parser.add_argument(
             "--scene_detect_method",

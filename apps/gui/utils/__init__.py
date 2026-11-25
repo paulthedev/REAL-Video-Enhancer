@@ -10,19 +10,13 @@ symbols here so callers can import from either place::
 """
 
 from .backends import (  # noqa: F401
-    BACKEND_HARDWARE_COMPATIBILITY,
     DownloadDependencies,
     DownloadModel,
-    FAMILY_HARDWARE,
-    HARDWARE_FAMILIES,
-    NCNN_BACKEND_HARDWARE,
     ONNX_PROVIDER_HARDWARE,
     check_backend_health,
     detect_gpu_hardware,
     get_backend_reinstall_info,
     get_compatible_backends,
-    get_ncnn_backend,
     get_onnx_providers,
     get_preferred_backend,
-    get_torch_backend_family,
 )
