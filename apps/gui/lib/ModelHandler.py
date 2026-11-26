@@ -1,4 +1,5 @@
 import os
+import re
 
 from apps.gui.util import createDirectory
 from apps.gui.constants import CUSTOM_MODELS_PATH
@@ -42,8 +43,15 @@ def _custom_onnx_models() -> dict:
     createDirectory(CUSTOM_MODELS_PATH)
     models = {}
     for model in os.listdir(CUSTOM_MODELS_PATH):
-        if model.endswith(".onnx"):
-            models[model] = (model, model, 4, "custom")
+        if not model.endswith(".onnx"):
+            continue
+        # custom upscalers advertise their native scale in the filename,
+        # e.g. 2x_model.onnx; fall back to 4x if the name is ambiguous
+        match = re.search(r"(?<!\d)([1-9])x", model.lower()) or re.search(
+            r"x([1-9])(?!\d)", model.lower()
+        )
+        scale = int(match.group(1)) if match else 4
+        models[model] = (model, model, scale, "custom")
     return models
 
 def getModels():

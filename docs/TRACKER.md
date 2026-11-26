@@ -69,7 +69,7 @@ Historical decision; the ONNX-only migration replaced it.
 - [x] Added check_backend_health() function
 - [x] Added get_backend_reinstall_info() function
 - [x] Integrated with DownloadDependencies (`apps/gui/utils/backends/`)
-- [x] All 293 tests passing at the time (current suite: 323)
+- [x] All 293 tests passing at the time (current suite: 324)
 
 ### GUI Refactor Wiring Fix (2026-10-08)
 - [x] `assemble_pages` re-points every page widget onto MainWindow (flat namespace preserved) — ~140 broken references fixed
@@ -88,7 +88,7 @@ Historical decision; the ONNX-only migration replaced it.
 - [x] Platform-aware variant options (Linux: CUDA/ROCm/XPU, Windows: CUDA, macOS: MPS)
 - [x] Integrated with ProcessTab for unified backend selection during processing
 - [x] Updated REAL-Video-Enhancer.py to use unified backend selector
-- [x] All 293 tests passing at the time (current suite: 323)
+- [x] All 293 tests passing at the time (current suite: 324)
 - Note (2026-10-08): the selector widgets were unreachable from MainWindow until the
   GUI Refactor Wiring Fix above — the `backend_type_combo` / `backend_variant_combo`
   accesses were `hasattr`-guarded and always False.
@@ -308,7 +308,7 @@ Archived (completed work):
 - Updated build.py references
 
 ### Test Results
-- 323 tests passing, 5 warnings
+- 324 tests passing, 5 warnings
 
 ## Last Updated
 2026-11-25
