@@ -2591,34 +2591,7 @@ border-radius:10px;
                                 </property>
                                </widget>
                               </item>
-                              <item>
-                               <widget class="QWidget" name="widget_23" native="true">
-                                <layout class="QVBoxLayout" name="verticalLayout_28">
-                                 <item>
-                                  <widget class="QPushButton" name="RemoveFromRenderQueue">
-                                   <property name="text">
-                                    <string>Remove</string>
-                                   </property>
-                                  </widget>
-                                 </item>
-                                 <item>
-                                  <widget class="QPushButton" name="MoveUpRenderQueue">
-                                   <property name="text">
-                                    <string>Move Up</string>
-                                   </property>
-                                  </widget>
-                                 </item>
-                                 <item>
-                                  <widget class="QPushButton" name="MoveDownRenderQueue">
-                                   <property name="text">
-                                    <string>Move Down</string>
-                                   </property>
-                                  </widget>
-                                 </item>
-                                </layout>
-                               </widget>
-                              </item>
-                             </layout>
+                              </layout>
                             </widget>
                            </item>
                            <item>

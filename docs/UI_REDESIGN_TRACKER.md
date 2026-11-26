@@ -43,7 +43,7 @@ functional UI issues:
   torch.compile help icon.
 - Pause/Stop are hidden while idle and appear only during a render.
 - Models page: imported-model list, status under the drop zone, legacy empty
-  download area hidden, uninstall moved to a danger zone.
+  download area removed, uninstall moved to a danger zone.
 - Source inputs and the Logs tab have empty-state text; the duplicate queue
   empty-state line is gone; scene-threshold moved to Render Settings.
 - Encoder command field is labeled, checkbox rows are fully clickable, and
@@ -55,8 +55,8 @@ functional UI issues:
   with the rail width, and footer counts refresh as jobs finish.
 - Closing the window only asks for confirmation when a render/queued job is
   active.
-- The hidden Backend row no longer reserves space; Enhancements rows are
-  compact at the top, and idle pills show Idle/-- instead of blanks.
+- The retired Backend row and old render-queue buttons are gone from the
+  `.ui` sources; Enhancements rows are compact at the top.
 - Keyboard shortcuts: Ctrl+1–4 for navigation, Ctrl+O / Ctrl+Shift+O for
   input/batch selection, Ctrl+Enter add-to-queue, Ctrl+Shift+Enter render,
   Ctrl+P preview. Icon-only controls now have tooltips + accessible names.

@@ -218,11 +218,6 @@ class DownloadTab:
 
         self._refresh_model_list()
 
-        # the legacy download list is empty now — don't reserve space for it
-        legacy_list = getattr(self.parent, "scrollArea_2", None)
-        if legacy_list is not None:
-            legacy_list.setVisible(False)
-
         uninstall_btn = getattr(self.parent, "uninstallAppBtn", None)
         if uninstall_btn is not None:
             uninstall_btn.setProperty("variant", "danger")
