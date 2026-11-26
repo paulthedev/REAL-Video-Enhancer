@@ -59,6 +59,9 @@ functional UI issues:
 - Keyboard shortcuts: Ctrl+1–4 for navigation, Ctrl+O / Ctrl+Shift+O for
   input/batch selection, Ctrl+Enter add-to-queue, Ctrl+Shift+Enter render,
   Ctrl+P preview. Icon-only controls now have tooltips + accessible names.
+- RVE Settings shows the active GPU acceleration build and offers a manual
+  “Check GPU Acceleration” action (the startup prompt is no longer the only
+  way to install a provider).
 
 Remaining polish (deliberately not changed): the Advanced/RVE settings cards
 are sparse, and the Models page keeps a large empty area below the list.

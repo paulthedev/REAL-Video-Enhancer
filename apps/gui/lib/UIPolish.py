@@ -7,7 +7,7 @@ prevent layout stretches from spreading a few rows across a whole card.
 
 from PySide6.QtCore import QEvent, QObject, Qt
 from PySide6.QtGui import QKeySequence, QShortcut
-from PySide6.QtWidgets import QCheckBox, QLabel, QScrollArea, QTabWidget, QWidget
+from PySide6.QtWidgets import QCheckBox, QLabel, QPushButton, QScrollArea, QTabWidget, QWidget
 
 
 class _LabelToggleFilter(QObject):
@@ -301,6 +301,33 @@ def _polish_rve_tab(window) -> None:
             info.setWordWrap(True)
             layout.insertWidget(layout.indexOf(button) + 1, info)
             window._rve_path_added = True
+
+    if button is not None and button.parentWidget() is not None:
+        layout = button.parentWidget().layout()
+        if layout is not None and not getattr(window, "_provider_button_added", False):
+            from apps.gui.utils.backends.ProviderUpgrade import provider_upgrade_status
+
+            package = provider_upgrade_status().get("package")
+            status = QLabel(
+                f"GPU acceleration: {package}" if package
+                else "GPU acceleration: bundled build"
+            )
+            status.setProperty("caption", True)
+
+            check = QPushButton("Check GPU Acceleration")
+            check.setProperty("variant", "ghost")
+            check.setToolTip("Look for a faster ONNX Runtime build for this GPU")
+
+            def _check_provider():
+                from apps.gui.lib.ProviderUpgradeUI import maybe_prompt_provider_upgrade
+
+                maybe_prompt_provider_upgrade(window, interactive=True)
+
+            check.clicked.connect(_check_provider)
+            at = layout.indexOf(button)
+            layout.insertWidget(at, status)
+            layout.insertWidget(at + 1, check)
+            window._provider_button_added = True
 
 
 def _add_shortcuts_and_accessibility(window) -> None:

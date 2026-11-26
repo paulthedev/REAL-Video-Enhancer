@@ -126,8 +126,20 @@ def _start_install(parent, recommendation):
     dialog.show()
 
 
-def _on_check_result(parent, recommendation):
+def _on_check_result(parent, recommendation, interactive=False):
     if not recommendation:
+        if interactive:
+            try:
+                from apps.gui.lib.QTcustom import NotificationOverlay
+
+                NotificationOverlay(
+                    "No GPU upgrade is available right now "
+                    "(the matching build may already be installed).",
+                    parent,
+                    timeout=3500,
+                )
+            except Exception:
+                pass
         return
     package = recommendation["package"]
     details = _vendor_label(package)
@@ -149,7 +161,7 @@ def _on_check_result(parent, recommendation):
         _start_install(parent, recommendation)
 
 
-def maybe_prompt_provider_upgrade(parent) -> None:
+def maybe_prompt_provider_upgrade(parent, interactive: bool = False) -> None:
     """Check for a faster provider build and offer to install it."""
     if os.environ.get("RVE_NO_PROVIDER_PROMPT"):
         return
@@ -158,9 +170,24 @@ def maybe_prompt_provider_upgrade(parent) -> None:
     from apps.gui.constants import HAS_NETWORK_ON_STARTUP
 
     if not HAS_NETWORK_ON_STARTUP:
+        if interactive:
+            try:
+                from apps.gui.lib.QTcustom import NotificationOverlay
+
+                NotificationOverlay(
+                    "No network connection — cannot check for GPU acceleration.",
+                    parent,
+                    timeout=3500,
+                )
+            except Exception:
+                pass
         return
 
     checker = _CheckThread(parent)
-    checker.result.connect(lambda recommendation: _on_check_result(parent, recommendation))
+    checker.result.connect(
+        lambda recommendation: _on_check_result(
+            parent, recommendation, interactive=interactive
+        )
+    )
     parent._provider_check_thread = checker
     checker.start()
