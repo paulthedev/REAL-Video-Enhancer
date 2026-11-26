@@ -220,12 +220,6 @@ class SettingsTab:
 
         self.parent.resetSettingsBtn.clicked.connect(self.resetSettings)
 
-        self.parent.uhd_mode.stateChanged.connect(
-            lambda: self.settings.writeSetting(
-                "uhd_mode",
-                "True" if self.parent.uhd_mode.isChecked() else "False",
-            )
-        )
         self.parent.gpu_id.currentIndexChanged.connect(
             lambda: self.settings.writeSetting(
                 "gpu_id", self.parent.gpu_id.currentText()
@@ -341,7 +335,6 @@ class SettingsTab:
         self.parent.use_same_output_folder_as_input_file_enabled.setChecked(
             self.settings.settings["use_same_output_folder_as_input_file_enabled"] == "True"
         )
-        self.parent.uhd_mode.setChecked(self.settings.settings["uhd_mode"] == "True")
         self.parent.gpu_id.setCurrentText(
             self.settings.settings["gpu_id"]
         )
@@ -404,7 +397,6 @@ class Settings:
             "output_folder_location": output_folder_default,
             "use_same_output_folder_as_input_file_enabled": "False",
             "last_input_folder_location": output_folder_default,
-            "uhd_mode": "True",
             "gpu_id": "Auto",
             "auto_border_cropping": "False",
             "video_container": "mkv",
@@ -437,7 +429,6 @@ class Settings:
             "output_folder_location": "ANY",
             "use_same_output_folder_as_input_file_enabled": ("True", "False"),
             "last_input_folder_location": "ANY",
-            "uhd_mode": ("True", "False"),
             "gpu_id": "ANY",
             "auto_border_cropping": ("True", "False"),
             "video_container": ("mkv", "mp4", "mov", "webm", "avi"),

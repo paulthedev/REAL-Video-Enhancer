@@ -249,7 +249,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.QConnect()
         # set up tabs
-        self.backendComboBox.addItems(["onnx"])  # ONNX is the only backend
         printOut = (
             "System Information:\n"
             + "OS: "
@@ -322,9 +321,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # these additions are not ready for stable rve just yet.
         #self.denoiseContainer.setVisible(False)
         self.deblurContainer.setVisible(False)
-        # ONNX interpolation has no dynamic-scaled-optical-flow mode
-        # (ensemble is implemented); don't offer a no-op control.
-        self.dynamicScaledOpticalFlowCheckBox.setVisible(False)
         #self.denoiseCheckBoxContainer.setVisible(False)
         self.deblurCheckBoxContainer.setVisible(False)
 
@@ -688,7 +684,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             ),
             benchmarkMode=self.benchmarkModeCheckBox.isChecked(),
             sloMoMode=self.sloMoModeCheckBox.isChecked(),
-            dyanmicScaleOpticalFlow=self.dynamicScaledOpticalFlowCheckBox.isChecked(),
+            dyanmicScaleOpticalFlow=False,
             ensemble=self.ensembleCheckBox.isChecked(),
             modelScale=modelScale,
             upscaleModelArch=upscaleModelArch,

@@ -392,12 +392,6 @@ class HandleApplication:
             action="store_true",
         )
         parser.add_argument(
-            "--UHD_mode",
-            help="Lowers the resoltion flow is calculated at, speeding up model and saving vram. Helpful for higher resultions.",
-            action="store_true",
-            default=False,
-        )
-        parser.add_argument(
             "--slomo_mode",
             help="Instead of increasing framerate, it will remain the same while just increasing the length of the video.",
             action="store_true",
@@ -406,12 +400,6 @@ class HandleApplication:
         parser.add_argument(
             "--hdr_mode",
             help="Appends ffmpeg command to re encode with hdr colorspace",
-            action="store_true",
-            default=False,
-        )
-        parser.add_argument(
-            "--dynamic_scaled_optical_flow",
-            help="Scale the optical flow based on the difference between frames, currently only works with the pytorch backend.",
             action="store_true",
             default=False,
         )

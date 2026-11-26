@@ -102,9 +102,9 @@ def test_ui_polish_hides_dead_controls(gui_entry):
             app.processEvents()
             time.sleep(0.01)
 
-        # dead controls from the retired backend/UHD/torch paths
-        assert not window.backendComboBox.isVisible()
-        assert not window.uhd_mode.isVisible()
+        # dead controls from the retired backend/UHD/torch paths are gone
+        assert not hasattr(window, "backendComboBox")
+        assert not hasattr(window, "uhd_mode")
         assert not window.pauseRenderButton.isVisible()
         assert not window.killRenderButton.isVisible()
 
@@ -219,12 +219,8 @@ def test_main_window_boots_offscreen(gui_entry):
             app.processEvents()
             time.sleep(0.01)
 
-        # onnx-only: the backend combo carries exactly the one backend
-        items = [
-            window.backendComboBox.itemText(i)
-            for i in range(window.backendComboBox.count())
-        ]
-        assert items == ["onnx"]
+        # onnx-only backend
+        assert window.processTab.get_current_backend() == "onnx"
 
         pixmap = window.grab()
         assert not pixmap.isNull()

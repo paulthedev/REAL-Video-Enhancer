@@ -726,10 +726,6 @@ class ProcessTab:
                 command += [
                     "--slomo_mode",
                 ]
-            if renderOptions.dyanmicScaleOpticalFlow:
-                command += [
-                    "--dynamic_scaled_optical_flow",
-                ]
             if renderOptions.ensemble:
                 command += [
                     "--ensemble",

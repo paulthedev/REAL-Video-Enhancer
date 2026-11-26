@@ -61,36 +61,27 @@ def _make_checkbox_labels_clickable(root: QWidget) -> None:
 
 
 def _hide_dead_controls(window) -> None:
-    # ONNX is the only backend — the combo has no alternatives and is never read.
-    for name in ("backendComboBox", "label_12"):
+    # These controls are gone from the .ui sources; keep the hook for any
+    # packaged/third-party UI that still carries them.
+    for name in (
+        "backendComboBox",
+        "widget_3",
+        "uhd_mode",
+        "uhdHelp",
+        "label_90",
+        "label_13",
+        "label_12",
+        "label_22",
+    ):
         widget = getattr(window, name, None)
         if widget is not None:
             widget.setVisible(False)
-    backend_row = getattr(window, "widget_3", None)
-    if backend_row is not None:
-        backend_row.setVisible(False)
-
-    # UHD interpolation mode has no ONNX implementation.
-    for name in ("uhd_mode", "label_22", "uhdHelp"):
-        widget = getattr(window, name, None)
-        if widget is not None:
-            widget.setVisible(False)
-
-    # Leftover help icon for the removed torch.compile toggle.
-    label_90 = getattr(window, "label_90", None)
-    if label_90 is not None:
-        label_90.setVisible(False)
 
     # Section titles inside the scroll areas were clipped at the top edge.
     for name in ("label_74", "label_41"):
         label = getattr(window, name, None)
         if label is not None:
             label.setContentsMargins(0, 6, 0, 0)
-
-    # Ko-fi is hidden in this fork; don't leave its caption behind.
-    label_13 = getattr(window, "label_13", None)
-    if label_13 is not None:
-        label_13.setVisible(False)
 
 
 def _settings_content_layouts(page):

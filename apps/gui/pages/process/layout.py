@@ -122,7 +122,6 @@ def apply_studio_layout(win) -> tuple[PreviewCompare, QueuePanel, QStackedLayout
     # ---- models card ----------------------------------------------------
     models_card, models_lay = _card("Enhancements")
     for name in (
-        "widget_3",               # backend combo row
         "widget_38",              # upscale toggle + scale/model containers
         "widget_35",              # interpolate toggle + model/factor containers
         "deblurCheckBoxContainer", "deblurContainer",

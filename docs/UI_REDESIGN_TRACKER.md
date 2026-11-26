@@ -38,8 +38,9 @@ functional UI issues:
   queue before validation.
 - Home changelog loads off the GUI thread with an offline fallback; the orphan
   “Support Me!” caption is gone and the hero title sits beside the logo.
-- Dead controls hidden: the `onnx`-only Backend combo, Interpolation UHD Mode,
-  and the leftover torch.compile help icon.
+- Dead controls removed from the `.ui` sources: the `onnx`-only Backend
+  combo, Interpolation UHD Mode, PyTorch-only dynamic flow, and the leftover
+  torch.compile help icon.
 - Pause/Stop are hidden while idle and appear only during a render.
 - Models page: imported-model list, status under the drop zone, legacy empty
   download area hidden, uninstall moved to a danger zone.

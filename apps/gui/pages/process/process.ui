@@ -791,58 +791,6 @@ background-color:#343b47
                                    </widget>
                                   </item>
                                   <item>
-                                   <widget class="QWidget" name="widget_3" native="true">
-                                    <layout class="QHBoxLayout" name="horizontalLayout_11">
-                                     <property name="leftMargin">
-                                      <number>0</number>
-                                     </property>
-                                     <property name="topMargin">
-                                      <number>0</number>
-                                     </property>
-                                     <property name="rightMargin">
-                                      <number>0</number>
-                                     </property>
-                                     <property name="bottomMargin">
-                                      <number>0</number>
-                                     </property>
-                                     <item>
-                                      <widget class="QLabel" name="label_12">
-                                       <property name="font">
-                                        <font>
-                                         <pointsize>12</pointsize>
-                                        </font>
-                                       </property>
-                                       <property name="text">
-                                        <string>Backend</string>
-                                       </property>
-                                      </widget>
-                                     </item>
-                                     <item>
-                                      <widget class="QComboBox" name="backendComboBox">
-                                       <property name="sizePolicy">
-                                        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
-                                         <horstretch>0</horstretch>
-                                         <verstretch>0</verstretch>
-                                        </sizepolicy>
-                                       </property>
-                                       <property name="minimumSize">
-                                        <size>
-                                         <width>0</width>
-                                         <height>0</height>
-                                        </size>
-                                       </property>
-                                       <property name="maximumSize">
-                                        <size>
-                                         <width>230</width>
-                                         <height>30</height>
-                                        </size>
-                                       </property>
-                                      </widget>
-                                     </item>
-                                    </layout>
-                                   </widget>
-                                  </item>
-                                  <item>
                                    <widget class="QWidget" name="widget_35" native="true">
                                     <layout class="QHBoxLayout" name="horizontalLayout_7">
                                      <property name="leftMargin">
@@ -3110,51 +3058,6 @@ border-radius:10px;
                                     <property name="text">
                                      <string>Interpolate Settings</string>
                                     </property>
-                                   </widget>
-                                  </item>
-                                  <item>
-                                   <widget class="QWidget" name="sloMoModeContainer_5" native="true">
-                                    <layout class="QHBoxLayout" name="horizontalLayout_53">
-                                     <item>
-                                      <widget class="QLabel" name="label_70">
-                                       <property name="font">
-                                        <font>
-                                         <pointsize>12</pointsize>
-                                        </font>
-                                       </property>
-                                       <property name="text">
-                                        <string>Dynamic Scaled Flow (Pytorch Only)</string>
-                                       </property>
-                                      </widget>
-                                     </item>
-                                     <item>
-                                      <spacer name="horizontalSpacer_26">
-                                       <property name="orientation">
-                                        <enum>Qt::Orientation::Horizontal</enum>
-                                       </property>
-                                       <property name="sizeHint" stdset="0">
-                                        <size>
-                                         <width>226</width>
-                                         <height>20</height>
-                                        </size>
-                                       </property>
-                                      </spacer>
-                                     </item>
-                                     <item>
-                                      <widget class="HelpIconLabel" name="label_71">
-                                                                        <property name="toolTip">
-                                                                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Scales optical flow based on the difference between frames.&lt;/p&gt;&lt;p&gt;Helps with anime interpolation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                                                                        </property>
-                                      </widget>
-                                     </item>
-                                     <item>
-                                      <widget class="QCheckBox" name="dynamicScaledOpticalFlowCheckBox">
-                                       <property name="text">
-                                        <string />
-                                       </property>
-                                      </widget>
-                                     </item>
-                                    </layout>
                                    </widget>
                                   </item>
                                   <item>

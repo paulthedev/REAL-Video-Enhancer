@@ -65,10 +65,6 @@ class HomeTab:
 
     def QConnect(self):
         self.parent.githubBtn.clicked.connect(lambda: openLink(APP_URL))
-        self.parent.kofiBtn.setVisible(False)  # upstream's donation link — hidden in this fork
-        label_13 = getattr(self.parent, "label_13", None)
-        if label_13 is not None:
-            label_13.setVisible(False)  # don't leave "Support Me!" hanging
 
         self.parent.changeLogText.setPlainText("Loading changelog…")
         self._changelog_thread = _ChangelogThread(self.parent)
