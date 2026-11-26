@@ -43,7 +43,8 @@ functional UI issues:
   torch.compile help icon.
 - Pause/Stop are hidden while idle and appear only during a render.
 - Models page: imported-model list, status under the drop zone, legacy empty
-  download area removed, uninstall moved to a danger zone.
+  download area removed, uninstall moved to a danger zone, and selected custom
+  models can be removed after confirmation.
 - Source inputs and the Logs tab have empty-state text; the duplicate queue
   empty-state line is gone; scene-threshold moved to Render Settings.
 - Encoder command field is labeled, checkbox rows are fully clickable, and

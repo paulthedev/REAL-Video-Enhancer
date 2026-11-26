@@ -188,13 +188,19 @@ class DownloadTab:
         self.models_button = QPushButton("Open Folder")
         self.models_button.setProperty("variant", "ghost")
         self.models_button.clicked.connect(lambda: open_folder(CUSTOM_MODELS_PATH))
+        self.models_remove_button = QPushButton("Remove")
+        self.models_remove_button.setProperty("variant", "ghost")
+        self.models_remove_button.setToolTip("Remove the selected custom model")
+        self.models_remove_button.setEnabled(False)
+        self.models_remove_button.clicked.connect(self._remove_selected_model)
         self.models_list = QListWidget()
         self.models_list.setMinimumHeight(120)
         self.models_list.setMaximumHeight(260)
-        self.models_list.setSelectionMode(QListWidget.NoSelection)
+        self.models_list.setSelectionMode(QListWidget.SingleSelection)
         self.models_list.itemDoubleClicked.connect(
             lambda _item: open_folder(CUSTOM_MODELS_PATH)
         )
+        self.models_list.itemSelectionChanged.connect(self._update_remove_button)
 
         if isinstance(layout, QGridLayout):
             # row 0: import target, 1: status, 2: hint, 3: list heading,
@@ -206,6 +212,7 @@ class DownloadTab:
             header.addWidget(self.models_label)
             header.addStretch(1)
             header.addWidget(self.models_button)
+            header.addWidget(self.models_remove_button)
             layout.addLayout(header, 3, 0)
             layout.addWidget(self.models_list, 4, 0)
             container = getattr(self.parent, "backendSelectContainer", None)
@@ -308,6 +315,34 @@ class DownloadTab:
             item.setTextAlignment(Qt.AlignCenter)
             item.setFlags(Qt.NoItemFlags)
             self.models_list.addItem(item)
+        self._update_remove_button()
+
+    def _update_remove_button(self):
+        item = self.models_list.currentItem() if hasattr(self, "models_list") else None
+        removable = item is not None and bool(item.flags() & Qt.ItemIsSelectable)
+        self.models_remove_button.setEnabled(removable)
+
+    def _remove_selected_model(self):
+        item = self.models_list.currentItem()
+        if item is None or not (item.flags() & Qt.ItemIsSelectable):
+            return
+        name = item.text()
+        reply = QMessageBox.question(
+            self.parent,
+            "Remove model",
+            f"Remove {name} from your custom models?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        try:
+            os.remove(os.path.join(CUSTOM_MODELS_PATH, name))
+        except OSError as e:
+            self._notify(f"Could not remove {name}: {e}")
+            return
+        self._notify(f"Removed {name}")
+        self._refresh_models()
 
     def _notify(self, text):
         from apps.gui.lib.QTcustom import NotificationOverlay
